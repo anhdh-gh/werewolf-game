@@ -144,7 +144,7 @@
   }
 
   /* ========== API TEST ========== */
-  fetch('https://werewolf.anhdh.net/api/ping')
+  fetch('https://werewolf.anhdh.net/api/v1/health')
           .then(res => res.json())
           .then(() => {
             apiStatusEl.textContent = '✅ API Connected';
