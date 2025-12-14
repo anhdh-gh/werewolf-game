@@ -3,123 +3,224 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Trang Chủ - Werewolf Game</title>
+  <title>Werewolf Chat Test</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      text-align: center;
-      margin-top: 50px;
+      background: #f0f2f5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0;
+      height: 100vh;
     }
-    h1 { color: #e74c3c; }
 
-    .btn {
-      display: inline-block;
-      padding: 10px 20px;
-      background-color: #3498db;
-      color: white;
-      text-decoration: none;
-      border-radius: 5px;
-      margin-top: 20px;
+    h1 {
+      color: #e74c3c;
+      margin: 20px 0 10px;
     }
-    .btn:hover { background-color: #2980b9; }
 
     .status {
-      margin-top: 20px;
       font-weight: bold;
-    }
-
-    .log {
-      margin: 20px auto;
-      width: 80%;
-      max-width: 500px;
-      height: 150px;
-      border: 1px solid #ccc;
-      padding: 10px;
-      overflow-y: auto;
-      text-align: left;
-      font-size: 14px;
+      margin-bottom: 5px;
     }
 
     .online { color: green; }
     .offline { color: red; }
+
+    .chat-container {
+      background: white;
+      width: 90%;
+      max-width: 500px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+
+    .chat-log {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+    }
+
+    .message {
+      margin-bottom: 8px;
+      max-width: 75%;
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      word-break: break-word;
+    }
+
+    .me {
+      background: #3498db;
+      color: white;
+      margin-left: auto;
+      border-bottom-right-radius: 2px;
+    }
+
+    .other {
+      background: #e4e6eb;
+      color: black;
+      margin-right: auto;
+      border-bottom-left-radius: 2px;
+    }
+
+    .system {
+      text-align: center;
+      color: gray;
+      font-size: 12px;
+      margin: 5px 0;
+    }
+
+    .chat-input {
+      display: flex;
+      border-top: 1px solid #ddd;
+    }
+
+    .chat-input input {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      outline: none;
+      font-size: 14px;
+    }
+
+    .chat-input button {
+      padding: 0 20px;
+      border: none;
+      background: #3498db;
+      color: white;
+      cursor: pointer;
+    }
+
+    .chat-input button:hover {
+      background: #2980b9;
+    }
   </style>
 </head>
 <body>
 
-<h1>🐺 Chào mừng đến với Ma Sói!</h1>
-<p>Nếu bạn thấy dòng chữ này, nghĩa là <b>CI/CD Frontend đã chạy thành công!</b></p>
+<h1>🐺 Werewolf Chat</h1>
 
-<!-- API status -->
-<div id="apiStatus" class="status">🔄 Đang kiểm tra API...</div>
+<div id="apiStatus" class="status">🔄 Checking API...</div>
+<div id="wsStatus" class="status">🔄 Connecting WebSocket...</div>
 
-<!-- WebSocket status -->
-<div id="wsStatus" class="status">🔄 Đang kết nối WebSocket...</div>
+<div class="chat-container">
+  <div id="chatLog" class="chat-log"></div>
 
-<!-- Chat log -->
-<div class="log" id="log"></div>
-
-<button class="btn" onclick="sendMessage()">Gửi test WebSocket</button>
-<br />
+  <div class="chat-input">
+    <input
+            id="messageInput"
+            type="text"
+            placeholder="Nhập tin nhắn..."
+            autocomplete="off"
+    />
+    <button onclick="sendMessage()">Gửi</button>
+  </div>
+</div>
 
 <script>
-  const logEl = document.getElementById('log');
+  const chatLog = document.getElementById('chatLog');
   const apiStatusEl = document.getElementById('apiStatus');
   const wsStatusEl = document.getElementById('wsStatus');
+  const inputEl = document.getElementById('messageInput');
 
-  function log(message) {
-    const p = document.createElement('div');
-    p.textContent = message;
-    logEl.appendChild(p);
-    logEl.scrollTop = logEl.scrollHeight;
+  function addMessage(text, type = 'other') {
+    const div = document.createElement('div');
+
+    if (type === 'system') {
+      div.className = 'system';
+    } else {
+      div.className = `message ${type}`;
+    }
+
+    div.textContent = text;
+    chatLog.appendChild(div);
+    chatLog.scrollTop = chatLog.scrollHeight;
   }
 
-  /* ================= API TEST ================= */
+  /* ========== API TEST ========== */
   fetch('https://werewolf.anhdh.net/api/ping')
           .then(res => res.json())
           .then(data => {
-            apiStatusEl.innerHTML = '✅ API Connected';
+            apiStatusEl.textContent = '✅ API Connected';
             apiStatusEl.classList.add('online');
-            log('API response: ' + JSON.stringify(data));
+            addMessage('API OK: ' + JSON.stringify(data), 'system');
           })
-          .catch(err => {
-            apiStatusEl.innerHTML = '❌ API Disconnected';
+          .catch(() => {
+            apiStatusEl.textContent = '❌ API Disconnected';
             apiStatusEl.classList.add('offline');
-            log('API error: ' + err.message);
+            addMessage('API error', 'system');
           });
 
-  /* ================= WEBSOCKET TEST ================= */
-  const wsUrl = `wss://werewolf.anhdh.net`;
-  const ws = new WebSocket(wsUrl);
+  /* ========== WEBSOCKET ========== */
+  const ws = new WebSocket('wss://werewolf.anhdh.net');
 
   ws.onopen = () => {
-    wsStatusEl.innerHTML = '✅ WebSocket Connected';
+    wsStatusEl.textContent = '✅ WebSocket Connected';
     wsStatusEl.classList.add('online');
-    log('WebSocket connected');
+    addMessage('Connected to chat server', 'system');
   };
 
   ws.onmessage = (event) => {
-    log('WS message: ' + event.data);
+    try {
+      const data = JSON.parse(event.data);
+      addMessage(data.message || event.data, 'other');
+    } catch {
+      addMessage(event.data, 'other');
+    }
   };
 
   ws.onerror = () => {
-    wsStatusEl.innerHTML = '❌ WebSocket Error';
+    wsStatusEl.textContent = '❌ WebSocket Error';
     wsStatusEl.classList.add('offline');
   };
 
   ws.onclose = () => {
-    wsStatusEl.innerHTML = '❌ WebSocket Closed';
+    wsStatusEl.textContent = '❌ WebSocket Closed';
     wsStatusEl.classList.add('offline');
-    log('WebSocket disconnected');
+    addMessage('Disconnected from server', 'system');
   };
 
+  let lastSentMessage = null; // lưu tin vừa gửi
+
   function sendMessage() {
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send('Hello BE 👋 from FE');
-      log('You: Hello BE 👋 from FE');
-    } else {
-      log('WebSocket chưa kết nối');
-    }
+    const text = inputEl.value.trim();
+    if (!text || ws.readyState !== WebSocket.OPEN) return;
+
+    ws.send(text);
+    lastSentMessage = text; // lưu lại tin nhắn
+    addMessage(text, 'me');
+    inputEl.value = '';
   }
+
+  ws.onmessage = (event) => {
+    let messageText;
+    try {
+      const data = JSON.parse(event.data);
+      messageText = data.message || event.data;
+    } catch {
+      messageText = event.data;
+    }
+
+    // Nếu tin giống tin vừa gửi => bỏ qua
+    if (messageText === lastSentMessage) {
+      lastSentMessage = null; // reset
+      return;
+    }
+
+    addMessage(messageText, 'other');
+  };
+
+  inputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      sendMessage();
+    }
+  });
 </script>
 
 </body>
