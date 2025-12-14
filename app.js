@@ -1,22 +1,12 @@
 const http = require('http');
 
-// Tạo server đơn giản nhất có thể
 const server = http.createServer((req, res) => {
-    // Trả về header báo là text bình thường
-    res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'});
-
-    // Trả về nội dung và kết thúc luôn
-    res.end('OKE - Server Node.js đang chạy ngon lành cành đào!');
+    // QUAN TRỌNG: Phải có dòng này thì cPanel mới không bị lỗi NoneType
+    res.writeHead(200, {'Content-Type': 'text/plain'});
+    res.end('Server Node.js dang chay!');
 });
 
-// Vẫn giữ socket.io để không bị lỗi module (nếu package.json đã khai báo)
-const io = require('socket.io')(server);
-
-io.on('connection', (socket) => {
-    console.log('Client connected: ' + socket.id);
-});
-
-// Lắng nghe port (cPanel tự cấp port)
+// CloudLinux tự động quản lý port, không cần điền số
 server.listen(() => {
-    console.log('Server is running...');
+    console.log('Server is running');
 });
