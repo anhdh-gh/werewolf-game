@@ -101,6 +101,8 @@
       background: #2980b9;
     }
   </style>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body>
 
@@ -129,93 +131,74 @@
   const wsStatusEl = document.getElementById('wsStatus');
   const inputEl = document.getElementById('messageInput');
 
+  // Hàm thêm tin nhắn vào giao diện
   function addMessage(text, type = 'other') {
     const div = document.createElement('div');
-
     if (type === 'system') {
       div.className = 'system';
     } else {
       div.className = `message ${type}`;
     }
-
     div.textContent = text;
     chatLog.appendChild(div);
     chatLog.scrollTop = chatLog.scrollHeight;
   }
 
-  /* ========== API TEST ========== */
-  fetch('https://werewolf.anhdh.net/api/ping')
+  /* ========== API TEST (Giữ nguyên) ========== */
+  fetch('https://werewolf.anhdh.net/api/ping') // Đảm bảo Backend có route này hoặc bỏ qua
           .then(res => res.json())
           .then(data => {
             apiStatusEl.textContent = '✅ API Connected';
             apiStatusEl.classList.add('online');
-            addMessage('API OK: ' + JSON.stringify(data), 'system');
           })
           .catch(() => {
-            apiStatusEl.textContent = '❌ API Disconnected';
+            apiStatusEl.textContent = '❌ API Disconnected'; // Có thể lỗi do CORS nếu chưa config
             apiStatusEl.classList.add('offline');
-            addMessage('API error', 'system');
           });
 
-  /* ========== WEBSOCKET ========== */
-  const ws = new WebSocket('wss://werewolf.anhdh.net');
+  /* ========== SOCKET.IO SETUP (PHẦN QUAN TRỌNG) ========== */
 
-  ws.onopen = () => {
-    wsStatusEl.textContent = '✅ WebSocket Connected';
-    wsStatusEl.classList.add('online');
-    addMessage('Connected to chat server', 'system');
-  };
+  // 1. Khởi tạo kết nối (Dùng hàm io() của thư viện vừa import)
+  const socket = io('https://werewolf.anhdh.net');
 
-  ws.onmessage = (event) => {
-    try {
-      const data = JSON.parse(event.data);
-      addMessage(data.message || event.data, 'other');
-    } catch {
-      addMessage(event.data, 'other');
-    }
-  };
+  // 2. Khi kết nối thành công
+  socket.on('connect', () => {
+    wsStatusEl.textContent = '✅ Socket.IO Connected';
+    wsStatusEl.className = 'status online';
+    addMessage('Đã vào hang Sói!', 'system');
+  });
 
-  ws.onerror = () => {
-    wsStatusEl.textContent = '❌ WebSocket Error';
-    wsStatusEl.classList.add('offline');
-  };
+  // 3. Khi bị ngắt kết nối
+  socket.on('disconnect', () => {
+    wsStatusEl.textContent = '❌ Socket.IO Disconnected';
+    wsStatusEl.className = 'status offline';
+    addMessage('Mất kết nối server...', 'system');
+  });
 
-  ws.onclose = () => {
-    wsStatusEl.textContent = '❌ WebSocket Closed';
-    wsStatusEl.classList.add('offline');
-    addMessage('Disconnected from server', 'system');
-  };
+  // 4. Nhận tin nhắn từ Server
+  // (Phải khớp với tên sự kiện server gửi về, ví dụ 'server_message')
+  socket.on('server_message', (msg) => {
+    addMessage(msg, 'other');
+  });
 
-  let lastSentMessage = null; // lưu tin vừa gửi
+  // Nếu server dùng sự kiện 'chat_message' để broadcast lại thì dùng dòng dưới:
+  // socket.on('chat_message', (data) => addMessage(data, 'other'));
 
+  /* ========== GỬI TIN NHẮN ========== */
   function sendMessage() {
     const text = inputEl.value.trim();
-    if (!text || ws.readyState !== WebSocket.OPEN) return;
+    if (!text) return;
 
-    ws.send(text);
-    lastSentMessage = text; // lưu lại tin nhắn
+    // 5. Gửi tin nhắn đi (Dùng .emit thay vì .send)
+    // 'chat_message' là tên sự kiện server đang lắng nghe
+    socket.emit('chat_message', text);
+
+    // Hiện tin nhắn của mình lên luôn cho mượt
     addMessage(text, 'me');
     inputEl.value = '';
   }
 
-  ws.onmessage = (event) => {
-    let messageText;
-    try {
-      const data = JSON.parse(event.data);
-      messageText = data.message || event.data;
-    } catch {
-      messageText = event.data;
-    }
-
-    // Nếu tin giống tin vừa gửi => bỏ qua
-    if (messageText === lastSentMessage) {
-      lastSentMessage = null; // reset
-      return;
-    }
-
-    addMessage(messageText, 'other');
-  };
-
+  // Bắt sự kiện Enter
   inputEl.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       sendMessage();
