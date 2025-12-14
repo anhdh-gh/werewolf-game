@@ -15,7 +15,7 @@ jobs:
           host: ${{ secrets.HOSTING_HOST }}
           username: ${{ secrets.HOSTING_USERNAME }}
           password: ${{ secrets.HOSTING_PASSWORD }}
-          port: ${{ secrets.PORT }}
+          port: ${{ secrets.HOSTING_PORT }}
           script: |
             # 1. Đi vào đúng thư mục chứa code (Dựa theo log bạn gửi)
             cd /home/anhdhnet/repositories/be/werewolf-game
