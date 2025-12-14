@@ -61,8 +61,6 @@
 <button class="btn" onclick="sendMessage()">Gửi test WebSocket</button>
 <br />
 
-<a href="/sign.html" class="btn">Chuyển sang trang Đăng Nhập ➡️</a>
-
 <script>
   const logEl = document.getElementById('log');
   const apiStatusEl = document.getElementById('apiStatus');
@@ -76,7 +74,7 @@
   }
 
   /* ================= API TEST ================= */
-  fetch('/api/ping')
+  fetch('https://werewolf.anhdh.net/api/ping')
           .then(res => res.json())
           .then(data => {
             apiStatusEl.innerHTML = '✅ API Connected';
@@ -90,8 +88,7 @@
           });
 
   /* ================= WEBSOCKET TEST ================= */
-  const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  const wsUrl = `${protocol}://${location.host}`;
+  const wsUrl = `wss://werewolf.anhdh.net`;
   const ws = new WebSocket(wsUrl);
 
   ws.onopen = () => {
