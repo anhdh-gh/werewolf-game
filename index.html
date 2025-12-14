@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Werewolf Chat Test</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🐺 Werewolf Chat Test</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -102,6 +103,7 @@
     }
   </style>
 
+  <!-- Socket.IO client -->
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body>
@@ -109,7 +111,7 @@
 <h1>🐺 Werewolf Chat</h1>
 
 <div id="apiStatus" class="status">🔄 Checking API...</div>
-<div id="wsStatus" class="status">🔄 Connecting WebSocket...</div>
+<div id="wsStatus" class="status">🔄 Connecting Socket.IO...</div>
 
 <div class="chat-container">
   <div id="chatLog" class="chat-log"></div>
@@ -133,17 +135,13 @@
 
   function addMessage(text, type = 'other') {
     const div = document.createElement('div');
-    if (type === 'system') {
-      div.className = 'system';
-    } else {
-      div.className = `message ${type}`;
-    }
+    div.className = type === 'system' ? 'system' : `message ${type}`;
     div.textContent = text;
     chatLog.appendChild(div);
     chatLog.scrollTop = chatLog.scrollHeight;
   }
 
-  /* ========== API TEST ========== */
+  /* ================= API TEST ================= */
   fetch('https://werewolf.anhdh.net/api/v1/health')
           .then(res => res.json())
           .then(() => {
@@ -155,7 +153,7 @@
             apiStatusEl.className = 'status offline';
           });
 
-  /* ========== SOCKET.IO ========== */
+  /* ================= SOCKET.IO ================= */
 
   const socket = io('https://werewolf.anhdh.net');
 
@@ -170,25 +168,27 @@
     addMessage('Mất kết nối server...', 'system');
   });
 
-  // ✅ SYSTEM MESSAGE (server -> client)
+  // SYSTEM MESSAGE
   socket.on('system', (data) => {
     addMessage(data.message, 'system');
   });
 
-  // ✅ CHAT MESSAGE (broadcast)
+  // CHAT MESSAGE (CHỈ render ở đây)
   socket.on('chat', (data) => {
-    addMessage(data.message, 'other');
+    if (data.senderId === socket.id) {
+      addMessage(data.message, 'me');
+    } else {
+      addMessage(data.message, 'other');
+    }
   });
 
-  /* ========== SEND MESSAGE ========== */
+  /* ================= SEND MESSAGE ================= */
+
   function sendMessage() {
     const text = inputEl.value.trim();
     if (!text) return;
 
-    // ✅ emit đúng event server đang listen
     socket.emit('chat', text);
-
-    addMessage(text, 'me');
     inputEl.value = '';
   }
 
