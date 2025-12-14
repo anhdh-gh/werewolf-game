@@ -19,9 +19,9 @@ const io = require('socket.io')(server);
 
 io.on('connection', (socket) => {
     console.log('Client connected: ' + socket.id);
-    
+
     // Gửi lời chào khi mới vào
-    socket.emit('server_message', 'Chào mừng đến với hang Ma Sói!');
+    socket.emit('server_message', 'Chào mừng đến với game Ma Sói!');
 
     // Lắng nghe tin nhắn chat
     socket.on('chat_message', (msg) => {
@@ -35,4 +35,7 @@ io.on('connection', (socket) => {
 });
 
 // 3. Khởi chạy (cPanel tự quản lý port)
-server.listen();
+server.listen(() => {
+    const port = server.address().port;
+    console.log('Server đang chạy trên port:', port);
+});
