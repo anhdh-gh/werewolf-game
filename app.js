@@ -19,7 +19,7 @@ app.use(cors());
 app.use(express.json());
 
 // API test
-app.get('/api/ping', (req, res) => {
+app.get('/api/v1/ping', (req, res) => {
     res.json({
         success: true,
         message: 'BE alive 🚀',
