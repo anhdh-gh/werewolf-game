@@ -4,6 +4,7 @@
   "description": "Game Ma Soi",
   "main": "app.js",
   "dependencies": {
+    "dotenv": "^17.2.3",
     "socket.io": "^4.7.0"
   },
   "scripts": {

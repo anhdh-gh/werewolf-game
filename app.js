@@ -1,12 +1,18 @@
+require('dotenv').config();
+
+//
 const http = require('http');
 
+//
+const port = process.env.PORT || 3000;
+
+//
 const server = http.createServer((req, res) => {
-    // QUAN TRỌNG: Phải có dòng này thì cPanel mới không bị lỗi NoneType
     res.writeHead(200, {'Content-Type': 'text/plain'});
-    res.end('Server Node.js is running!');
+    res.end('Server is running!');
 });
 
-// CloudLinux tự động quản lý port, không cần điền số
-server.listen(() => {
-    console.log('Server is running');
+//
+server.listen(port, () => {
+    console.log(`Server run at: http://localhost:${port}`);
 });
