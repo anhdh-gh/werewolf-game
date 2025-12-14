@@ -12,9 +12,6 @@ const wss = new WebSocket.Server({ server });
 app.use(cors());
 app.use(express.json());
 
-// Static files
-app.use(express.static(path.join(__dirname, 'public')));
-
 // API test
 app.get('/api/ping', (req, res) => {
     res.json({
