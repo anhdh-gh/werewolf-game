@@ -12,45 +12,40 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@master
         with:
-          # 1. Điền cứng IP (Lấy từ lệnh SSH thành công của bạn)
-          host: "103.200.23.88"
-
-          # 2. Điền cứng Username (Lấy từ lệnh SSH thành công của bạn)
-          username: "anhdhnet"
-
-          # 3. QUAN TRỌNG: Điền cứng Port 22 (Vì bạn SSH tay không cần -p nghĩa là port 22)
-          # Nếu dùng secret cũ (21098) sẽ bị lỗi ngay.
-          port: 22
-
-          # 4. Chỉ dùng Secret cho mật khẩu
+          # Use secrets from GitHub Settings
+          host: ${{ secrets.HOSTING_HOST }}
+          username: ${{ secrets.HOSTING_USERNAME }}
           password: ${{ secrets.HOSTING_PASSWORD }}
-
-          # Tăng thời gian chờ
+          port: ${{ secrets.HOSTING_PORT }} # Make sure this secret is set to 22
           timeout: "60s"
 
           script: |
-            # --- BẮT ĐẦU SCRIPT ---
+            # --- START DEPLOYMENT SCRIPT ---
             
-            # 1. Vào thư mục code
-            cd /home/anhdhnet/repositories/be/werewolf-game
+            # 1. Navigate to the project directory
+            # Using the username variable to ensure the path is correct
+            cd /home/${{ secrets.HOSTING_USERNAME }}/repositories/be/werewolf-game
             
-            # 2. Pull code mới
-            echo "Dang pull code..."
+            # 2. Pull the latest code from the 'backend' branch
+            echo "Pulling latest code..."
             git pull origin backend
             
-            # 3. Cài đặt thư viện (Dùng đường dẫn cứng cho chuẩn)
-            echo "Dang cai dat..."
-            source /home/anhdhnet/nodevenv/repositories/be/werewolf-game/20/bin/activate
+            # 3. Activate Node.js virtual environment
+            echo "Activating environment and installing dependencies..."
+            source /home/${{ secrets.HOSTING_USERNAME }}/nodevenv/repositories/be/werewolf-game/20/bin/activate
+            
+            # 4. Install production dependencies only
             npm install --production
             
-            # 4. Restart Server
-            echo "Dang restart..."
+            # 5. Restart the Node.js Server
+            echo "Restarting server..."
             
-            # Cách 1: Kill process cũ (Thêm || true để không báo lỗi nếu server đang tắt)
-            pkill -u anhdhnet node || true
+            # Method 1: Force kill old Node.js processes for this user
+            # "|| true" ensures the workflow doesn't fail if no process is currently running
+            pkill -u ${{ secrets.HOSTING_USERNAME }} node || true
             
-            # Cách 2: Tạo file restart.txt
+            # Method 2: Trigger Passenger restart via restart.txt
             mkdir -p tmp
             touch tmp/restart.txt
             
-            echo "DEPLOY THANH CONG 100%!"
+            echo "DEPLOYMENT SUCCESSFUL!"
