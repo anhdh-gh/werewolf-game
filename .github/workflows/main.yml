@@ -3,7 +3,7 @@ name: Auto Deploy to Hosting
 on:
   push:
     branches:
-      - backend  # Chỉ chạy khi push code vào nhánh backend
+      - backend
 
 jobs:
   deploy:
@@ -12,34 +12,31 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@master
         with:
+          # Các biến này đã khớp với ảnh Secrets của bạn
           host: ${{ secrets.HOSTING_HOST }}
           username: ${{ secrets.HOSTING_USERNAME }}
           password: ${{ secrets.HOSTING_PASSWORD }}
-          port: ${{ secrets.HOSTING_PORT }}
+          port: ${{ secrets.HOSTING_PORT }} # Hãy chắc chắn Secret này là số 22
+          timeout: "60s"
           script: |
-            # 1. Đi vào đúng thư mục chứa code (Dựa theo log bạn gửi)
+            # 1. Đi vào thư mục
             cd /home/anhdhnet/repositories/be/werewolf-game
             
-            # 2. Pull code mới nhất về
-            echo "Drafting new code..."
+            # 2. Pull code
+            echo "Pulling code..."
             git pull origin backend
             
-            # 3. Kích hoạt môi trường ảo Node.js (Dựa theo log bạn gửi)
-            echo "Installing dependencies..."
-            source /home/anhdhnet/nodevenv/repositories/be/werewolf-game/20/bin/activate
+            # 3. Kích hoạt môi trường (Dùng biến HOSTING_USERNAME cho chuẩn)
+            echo "Installing..."
+            source /home/${{ secrets.HOSTING_USERNAME }}/nodevenv/repositories/be/werewolf-game/20/bin/activate
+            npm install --production
             
-            # 4. Cài đặt thư viện
-            npm install
-            
-            # 5. Khởi động lại Server (Kết hợp cả 2 cách bạn dùng để chắc ăn nhất)
-            echo "Restarting server..."
-            
-            # Cách 1: Tạo file restart.txt (Cách chuẩn của Passenger)
+            # 4. Restart server
+            echo "Restarting..."
             mkdir -p tmp
             touch tmp/restart.txt
             
-            # Cách 2: Kill process cũ (Cách mạnh tay bạn đã dùng)
-            # Thêm "|| true" để nếu không có process nào chạy thì không báo lỗi đỏ
-            pkill -u ${{ secrets.USERNAME }} node || true
+            # Sửa lỗi: Dùng đúng tên biến HOSTING_USERNAME
+            pkill -u ${{ secrets.HOSTING_USERNAME }} node || true
             
-            echo "DEPLOY THÀNH CÔNG!"
+            echo "DEPLOY THANH CONG!"
