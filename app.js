@@ -1,13 +1,19 @@
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
-const path = require('path');
 const cors = require('cors');
-const WebSocket = require('ws');
+const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+
+// Socket.IO server
+const io = new Server(server, {
+    cors: {
+        origin: '*',
+        methods: ['GET', 'POST']
+    }
+});
 
 app.use(cors());
 app.use(express.json());
@@ -21,31 +27,31 @@ app.get('/api/ping', (req, res) => {
     });
 });
 
-// WebSocket
-wss.on('connection', (ws) => {
-    console.log('🟢 Client connected');
+/**
+ * ======================
+ * SOCKET.IO
+ * ======================
+ */
+io.on('connection', (socket) => {
+    console.log('🟢 Client connected:', socket.id);
 
-    ws.send(JSON.stringify({
-        type: 'system',
-        message: 'Connected to WebSocket server'
-    }));
+    // Send welcome message
+    socket.emit('system', {
+        message: 'Connected to Socket.IO server'
+    });
 
-    ws.on('message', (data) => {
-        const message = data.toString();
+    // Receive message from client
+    socket.on('chat', (message) => {
         console.log('📩 Received:', message);
 
-        wss.clients.forEach(client => {
-            if (client.readyState === WebSocket.OPEN) {
-                client.send(JSON.stringify({
-                    type: 'chat',
-                    message
-                }));
-            }
+        // Broadcast to all clients
+        io.emit('chat', {
+            message
         });
     });
 
-    ws.on('close', () => {
-        console.log('🔴 Client disconnected');
+    socket.on('disconnect', () => {
+        console.log('🔴 Client disconnected:', socket.id);
     });
 });
 
