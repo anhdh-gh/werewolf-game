@@ -2,43 +2,37 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
+// 1. Web Server: Đọc file index.html trả về cho trình duyệt
 const server = http.createServer((req, res) => {
-    console.log('Request URL:', req.url);
-
-    if (req.url === '/' || req.url === '/index.html') {
-        const filePath = path.join(__dirname, 'index.html');
-
-        fs.readFile(filePath, (err, data) => {
-            if (err) {
-                console.error('Lỗi Đọc File:', err);
-                res.writeHead(500, {'Content-Type': 'text/plain; charset=utf-8'});
-                return res.end('Lỗi server: ' + err.message);
-            }
-            res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'});
-            res.end(data);
-        });
-    } else {
-        res.writeHead(404, {'Content-Type': 'text/plain'});
-        res.end('Not Found');
-    }
-});
-
-// Socket.io
-const { Server } = require("socket.io");
-const io = new Server(server);
-
-io.on('connection', (socket) => {
-    console.log('Client connected:', socket.id);
-
-    socket.emit('server_message', 'Chào mừng đến với game Ma Sói!');
-
-    socket.on('chat_message', (msg) => {
-        io.emit('server_message', msg);
+    fs.readFile(path.join(__dirname, 'index.html'), (err, data) => {
+        if (err) {
+            res.writeHead(500);
+            return res.end('Error loading index.html');
+        }
+        res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'});
+        res.end(data);
     });
 });
 
-// BẮT BUỘC
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+// 2. WebSocket Server
+const io = require('socket.io')(server);
+
+io.on('connection', (socket) => {
+    console.log('Client connected: ' + socket.id);
+
+    // Gửi lời chào khi mới vào
+    socket.emit('server_message', 'Chào mừng đến với hang Ma Sói!');
+
+    // Lắng nghe tin nhắn chat
+    socket.on('chat_message', (msg) => {
+        console.log('Nhận tin nhắn: ' + msg);
+        io.emit('server_message', 'Người lạ: ' + msg); // Gửi lại cho tất cả
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Client disconnected');
+    });
 });
+
+// 3. Khởi chạy (cPanel tự quản lý port)
+server.listen();
