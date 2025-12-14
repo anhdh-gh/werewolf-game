@@ -2,37 +2,40 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-// 1. Web Server: Đọc file index.html trả về cho trình duyệt
 const server = http.createServer((req, res) => {
-    fs.readFile(path.join(__dirname, 'index.html'), (err, data) => {
+    // 1. Xác định đường dẫn file tuyệt đối
+    // __dirname sẽ lấy chính xác thư mục chứa file app.js trên server
+    const filePath = path.join(__dirname, 'index.html');
+
+    // 2. Thử đọc file
+    fs.readFile(filePath, (err, data) => {
         if (err) {
-            res.writeHead(500);
-            return res.end('Error loading index.html');
+            // NẾU CÓ LỖI:
+            console.error('Lỗi khi đọc file:', err); // Ghi vào log hệ thống
+
+            res.writeHead(500, {'Content-Type': 'text/plain; charset=utf-8'});
+
+            // QUAN TRỌNG: Dòng này sẽ in lỗi chi tiết ra màn hình trình duyệt của bạn
+            // Ví dụ: "ENOENT" (không tìm thấy file), "EACCES" (không có quyền đọc)...
+            return res.end('GẶP LỖI RỒI: ' + err.message + '\nĐường dẫn file server đang tìm: ' + filePath);
         }
+
+        // NẾU THÀNH CÔNG:
         res.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'});
         res.end(data);
     });
 });
 
-// 2. WebSocket Server
 const io = require('socket.io')(server);
 
 io.on('connection', (socket) => {
     console.log('Client connected: ' + socket.id);
-
-    // Gửi lời chào khi mới vào
     socket.emit('server_message', 'Chào mừng đến với hang Ma Sói!');
-
-    // Lắng nghe tin nhắn chat
     socket.on('chat_message', (msg) => {
-        console.log('Nhận tin nhắn: ' + msg);
-        io.emit('server_message', 'Người lạ: ' + msg); // Gửi lại cho tất cả
-    });
-
-    socket.on('disconnect', () => {
-        console.log('Client disconnected');
+        io.emit('server_message', 'Người lạ: ' + msg);
     });
 });
 
-// 3. Khởi chạy (cPanel tự quản lý port)
-server.listen();
+server.listen(() => {
+    console.log('Server is running');
+});
