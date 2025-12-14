@@ -12,31 +12,45 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@master
         with:
-          # Các biến này đã khớp với ảnh Secrets của bạn
-          host: ${{ secrets.HOSTING_HOST }}
-          username: ${{ secrets.HOSTING_USERNAME }}
+          # 1. Điền cứng IP (Lấy từ lệnh SSH thành công của bạn)
+          host: "103.200.23.88"
+
+          # 2. Điền cứng Username (Lấy từ lệnh SSH thành công của bạn)
+          username: "anhdhnet"
+
+          # 3. QUAN TRỌNG: Điền cứng Port 22 (Vì bạn SSH tay không cần -p nghĩa là port 22)
+          # Nếu dùng secret cũ (21098) sẽ bị lỗi ngay.
+          port: 22
+
+          # 4. Chỉ dùng Secret cho mật khẩu
           password: ${{ secrets.HOSTING_PASSWORD }}
-          port: ${{ secrets.HOSTING_PORT }} # Hãy chắc chắn Secret này là số 22
+
+          # Tăng thời gian chờ
           timeout: "60s"
+
           script: |
-            # 1. Đi vào thư mục
+            # --- BẮT ĐẦU SCRIPT ---
+            
+            # 1. Vào thư mục code
             cd /home/anhdhnet/repositories/be/werewolf-game
             
-            # 2. Pull code
-            echo "Pulling code..."
+            # 2. Pull code mới
+            echo "Dang pull code..."
             git pull origin backend
             
-            # 3. Kích hoạt môi trường (Dùng biến HOSTING_USERNAME cho chuẩn)
-            echo "Installing..."
-            source /home/${{ secrets.HOSTING_USERNAME }}/nodevenv/repositories/be/werewolf-game/20/bin/activate
+            # 3. Cài đặt thư viện (Dùng đường dẫn cứng cho chuẩn)
+            echo "Dang cai dat..."
+            source /home/anhdhnet/nodevenv/repositories/be/werewolf-game/20/bin/activate
             npm install --production
             
-            # 4. Restart server
-            echo "Restarting..."
+            # 4. Restart Server
+            echo "Dang restart..."
+            
+            # Cách 1: Kill process cũ (Thêm || true để không báo lỗi nếu server đang tắt)
+            pkill -u anhdhnet node || true
+            
+            # Cách 2: Tạo file restart.txt
             mkdir -p tmp
             touch tmp/restart.txt
             
-            # Sửa lỗi: Dùng đúng tên biến HOSTING_USERNAME
-            pkill -u ${{ secrets.HOSTING_USERNAME }} node || true
-            
-            echo "DEPLOY THANH CONG!"
+            echo "DEPLOY THANH CONG 100%!"
