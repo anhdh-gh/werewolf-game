@@ -131,7 +131,6 @@
   const wsStatusEl = document.getElementById('wsStatus');
   const inputEl = document.getElementById('messageInput');
 
-  // Hàm thêm tin nhắn vào giao diện
   function addMessage(text, type = 'other') {
     const div = document.createElement('div');
     if (type === 'system') {
@@ -144,65 +143,57 @@
     chatLog.scrollTop = chatLog.scrollHeight;
   }
 
-  /* ========== API TEST (Giữ nguyên) ========== */
-  fetch('https://werewolf.anhdh.net/api/ping') // Đảm bảo Backend có route này hoặc bỏ qua
+  /* ========== API TEST ========== */
+  fetch('https://werewolf.anhdh.net/api/ping')
           .then(res => res.json())
-          .then(data => {
+          .then(() => {
             apiStatusEl.textContent = '✅ API Connected';
-            apiStatusEl.classList.add('online');
+            apiStatusEl.className = 'status online';
           })
           .catch(() => {
-            apiStatusEl.textContent = '❌ API Disconnected'; // Có thể lỗi do CORS nếu chưa config
-            apiStatusEl.classList.add('offline');
+            apiStatusEl.textContent = '❌ API Disconnected';
+            apiStatusEl.className = 'status offline';
           });
 
-  /* ========== SOCKET.IO SETUP (PHẦN QUAN TRỌNG) ========== */
+  /* ========== SOCKET.IO ========== */
 
-  // 1. Khởi tạo kết nối (Dùng hàm io() của thư viện vừa import)
   const socket = io('https://werewolf.anhdh.net');
 
-  // 2. Khi kết nối thành công
   socket.on('connect', () => {
     wsStatusEl.textContent = '✅ Socket.IO Connected';
     wsStatusEl.className = 'status online';
-    addMessage('Đã vào hang Sói!', 'system');
   });
 
-  // 3. Khi bị ngắt kết nối
   socket.on('disconnect', () => {
     wsStatusEl.textContent = '❌ Socket.IO Disconnected';
     wsStatusEl.className = 'status offline';
     addMessage('Mất kết nối server...', 'system');
   });
 
-  // 4. Nhận tin nhắn từ Server
-  // (Phải khớp với tên sự kiện server gửi về, ví dụ 'server_message')
-  socket.on('server_message', (msg) => {
-    addMessage(msg, 'other');
+  // ✅ SYSTEM MESSAGE (server -> client)
+  socket.on('system', (data) => {
+    addMessage(data.message, 'system');
   });
 
-  // Nếu server dùng sự kiện 'chat_message' để broadcast lại thì dùng dòng dưới:
-  // socket.on('chat_message', (data) => addMessage(data, 'other'));
+  // ✅ CHAT MESSAGE (broadcast)
+  socket.on('chat', (data) => {
+    addMessage(data.message, 'other');
+  });
 
-  /* ========== GỬI TIN NHẮN ========== */
+  /* ========== SEND MESSAGE ========== */
   function sendMessage() {
     const text = inputEl.value.trim();
     if (!text) return;
 
-    // 5. Gửi tin nhắn đi (Dùng .emit thay vì .send)
-    // 'chat_message' là tên sự kiện server đang lắng nghe
-    socket.emit('chat_message', text);
+    // ✅ emit đúng event server đang listen
+    socket.emit('chat', text);
 
-    // Hiện tin nhắn của mình lên luôn cho mượt
     addMessage(text, 'me');
     inputEl.value = '';
   }
 
-  // Bắt sự kiện Enter
   inputEl.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      sendMessage();
-    }
+    if (e.key === 'Enter') sendMessage();
   });
 </script>
 
