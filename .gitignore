@@ -241,5 +241,3 @@ README.html
 
 log/
 package-lock.json
-
-/src/generated/prisma
