@@ -35,9 +35,13 @@ jobs:
             source /home/${{ secrets.HOSTING_USERNAME }}/nodevenv/repositories/be/werewolf-game/20/bin/activate
             
             # 4. Install production dependencies only
+            echo "Installing dependencies..."
             npm install --production
             
             # 5. Restart the Node.js Server
+            echo "Generating Prisma Client..."
+            npx prisma generate
+          
             echo "Restarting server..."
             
             # Method 1: Force kill old Node.js processes for this user
