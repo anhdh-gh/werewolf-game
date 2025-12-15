@@ -15,7 +15,7 @@ app.use(logger);
 // ===== ROUTES =====
 app.use('/api', routes);
 
-// ===== ERROR HANDLER (bottom) =====
+// ===== ERROR HANDLER (Bottom) =====
 app.use(errorHandler);
 
 module.exports = app;
