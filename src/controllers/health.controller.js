@@ -1,7 +1,6 @@
 const { success } = require('../utils/response');
 const AppError = require('../errors/AppError');
 const ERROR_CODES = require('../constants/errorCode.constants');
-const db = require('../config/database'); // ← pool mysql2
 
 exports.health = async (req, res, next) => {
     try {
