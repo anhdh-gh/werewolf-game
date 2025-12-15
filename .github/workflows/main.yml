@@ -17,6 +17,7 @@ jobs:
           username: ${{ secrets.HOSTING_USERNAME }}
           password: ${{ secrets.HOSTING_PASSWORD }}
           port: ${{ secrets.HOSTING_PORT }} # Make sure this secret is set to 22
+          request_pty: true
           timeout: "60s"
 
           script: |
