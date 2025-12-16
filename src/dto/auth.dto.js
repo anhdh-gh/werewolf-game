@@ -31,3 +31,12 @@ exports.loginDto = z.object({
         .min(6, { message: 'Password must be at least 6 characters' })
         .max(50, { message: 'Password must be at most 50 characters' })
 });
+
+exports.refreshDto = z.object({
+    refresh_token: z
+        .string()
+        .trim()
+        .nonempty({ message: 'Refresh token must be empty' })
+        .max(500, { message: 'Refresh token must be at most 500 characters' }),
+});
+

@@ -55,6 +55,42 @@ const AuthService = {
             access_token: accessToken,
             refresh_token: refreshToken
         };
+    },
+
+    async refresh({ refresh_token }) {
+        if (!refresh_token) {
+            throw new AppError(ERROR_CODES.INVALID_REQUEST, 'Refresh token required');
+        }
+
+        let decoded;
+        try {
+            decoded = jwtUtil.verifyRefreshToken(refresh_token);
+        } catch (err) {
+            throw new AppError(ERROR_CODES.INVALID_REQUEST, 'Invalid refresh token');
+        }
+
+        //
+        const user = await UserRepository.getByUsername(decoded.sub);
+        if (!user) {
+            throw new AppError(ERROR_CODES.NOT_FOUND, 'User not found');
+        }
+
+        //
+        if (user.refresh_token !== refresh_token) {
+            throw new AppError(ERROR_CODES.INVALID_REQUEST, 'Refresh token mismatch');
+        }
+
+        // Sinh access token mới
+        const newAccessToken = jwtUtil.generateAccessToken(user);
+
+        // Sinh refresh token mới
+        const newRefreshToken = jwtUtil.generateRefreshTokenWithSameExp(user, refresh_token);
+        await UserRepository.updateRefreshToken(user.username, newRefreshToken);
+
+        return {
+            access_token: newAccessToken,
+            refresh_token: newRefreshToken
+        };
     }
 };
 

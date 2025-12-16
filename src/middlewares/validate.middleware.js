@@ -1,5 +1,5 @@
 // middlewares/validate.middleware.js
-const { error } = require('../utils/response');
+const AppError = require('../errors/AppError');
 const ERROR_CODES = require('../constants/errorCode.constants');
 
 module.exports = (schema, property = 'body') => {

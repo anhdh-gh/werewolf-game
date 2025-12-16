@@ -9,3 +9,7 @@ exports.register = errorWrapper(async (req, res) => {
 exports.login = errorWrapper(async (req, res) => {
     return success(res, await AuthService.login(req.body));
 });
+
+exports.refresh = errorWrapper(async (req, res) => {
+    return success(res, await AuthService.refresh(req.body));
+});

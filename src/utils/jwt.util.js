@@ -29,6 +29,30 @@ exports.generateRefreshToken = (user) => {
     );
 };
 
+exports.generateRefreshTokenWithSameExp = (user, oldRefreshToken) => {
+    //
+    const decoded = jwt.decode(oldRefreshToken);
+
+    if (!decoded || !decoded.exp) {
+        throw new Error('Invalid old refresh token');
+    }
+
+    //
+    const exp = decoded.exp;
+
+    //
+    const payload = {
+        sub: user.username,
+        type: JWT_CONSTANTS.REFRESH_TOKEN_TYPE,
+        exp
+    };
+
+    // Sign token
+    return jwt.sign(payload, privateKey, {
+        algorithm: JWT_CONSTANTS.ALGORITHM
+    });
+};
+
 exports.verifyAccessToken = (token) => {
     return jwt.verify(token, publicKey, {
         algorithms: [JWT_CONSTANTS.ALGORITHM]

@@ -44,6 +44,19 @@ const UserRepository = {
         return rows[0] || null;
     },
 
+    async getByUsername(username) {
+        const [rows] = await pool.execute(
+            `
+                SELECT email, username, refresh_token
+                FROM users
+                WHERE username = ?
+            `,
+            [username]
+        );
+
+        return rows[0] || null;
+    },
+
     async updateRefreshToken(username, refreshToken) {
         await pool.execute(
             `
