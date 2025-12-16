@@ -1,0 +1,5 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/anhdhnet/repositories/be/werewolf-game
+    - /bin/cp -R * $DEPLOYPATH
