@@ -1,6 +1,6 @@
 const ERROR_CODES = require('../constants/errorCode.constants');
 
-exports.success = (res, data = {}, message) => {
+exports.success = (res, data = null, message) => {
     return res.status(200).json({
         meta: {
             code: ERROR_CODES.SUCCESS.code,
@@ -11,12 +11,11 @@ exports.success = (res, data = {}, message) => {
 };
 
 
-exports.error = (res, code = 5000, message = 'Internal Server Error', status = 500) => {
-    return res.status(status).json({
+exports.error = (res, errApp = ERROR_CODES.INTERNAL_ERROR) => {
+    return res.status(Math.floor(errApp.code / 10)).json({
         meta: {
-            code,
-            message
-        },
-        data: {}
+            code: errApp.code,
+            message: errApp.message
+        }
     });
 };

@@ -9,6 +9,16 @@ module.exports = {
         message: 'Invalid request'
     },
 
+    EMAIL_ALREADY_EXISTS: {
+        code: 4002,
+        message: 'Email already exists'
+    },
+
+    USERNAME_ALREADY_EXISTS: {
+        code: 4003,
+        message: 'Username already exists'
+    },
+
     UNAUTHORIZED: {
         code: 4011,
         message: 'Unauthorized'

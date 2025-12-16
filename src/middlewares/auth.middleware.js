@@ -1,32 +1,26 @@
-const jwt = require('jsonwebtoken');
+// middlewares/auth.middleware.js
+const jwtUtil = require('../utils/jwt.util');
+const ERROR_CODES = require('../constants/errorCode.constants');
+const AppError = require('../errors/AppError');
 
 module.exports = (req, res, next) => {
     const authHeader = req.headers.authorization;
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({
-            success: false,
-            message: 'Missing access token'
-        });
+    if (!authHeader) {
+        throw new AppError(ERROR_CODES.UNAUTHORIZED)
     }
 
     const token = authHeader.split(' ')[1];
+    if (!token) {
+        throw new AppError(ERROR_CODES.UNAUTHORIZED)
+    }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-        // Gắn user vào request
+        const decoded = jwtUtil.verifyAccessToken(token);
         req.user = {
-            id: decoded.sub,
-            username: decoded.username,
-            role: decoded.role
+            username: decoded.sub
         };
-
         next();
     } catch (err) {
-        return res.status(401).json({
-            success: false,
-            message: 'Invalid or expired access token'
-        });
+        throw new AppError(ERROR_CODES.UNAUTHORIZED)
     }
 };
