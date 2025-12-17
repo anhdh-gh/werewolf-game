@@ -2,8 +2,8 @@ const UserRepository = require('../repositories/user.repository');
 
 const UserService = {
 
-    async deleteUser(username) {
-        await UserRepository.deleteByUsername(username);
+    async deleteUser(id) {
+        await UserRepository.deleteById(id);
     }
 };
 

@@ -5,7 +5,7 @@ const { privateKey, publicKey } = require('./key.util');
 exports.generateAccessToken = (user) => {
     return jwt.sign(
         {
-            sub: user.username
+            sub: user.id
         },
         privateKey,
         {
@@ -18,7 +18,7 @@ exports.generateAccessToken = (user) => {
 exports.generateRefreshToken = (user) => {
     return jwt.sign(
         {
-            sub: user.username,
+            sub: user.id,
             type: JWT_CONSTANTS.REFRESH_TOKEN_TYPE
         },
         privateKey,
@@ -42,7 +42,7 @@ exports.generateRefreshTokenWithSameExp = (user, oldRefreshToken) => {
 
     //
     const payload = {
-        sub: user.username,
+        sub: user.id,
         type: JWT_CONSTANTS.REFRESH_TOKEN_TYPE,
         exp
     };

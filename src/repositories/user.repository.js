@@ -21,7 +21,7 @@ const UserRepository = {
     async findByEmail(email) {
         const [rows] = await pool.execute(
             `
-                SELECT email, username
+                SELECT id, email, username
                 FROM users
                 WHERE email = ?
             `,
@@ -34,7 +34,7 @@ const UserRepository = {
     async findByUsername(username) {
         const [rows] = await pool.execute(
             `
-                SELECT email, username, password
+                SELECT id, email, username, password
                 FROM users
                 WHERE username = ?
             `,
@@ -47,7 +47,7 @@ const UserRepository = {
     async getByUsername(username) {
         const [rows] = await pool.execute(
             `
-                SELECT email, username, refresh_token
+                SELECT id, email, username, refresh_token
                 FROM users
                 WHERE username = ?
             `,
@@ -57,14 +57,27 @@ const UserRepository = {
         return rows[0] || null;
     },
 
-    async updateRefreshToken(username, refreshToken) {
+    async getById(id) {
+        const [rows] = await pool.execute(
+            `
+                SELECT id, email, username, refresh_token
+                FROM users
+                WHERE id = ?
+            `,
+            [id]
+        );
+
+        return rows[0] || null;
+    },
+
+    async updateRefreshToken(id, refreshToken) {
         await pool.execute(
             `
                 UPDATE users
                 SET refresh_token = ?
-                WHERE username = ?
+                WHERE id = ?
             `,
-            [refreshToken, username]
+            [refreshToken, id]
         );
     },
 
@@ -79,14 +92,14 @@ const UserRepository = {
         );
     },
 
-    async deleteByUsername(username) {
+    async deleteById(id) {
         await pool.execute(
             `
                 DELETE
                 FROM users
-                WHERE username = ?
+                WHERE id = ?
             `,
-            [username]
+            [id]
         );
     }
 };

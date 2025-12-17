@@ -49,7 +49,7 @@ const AuthService = {
         const refreshToken = jwtUtil.generateRefreshToken(user);
 
         // Save refresh token
-        await UserRepository.updateRefreshToken(user.username, refreshToken);
+        await UserRepository.updateRefreshToken(user.id, refreshToken);
 
         return {
             access_token: accessToken,
@@ -70,7 +70,7 @@ const AuthService = {
         }
 
         //
-        const user = await UserRepository.getByUsername(decoded.sub);
+        const user = await UserRepository.getById(decoded.sub);
         if (!user) {
             throw new AppError(ERROR_CODES.NOT_FOUND, 'User not found');
         }
@@ -85,7 +85,7 @@ const AuthService = {
 
         // Sinh refresh token mới
         const newRefreshToken = jwtUtil.generateRefreshTokenWithSameExp(user, refresh_token);
-        await UserRepository.updateRefreshToken(user.username, newRefreshToken);
+        await UserRepository.updateRefreshToken(user.id, newRefreshToken);
 
         return {
             access_token: newAccessToken,

@@ -3,6 +3,6 @@ const { success } = require('../utils/response');
 const errorWrapper = require('../utils/error.wrapper');
 
 exports.deleteUser = errorWrapper(async (req, res) => {
-    await UserService.deleteUser(req.user.username);
+    await UserService.deleteUser(req.user.id);
     return success(res);
 });
