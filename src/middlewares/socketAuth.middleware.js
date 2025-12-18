@@ -4,7 +4,7 @@ const socketError = require('../utils/socketError.util');
 
 module.exports = (socket, next) => {
     try {
-        const token = socket.handshake.auth?.token;
+        const token = socket.handshake.auth?.token || socket.handshake.headers?.token;
 
         if (!token) {
             return next(socketError(ERROR_CODES.UNAUTHORIZED));

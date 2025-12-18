@@ -23,14 +23,13 @@ DROP TABLE IF EXISTS user_room;
 CREATE TABLE user_room
 (
     id         BIGINT AUTO_INCREMENT PRIMARY KEY,
-    room_code  BIGINT NOT NULL,
-    user_id    BIGINT NOT NULL,
+    room_code  VARCHAR(50) UNIQUE NOT NULL,
+    user_id    BIGINT UNIQUE NOT NULL,
     username   VARCHAR(50),
     socket_id  VARCHAR(30),
     role       VARCHAR(30),
     pre_role   VARCHAR(30),
     is_owner   BOOLEAN,
     is_dead    BOOLEAN,
-    vote_count INT,
-    UNIQUE (user_id, room_code)
+    vote_count INT
 );

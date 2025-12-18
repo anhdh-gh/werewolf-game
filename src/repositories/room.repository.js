@@ -8,6 +8,7 @@ const RoomRepository = {
                 INSERT INTO user_room (user_id, room_code, username, is_owner)
                 VALUES (?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE
+                  room_code = VALUES(room_code),
                   is_owner = VALUES(is_owner)
             `,
             [userId, roomCode, username, isOwner]
@@ -43,11 +44,11 @@ const RoomRepository = {
         }
     },
 
-    async joinRoom(userId, roomId, username) {
-        await this.upsertUserRoom(pool, userId, roomId, username, null);
+    async joinRoom(userId, roomCode, username) {
+        await this.upsertUserRoom(pool, userId, roomCode, username, null);
     },
 
-    async connectRoom(userId, roomId, socketId) {
+    async connectRoom(userId, roomCode, socketId) {
         await pool.execute(
             `
                 UPDATE user_room
@@ -55,7 +56,17 @@ const RoomRepository = {
                     socket_id = ?
                 WHERE user_id = ? AND room_code = ?
             `,
-            [socketId, userId, roomId]
+            [socketId, userId, roomCode]
+        );
+    },
+
+    async getByCode(code) {
+        return await pool.execute(
+            `
+                SELECT user_id, username, role, pre_role, is_owner, is_dead, vote_count
+                FROM user_room WHERE room_code = ?
+            `,
+            [code]
         );
     }
 };

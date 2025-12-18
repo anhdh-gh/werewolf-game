@@ -4,9 +4,9 @@ const RoomRepository = require('../repositories/room.repository');
 
 const GameService = {
 
-    async connectRoom(userId, roomId, socketId) {
-        await RoomRepository.connectRoom(userId, roomId, socketId);
-        return await RoomRepository
+    async connectRoom(userId, roomCode, socketId) {
+        await RoomRepository.connectRoom(userId, roomCode, socketId);
+        return await RoomRepository.getByCode(roomCode);
     },
 };
 
