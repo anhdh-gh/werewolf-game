@@ -16,8 +16,9 @@ const RoomService = {
         return {
             room: { code },
             next_step: {
-                action: EVENTS.CONNECT_WEB_SOCKET,
-                websocket: SERVERS.EARTH.ws
+                action: EVENTS.CONNECT_ROOM,
+                description: "Connect to the websocket to start playing the game",
+                websocket: SERVERS.DEFAULT.ws
             }
         };
     },
@@ -29,8 +30,9 @@ const RoomService = {
         //
         return {
             next_step: {
-                action: EVENTS.CONNECT_WEB_SOCKET,
-                websocket: SERVERS.EARTH.ws
+                action: EVENTS.CONNECT_ROOM,
+                description: "Connect to the websocket to start playing the game",
+                websocket: SERVERS.DEFAULT.ws
             }
         };
     },

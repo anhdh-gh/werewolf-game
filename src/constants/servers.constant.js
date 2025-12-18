@@ -1,14 +1,14 @@
 const SERVERS = {
-    EARTH: {
+    //
+    DEFAULT: {
         api: 'https://werewolf.anhdh.net',
-        ws: 'wss://werewolf.anhdh.net',
-        label: 'Trái Đất'
+        ws: 'wss://werewolf.anhdh.net'
     },
 
-    MARS: {
+    //
+    BACKUP: {
         api: 'https://werewolf1.anhdh.net',
-        ws: 'wss://werewolf1.anhdh.net',
-        label: 'Sao hỏa'
+        ws: 'wss://werewolf1.anhdh.net'
     }
 };
 

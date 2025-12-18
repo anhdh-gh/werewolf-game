@@ -4,9 +4,9 @@ const gameService = require('../services/game.service');
 module.exports = (io, socket) => {
 
     //
-    socket.on(EVENTS.CHAT_MESSAGE, async (text) => {
+    socket.on(EVENTS.CONNECT_ROOM, async (text) => {
         const saved = await gameService.handleMessage(text);
-        io.emit(EVENTS.CHAT_MESSAGE, saved);
+        io.emit(EVENTS.CONNECT_ROOM, saved);
     });
 
     //
