@@ -10,7 +10,7 @@ const RoomService = {
         let code = randomStr(5);
 
         //
-        await RoomRepository.createRoom(req.user.id, code)
+        await RoomRepository.createRoom(req.user.id, req.user.username, code)
 
         //
         return {
@@ -25,7 +25,7 @@ const RoomService = {
 
     async joinRoom(req) {
         //
-        await RoomRepository.joinRoom(req.user.id, req.body.room.code)
+        await RoomRepository.joinRoom(req.user.id, req.user.username, req.body.room.code)
 
         //
         return {
