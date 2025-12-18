@@ -9,12 +9,18 @@ const RoomService = {
         let code = randomStr(5);
 
         //
-        let id = await RoomRepository.createRoom(req.user.id, code)
+        await RoomRepository.createRoom(req.user.id, code)
 
         //
-        return {
-            room: { id, code }
-        };
+        return { code };
+    },
+
+    async joinRoom(req) {
+        //
+        await RoomRepository.joinRoom(req.user.id, req.body.room.code)
+
+        //
+        return undefined;
     },
 };
 

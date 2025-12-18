@@ -1,13 +1,18 @@
 const ERROR_CODES = require('../constants/errorCode.constants');
 
 exports.success = (res, data = null, message) => {
-    return res.status(200).json({
+    const response = {
         meta: {
             code: ERROR_CODES.SUCCESS.code,
             message: message || ERROR_CODES.SUCCESS.message
-        },
-        data
-    });
+        }
+    };
+
+    if (data !== null) {
+        response.data = data;
+    }
+
+    return res.status(200).json(response);
 };
 
 
