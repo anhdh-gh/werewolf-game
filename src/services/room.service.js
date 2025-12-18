@@ -1,6 +1,7 @@
-const AppError = require('../errors/AppError');
 const RoomRepository = require('../repositories/room.repository');
 const { randomStr } = require('../utils/string.util');
+const EVENTS = require('../constants/events');
+const { SERVERS } = require('../constants/servers.constant');
 
 const RoomService = {
 
@@ -12,7 +13,13 @@ const RoomService = {
         await RoomRepository.createRoom(req.user.id, code)
 
         //
-        return { code };
+        return {
+            room: { code },
+            next_step: {
+                action: EVENTS.CONNECT_WEB_SOCKET,
+                websocket: SERVERS.EARTH.ws
+            }
+        };
     },
 
     async joinRoom(req) {
@@ -20,7 +27,12 @@ const RoomService = {
         await RoomRepository.joinRoom(req.user.id, req.body.room.code)
 
         //
-        return undefined;
+        return {
+            next_step: {
+                action: EVENTS.CONNECT_WEB_SOCKET,
+                websocket: SERVERS.EARTH.ws
+            }
+        };
     },
 };
 

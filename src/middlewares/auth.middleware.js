@@ -1,4 +1,3 @@
-// middlewares/auth.middleware.js
 const jwtUtil = require('../utils/jwt.util');
 const ERROR_CODES = require('../constants/errorCode.constants');
 const AppError = require('../errors/AppError');

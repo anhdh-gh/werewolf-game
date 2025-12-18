@@ -1,12 +1,23 @@
+const jwtUtil = require('../utils/jwt.util');
+const ERROR_CODES = require('../constants/errorCode.constants');
+const socketError = require('../utils/socketError.util');
+
 module.exports = (socket, next) => {
-    const token = socket.handshake.auth?.token;
+    try {
+        const token = socket.handshake.auth?.token;
 
-    // if (!token) {
-    //     return next(new Error('Unauthorized'));
-    // }
-    //
-    // // TODO: verify token (JWT, session, etc.)
-    // socket.user = { id: 'guest' };
+        if (!token) {
+            return next(socketError(ERROR_CODES.UNAUTHORIZED));
+        }
 
-    next();
+        const decoded = jwtUtil.verifyAccessToken(token);
+
+        socket.user = {
+            id: decoded.sub
+        };
+
+        next();
+    } catch (err) {
+        next(socketError(ERROR_CODES.UNAUTHORIZED));
+    }
 };

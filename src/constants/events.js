@@ -1,4 +1,4 @@
 module.exports = {
-    CHAT_MESSAGE: 'chat',
-    SYSTEM_MESSAGE: 'system'
+    ROOM_LEAVE: 'ROOM_LEAVE',
+    CONNECT_WEB_SOCKET: 'CONNECT_WEB_SOCKET'
 };

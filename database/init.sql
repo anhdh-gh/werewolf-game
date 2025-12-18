@@ -25,6 +25,7 @@ CREATE TABLE user_room
     id         BIGINT AUTO_INCREMENT PRIMARY KEY,
     room_code  BIGINT NOT NULL,
     user_id    BIGINT NOT NULL,
+    socket_id  VARCHAR(30),
     role       VARCHAR(30),
     pre_role   VARCHAR(30),
     is_owner   BOOLEAN,
