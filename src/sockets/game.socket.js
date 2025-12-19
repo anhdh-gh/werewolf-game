@@ -50,6 +50,9 @@ module.exports = (io, socket) => {
             if (typeof ack === 'function') {
                 ack({ code: ERROR_CODES.SUCCESS.code, message: ERROR_CODES.SUCCESS.message });
             }
+
+            //
+            socket.disconnect(true);
         })
     );
 
