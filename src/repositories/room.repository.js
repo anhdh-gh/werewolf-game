@@ -8,6 +8,7 @@ const RoomRepository = {
                 INSERT INTO user_room (user_id, room_code, username)
                 VALUES (?, ?, ?)
                 ON DUPLICATE KEY UPDATE
+                  username = VALUES(username), 
                   room_code = VALUES(room_code)
             `,
             [userId, roomCode, username]
@@ -53,6 +54,7 @@ const RoomRepository = {
                 INSERT INTO user_room (user_id, username, room_code, socket_id)
                 VALUES (?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE
+                     username = VALUES(username),
                      room_code = VALUES(room_code),
                      socket_id = VALUES(socket_id)
             `,
