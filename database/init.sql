@@ -12,7 +12,6 @@ DROP TABLE IF EXISTS rooms;
 CREATE TABLE rooms
 (
     id                 BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id            BIGINT             NOT NULL unique,
     code               VARCHAR(50) UNIQUE NOT NULL,
     prev_guard_user_id BIGINT,
     is_witch_heal_used BOOLEAN,

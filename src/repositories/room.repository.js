@@ -24,13 +24,13 @@ const RoomRepository = {
             // 1. Insert / update room
             await conn.execute(
                 `
-                    INSERT INTO rooms (user_id, code)
-                    VALUES (?, ?)
+                    INSERT INTO rooms (code)
+                    VALUES (?)
                     ON DUPLICATE KEY UPDATE
                         code = VALUES(code),
                         id = LAST_INSERT_ID(id)
                 `,
-                [userId, code]
+                [code]
             );
 
             // 2. Upsert user_room (owner)
