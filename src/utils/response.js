@@ -26,9 +26,9 @@ exports.error = (res, errApp = ERROR_CODES.INTERNAL_ERROR) => {
 };
 
 exports.buildError = (err) => {
-    const status = err.status || err.statusCode || 500;
     const code = err.code || ERROR_CODES.INTERNAL_ERROR.code;
     const message = err.message || ERROR_CODES.INTERNAL_ERROR.message;
+    const status = Math.floor(err.code / 10);
 
     const response = {
         meta: {

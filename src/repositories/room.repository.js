@@ -47,27 +47,89 @@ const RoomRepository = {
         await this.upsertUserRoom(pool, userId, roomCode, username);
     },
 
-    async connectRoom(userId, roomCode, socketId) {
-        await pool.execute(
+    async connectRoom(user, roomCode, socketId) {
+        return await pool.execute(
             `
-                UPDATE user_room
-                SET
-                    socket_id = ?
-                WHERE user_id = ? AND room_code = ?
+                INSERT INTO user_room (user_id, username, room_code, socket_id)
+                VALUES (?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                     room_code = VALUES(room_code),
+                     socket_id = VALUES(socket_id)
             `,
-            [socketId, userId, roomCode]
+            [user.id, user.username, roomCode, socketId]
+        );
+    },
+
+    async leaveRoom(userId, roomCode) {
+        return await pool.execute(
+            `
+                DELETE
+                FROM user_room
+                WHERE user_id = ?
+                  AND room_code = ?
+            `,
+            [userId, roomCode]
         );
     },
 
     async getByCode(code) {
-        return await pool.execute(
+        const [result] = await pool.execute(
             `
                 SELECT user_id, username, role, pre_role, is_dead, vote_count
                 FROM user_room WHERE room_code = ?
             `,
             [code]
         );
-    }
+
+        return result;
+    },
+
+    async getByRomInfo(code) {
+        const [result] = await pool.execute(
+            `
+                SELECT id, code, prev_guard_user_id, is_witch_heal_used, is_witch_kill_used
+                FROM rooms WHERE code = ?
+            `,
+            [code]
+        );
+
+        return result;
+    },
+
+    async getBySocketId(userId, socketId) {
+        const [result] = await pool.execute(
+            `
+                SELECT room_code
+                FROM user_room WHERE socket_id = ? and user_id = ?
+            `,
+            [socketId, userId]
+        );
+
+        return result?.[0]?.room_code;
+    },
+
+    async getNumberOfPlayers(roomCode) {
+        const [result] = await pool.execute(
+            `
+                SELECT count(user_id) as 'numberOfPlayers'
+                FROM user_room WHERE room_code = ?
+            `,
+            [roomCode]
+        );
+
+        return result?.[0]?.numberOfPlayers
+    },
+
+    async deleteRoom(roomCode) {
+        return await pool.execute(
+            `
+                DELETE
+                FROM rooms
+                WHERE code = ?
+            `,
+            [roomCode]
+        );
+    },
 };
 
 module.exports = RoomRepository;

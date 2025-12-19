@@ -25,7 +25,7 @@ const RoomService = {
 
     async joinRoom(req) {
         //
-        await RoomRepository.joinRoom(req.user.id, req.user.username, req.body.room.code)
+        await RoomRepository.joinRoom(req.user.id, req.body.room.code, req.user.username)
 
         //
         return {
