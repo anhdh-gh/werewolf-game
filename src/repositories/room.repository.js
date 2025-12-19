@@ -2,16 +2,15 @@ const pool = require('../config/database');
 
 const RoomRepository = {
 
-    async upsertUserRoom(conn, userId, roomCode, username, isOwner) {
+    async upsertUserRoom(conn, userId, roomCode, username) {
         await conn.execute(
             `
-                INSERT INTO user_room (user_id, room_code, username, is_owner)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO user_room (user_id, room_code, username)
+                VALUES (?, ?, ?)
                 ON DUPLICATE KEY UPDATE
-                  room_code = VALUES(room_code),
-                  is_owner = VALUES(is_owner)
+                  room_code = VALUES(room_code)
             `,
-            [userId, roomCode, username, isOwner]
+            [userId, roomCode, username]
         );
     },
 
@@ -34,7 +33,7 @@ const RoomRepository = {
             );
 
             // 2. Upsert user_room (owner)
-            await this.upsertUserRoom(conn, userId, code, username, true);
+            await this.upsertUserRoom(conn, userId, code, username);
             await conn.commit();
         } catch (err) {
             await conn.rollback();
@@ -45,7 +44,7 @@ const RoomRepository = {
     },
 
     async joinRoom(userId, roomCode, username) {
-        await this.upsertUserRoom(pool, userId, roomCode, username, null);
+        await this.upsertUserRoom(pool, userId, roomCode, username);
     },
 
     async connectRoom(userId, roomCode, socketId) {
