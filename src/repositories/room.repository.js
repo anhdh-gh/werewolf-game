@@ -62,7 +62,7 @@ const RoomRepository = {
     async getByCode(code) {
         return await pool.execute(
             `
-                SELECT user_id, username, role, pre_role, is_owner, is_dead, vote_count
+                SELECT user_id, username, role, pre_role, is_dead, vote_count
                 FROM user_room WHERE room_code = ?
             `,
             [code]
