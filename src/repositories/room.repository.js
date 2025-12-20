@@ -2,27 +2,26 @@ const pool = require('../config/database');
 
 const RoomRepository = {
 
-    async updateRoom(userId, roomCode = null, socketId = null, role = null, isDead = null, guardUserId = null, isHealUsed = null, isKillUsed = null) {
+    async updateRoom(userId, roomCode = null, socketId = null, role = null, status = null, votes_received = null, meta_data = null) {
         return await pool.execute(
             `
                 UPDATE games
                 SET room_code = ?,
                     socket_id = ?,
                     role = ?,
-                    is_dead = ?,
-                    guard_user_id = ?,
-                    is_heal_used = ?,
-                    is_kill_used = ?
+                    status = ?,
+                    votes_received = ?,
+                    meta_data = ?
                 WHERE id = ?
             `,
-            [roomCode, socketId, role, isDead, guardUserId, isHealUsed, isKillUsed, userId]
+            [roomCode, socketId, role, status, votes_received, meta_data, userId]
         );
     },
 
     async getByCode(code) {
         const [result] = await pool.execute(
             `
-                SELECT id, username, role, is_dead, vote_count, guard_user_id, is_heal_used, is_kill_used
+                SELECT id, username, role, status, votes_received, meta_data
                 FROM games WHERE room_code = ?
             `,
             [code]

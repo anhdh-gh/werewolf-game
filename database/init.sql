@@ -8,13 +8,11 @@ CREATE TABLE games
     password      VARCHAR(255)       NOT NULL,
     refresh_token TEXT,
 
-    # Game
-        room_code  VARCHAR(50) UNIQUE,
-    socket_id  VARCHAR(30),
-    role       VARCHAR(30),
-    is_dead    BOOLEAN,
-    vote_count INT,
-    guard_user_id BIGINT,
-    is_heal_used BOOLEAN,
-    is_kill_used BOOLEAN
+    #             Game
+    room_code  VARCHAR(10) UNIQUE,
+    socket_id     VARCHAR(30),
+    role          VARCHAR(30),
+    status        VARCHAR(50),
+    votes_received    INT,
+    meta_data     JSON
 );
