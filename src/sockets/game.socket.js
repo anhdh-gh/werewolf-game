@@ -44,7 +44,10 @@ module.exports = (io, socket) => {
             socket.leave(room.code);
 
             // Broadcast for all players in room
-            io.to(room.code).emit(EVENTS.ROOM_PLAYERS, await gameService.getByCode(room.code));
+            const players = await gameService.getByCode(room.code);
+            if(players && players.length > 0) {
+                io.to(room.code).emit(EVENTS.ROOM_PLAYERS, players);
+            }
 
             // Ack for client
             if (typeof ack === 'function') {
@@ -64,7 +67,10 @@ module.exports = (io, socket) => {
             const roomCode = Array.from(socket.rooms).find(room => room !== socket.id)
             if(roomCode) {
                 socket.leave(roomCode);
-                io.to(roomCode).emit(EVENTS.ROOM_PLAYERS, await gameService.getByCode(roomCode));
+                const players = await gameService.getByCode(roomCode);
+                if(players && players.length > 0) {
+                    io.to(roomCode).emit(EVENTS.ROOM_PLAYERS, players);
+                }
             }
         } catch (err) {
             console.error('[Socket Disconnect Error]', err);
