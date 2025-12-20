@@ -2,6 +2,7 @@ module.exports = {
     //
     CONNECT_ROOM: 'CONNECT_ROOM',
     LEAVE_ROOM: 'LEAVE_ROOM',
+    START_NEW_GAME: 'START_NEW_GAME',
 
     //
     ROOM_PLAYERS: "ROOM_PLAYERS",

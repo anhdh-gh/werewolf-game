@@ -59,6 +59,23 @@ module.exports = (io, socket) => {
         })
     );
 
+    // ===== START_NEW_GAME =====
+    socket.on(
+        EVENTS.START_NEW_GAME,
+        socketErrorWrapper(async (socket, payload, ack) => {
+            const { room } = payload || {};
+
+            //
+            const players = await gameService.startNewGame(socket.user.id, room.code)
+            io.to(room.code).emit(EVENTS.ROOM_PLAYERS, players);
+
+            // Ack for client
+            if (typeof ack === 'function') {
+                ack({ code: ERROR_CODES.SUCCESS.code, message: ERROR_CODES.SUCCESS.message });
+            }
+        })
+    );
+
     // ===== DISCONNECT =====
     socket.on('disconnect', async () => {
         try {

@@ -23,6 +23,19 @@ const GameService = {
         //
         return userId;
     },
+
+    async startNewGame(userId, roomCode) {
+        //
+        const players = await GameService.getByCode(roomCode);
+        if(!players || players.length < 4) {
+            throw new AppError(ERROR_CODES.INVALID_REQUEST, "Number of players must be > 3")
+        }
+
+        // TODO: Logic random role here
+
+        //
+        return players;
+    },
 };
 
 module.exports = GameService;
