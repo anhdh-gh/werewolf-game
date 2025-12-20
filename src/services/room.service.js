@@ -6,29 +6,16 @@ const { SERVERS } = require('../constants/servers.constant');
 const RoomService = {
 
     async createRoom(req) {
-        //
-        let code = randomStr(5);
-
-        //
-        await RoomRepository.createRoom(req.user.id, req.user.username, code)
-
-        //
-        return {
-            room: { code },
-            next_step: {
-                action: EVENTS.CONNECT_ROOM,
-                description: "Connect to the websocket to start playing the game",
-                websocket: SERVERS.DEFAULT.ws
-            }
-        };
+        return await RoomService.joinRoom(req.user.id, randomStr(5));
     },
 
-    async joinRoom(req) {
+    async joinRoom(userId, roomCode) {
         //
-        await RoomRepository.joinRoom(req.user.id, req.body.room.code, req.user.username)
+        await RoomRepository.updateRoom(userId, roomCode)
 
         //
         return {
+            room: { code: roomCode },
             next_step: {
                 action: EVENTS.CONNECT_ROOM,
                 description: "Connect to the websocket to start playing the game",

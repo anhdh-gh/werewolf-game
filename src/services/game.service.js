@@ -6,13 +6,7 @@ const GameService = {
 
     async connectRoom(user, roomCode, socketId) {
         //
-        const room = await RoomRepository.getByRomInfo(roomCode);
-        if(!room || room.length < 1) {
-            throw new AppError(ERROR_CODES.NOT_FOUND, 'Room not found')
-        }
-
-        //
-        await RoomRepository.connectRoom(user, roomCode, socketId);
+        await RoomRepository.updateRoom(user.id, roomCode, socketId);
 
         //
         return await GameService.getByCode(roomCode);
@@ -22,34 +16,12 @@ const GameService = {
         return await RoomRepository.getByCode(code)
     },
 
-    async getNumberOfPlayers(code) {
-        return await RoomRepository.getNumberOfPlayers(code);
-    },
-
-    async disconnectRoom(userId, socketId) {
+    async leaveRoom(userId) {
         //
-        const roomCode = await RoomRepository.getBySocketId(userId, socketId);
-        if(!roomCode) {
-            return roomCode;
-        }
+        await RoomRepository.updateRoom(userId);
 
         //
-        return await GameService.leaveRoom(userId, roomCode);
-    },
-
-    async leaveRoom(userId, roomCode) {
-        //
-        await RoomRepository.leaveRoom(userId, roomCode);
-
-        //
-        const num = await GameService.getNumberOfPlayers(roomCode);
-        if(!num || num < 1) {
-            await RoomRepository.deleteRoom(roomCode);
-            return roomCode;
-        }
-
-        //
-        return roomCode;
+        return userId;
     },
 };
 

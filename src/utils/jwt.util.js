@@ -5,8 +5,7 @@ const { privateKey, publicKey } = require('./key.util');
 exports.generateAccessToken = (user) => {
     return jwt.sign(
         {
-            sub: user.id,
-            username: user.username
+            sub: user.id
         },
         privateKey,
         {

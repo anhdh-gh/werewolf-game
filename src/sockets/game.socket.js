@@ -38,7 +38,7 @@ module.exports = (io, socket) => {
             const { room } = payload || {};
 
             //
-            await gameService.leaveRoom(socket.user.id, room.code);
+            await gameService.leaveRoom(socket.user.id);
 
             // Join socket.io room
             socket.leave(room.code);
@@ -59,7 +59,9 @@ module.exports = (io, socket) => {
     // ===== DISCONNECT =====
     socket.on('disconnect', async () => {
         try {
-            const roomCode = await gameService.disconnectRoom(socket.user.id, socket.id);
+            await gameService.leaveRoom(socket.user.id);
+
+            const roomCode = Array.from(socket.rooms).find(room => room !== socket.id)
             if(roomCode) {
                 socket.leave(roomCode);
                 io.to(roomCode).emit(EVENTS.ROOM_PLAYERS, await gameService.getByCode(roomCode));
