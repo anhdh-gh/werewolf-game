@@ -1,0 +1,108 @@
+/* app/signin/signin.module.css */
+
+/* Lớp vỏ bao phủ toàn màn hình */
+.pageWrapper {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* Nền tối màu xanh tím than */
+  background-color: #0a0a16;
+  background-image: radial-gradient(circle at 50% 20%, #1a1a3a, #000000);
+  font-family: sans-serif;
+}
+
+/* Cái hộp chứa form đăng nhập */
+.loginContainer {
+  background-color: rgba(20, 20, 35, 0.9); /* Màu nền bán trong suốt */
+  padding: 2.5rem;
+  border-radius: 15px;
+  width: 100%;
+  max-width: 450px;
+  text-align: center;
+  color: #e0e0e0;
+  /* Hiệu ứng viền sáng ma quái */
+  box-shadow: 0 0 25px rgba(124, 77, 255, 0.3), inset 0 0 10px rgba(0,0,0,0.5);
+  border: 1px solid #2c2c4e;
+}
+
+/* Tiêu đề */
+.title {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: #ff3e3e; /* Màu đỏ máu */
+  text-shadow: 0 0 10px rgba(255, 62, 62, 0.7);
+  text-transform: uppercase;
+  font-weight: bold;
+}
+
+.subtitle {
+  color: #8a8ab5;
+  margin-bottom: 2rem;
+  font-style: italic;
+}
+
+/* --- Phần Form --- */
+.inputGroup {
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+.label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #b3b3d6;
+  font-size: 0.9rem;
+}
+
+.inputField {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 2px solid #2c2c4e;
+  background-color: #0a0a16;
+  color: white;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+/* Khi bấm vào ô input thì sáng lên */
+.inputField:focus {
+  border-color: #7c4dff; /* Màu tím sáng */
+  box-shadow: 0 0 10px rgba(124, 77, 255, 0.5);
+}
+
+/* Nút bấm */
+.submitButton {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  /* Gradient màu đỏ cam cháy */
+  background: linear-gradient(45deg, #c0392b, #e74c3c);
+  color: white;
+  font-size: 1.1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.submitButton:hover {
+  transform: scale(1.02);
+  box-shadow: 0 0 20px rgba(231, 76, 60, 0.8);
+}
+
+.footerLink {
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    color: #8a8ab5;
+}
+.link {
+    color: #7c4dff;
+    text-decoration: none;
+    font-weight: bold;
+}
+.link:hover { text-decoration: underline;}
