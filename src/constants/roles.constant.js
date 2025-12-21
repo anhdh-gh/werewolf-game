@@ -11,8 +11,8 @@ const ROLES = {
         label: 'Sói'
     },
 
-    GUARDIAN: {
-        key: 'GUARDIAN',
+    BODYGUARD: {
+        key: 'BODYGUARD',
         team: TEAMS.VILLAGE,
         label: 'Bảo vệ'
     },
@@ -41,14 +41,14 @@ const ROLES = {
         label: 'Bị nguyền'
     },
 
-    MUTE: {
-        key: 'MUTE',
+    SILENCED: {
+        key: 'SILENCED',
         team: TEAMS.VILLAGE,
         label: 'Bị câm'
     },
 
-    LONER: {
-        key: 'LONER',
+    TANNER: {
+        key: 'TANNER',
         team: TEAMS.THIRD_PARTY,
         label: 'Chán đời'
     }

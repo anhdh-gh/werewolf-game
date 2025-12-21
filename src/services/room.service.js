@@ -11,7 +11,15 @@ const RoomService = {
 
     async joinRoom(userId, roomCode) {
         //
-        await RoomRepository.updateRoom(userId, roomCode)
+        await RoomRepository.updateRoom([{
+            id: userId,
+            room_code: roomCode,
+            socket_id: null,
+            role: null,
+            status: null,
+            votes_received: null,
+            meta_data: null
+        }]);
 
         //
         return {

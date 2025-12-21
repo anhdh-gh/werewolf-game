@@ -10,11 +10,6 @@ module.exports = (io, socket) => {
         EVENTS.CONNECT_ROOM,
         socketErrorWrapper(async (socket, payload, ack) => {
             const { room } = payload || {};
-
-            // Join socket.io room
-            socket.join(room.code);
-
-            //
             const players = await gameService.connectRoom(
                 socket.user,
                 room.code,
@@ -22,6 +17,7 @@ module.exports = (io, socket) => {
             );
 
             // Broadcast for all players in room
+            socket.join(room.code);
             io.to(room.code).emit(EVENTS.ROOM_PLAYERS, players);
 
             // Ack for client
@@ -67,6 +63,7 @@ module.exports = (io, socket) => {
 
             //
             const players = await gameService.startNewGame(socket.user.id, room.code)
+            socket.join(room.code);
             io.to(room.code).emit(EVENTS.ROOM_PLAYERS, players);
 
             // Ack for client
