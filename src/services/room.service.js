@@ -14,7 +14,6 @@ const RoomService = {
         await RoomRepository.updateRoom([{
             id: userId,
             room_code: roomCode,
-            socket_id: null,
             role: null,
             status: null,
             votes_received: null,

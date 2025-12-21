@@ -31,7 +31,6 @@ const GameService = {
         await RoomRepository.updateRoom([{
             id: userId,
             room_code: null,
-            socket_id: null,
             role: null,
             status: null,
             votes_received: null,
