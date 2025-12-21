@@ -19,6 +19,11 @@ module.exports = {
         message: 'Username already exists'
     },
 
+    LOCK_TIMEOUT: {
+        code: 4004,
+        message: 'LOck timeout'
+    },
+
     UNAUTHORIZED: {
         code: 4011,
         message: 'Unauthorized'

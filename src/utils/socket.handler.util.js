@@ -6,19 +6,23 @@ module.exports.emitGameFlow = ({socket,io, roomCode, dataFlow, ack }) => {
     socket.join(roomCode);
 
     // Emit flow hiện tại
-    io.to(roomCode).emit(EVENTS.NEXT_GAME_FLOW, dataFlow.current);
+    if(dataFlow) {
+        if(dataFlow?.current) {
+            io.to(roomCode).emit(EVENTS.NEXT_GAME_FLOW, dataFlow.current);
+        }
 
-    // Emit flow tiếp theo nếu có
-    if (dataFlow?.next) {
-        setTimeout(() => {
-            try {
-                io.to(roomCode).emit(
-                    EVENTS.NEXT_GAME_FLOW,
-                    dataFlow.next.data
-                );
-            } catch (_) {
-            }
-        }, dataFlow.next.after);
+        // Emit flow tiếp theo nếu có
+        if (dataFlow?.next) {
+            setTimeout(() => {
+                try {
+                    io.to(roomCode).emit(
+                        EVENTS.NEXT_GAME_FLOW,
+                        dataFlow.next.data
+                    );
+                } catch (_) {
+                }
+            }, dataFlow.next.after);
+        }
     }
 
     // Ack cho client

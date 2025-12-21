@@ -108,6 +108,7 @@ const GameService = {
             player.role = assignedRole.key;
             player.status = STATUS.ALIVE
             player.votes_received = 0
+            player.voted_by = ''
 
             // Reset status và init role_data
             if(assignedRole === ROLES.WITCH) {
@@ -162,6 +163,21 @@ const GameService = {
 
         // Next Sói
         return await GameService.processRole(ROLES.SILENCED, ROLES.WEREWOLF);
+    },
+
+    async doneWolf(userId, roomCode, bittenUserId){
+        // Update DB
+        if(!await RoomRepository.incrVote(bittenUserId, roomCode, userId)) {
+            return null;
+        }
+
+        // Check Sói vote done
+        if(!await RoomRepository.isWolfVoteDone(roomCode)) {
+            return userId;
+        }
+
+        // Next phù thủy
+        return await GameService.processRole(ROLES.WEREWOLF, ROLES.WITCH);
     },
 
     async doneGuard(roomCode, guardUserId) {

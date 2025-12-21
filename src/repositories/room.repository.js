@@ -85,6 +85,62 @@ const RoomRepository = {
         const params = [status, userId, roomCode, status];
         const [result] = await pool.execute(sql, params);
         return result.affectedRows > 0;
+    },
+
+    async incrVote(userId, roomCode, votedBy) {
+        const sql = `
+            UPDATE games
+            SET votes_received = votes_received + 1,
+                voted_by = CONCAT(COALESCE(voted_by, ''), ?)
+            WHERE id = ? AND room_code = ? AND (voted_by IS NULL or voted_by NOT LIKE ?)
+        `;
+
+        const params = [`${votedBy}-`, userId, roomCode, `%${votedBy}-%`];
+
+        const [result] = await pool.execute(sql, params);
+        return result.affectedRows > 0;
+    },
+
+    async resetVote(roomCode, userId = null) {
+        let sql = `
+            UPDATE games
+            SET votes_received = 0, voted_by = null
+            WHERE room_code = ?
+        `;
+        const params = [roomCode];
+
+        if (userId !== null && userId !== undefined) {
+            sql += ' AND id = ?';
+            params.push(userId);
+        }
+
+        const [result] = await pool.execute(sql, params);
+        return result.affectedRows > 0;
+    },
+
+    async isWolfVoteDone(roomCode) {
+        const connection = await pool.getConnection();
+
+        try {
+            const [rows] = await connection.query(
+                `
+                  SELECT 
+                    (SELECT SUM(votes_received) 
+                     FROM games 
+                     WHERE room_code = ?) >= 
+                    (SELECT COUNT(id) 
+                     FROM games 
+                     WHERE room_code = ? AND role = 'WEREWOLF' AND status IS NOT NULL AND status != 'DEAD') 
+                  AS result
+                  `,
+                [roomCode, roomCode]
+            );
+
+            // result sẽ là 1 (true) hoặc 0 (false)
+            return rows[0].result === 1;
+        } finally {
+            connection.release();
+        }
     }
 };
 

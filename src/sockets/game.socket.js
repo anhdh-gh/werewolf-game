@@ -152,6 +152,41 @@ module.exports = (io, socket) => {
         })
     );
 
+    // ===== WEREWOLF_DONE =====
+    socket.on(
+        EVENTS.WEREWOLF_DONE,
+        socketErrorWrapper(async (socket, payload, ack) => {
+            //
+            const { room, bitten_user_id } = payload || {};
+
+            //
+            const dataFlow = await gameService.doneWolf(socket.user.id, room.code, bitten_user_id)
+
+            //
+            if(dataFlow) {
+                const players = await gameService.getByCode(room.code);
+                if(players && players.length > 0) {
+                    socket.join(room.code);
+                    io.to(room.code).emit(EVENTS.ROOM_PLAYERS, players);
+                }
+
+                if(dataFlow !== socket.user.id) {
+                    emitGameFlow({
+                        socket,
+                        io,
+                        roomCode: room.code,
+                        dataFlow,
+                        ack
+                    });
+                }
+            } else {
+                if (typeof ack === 'function') {
+                    ack({ code: ERROR_CODES.SUCCESS.code, message: ERROR_CODES.SUCCESS.message });
+                }
+            }
+        })
+    );
+
     // ===== DISCONNECT =====
     socket.on('disconnect', async () => {
         try {
