@@ -9,8 +9,7 @@ CREATE TABLE games
     refresh_token  TEXT,
 
     #              Game
-        room_code      VARCHAR(10),
-    socket_id      VARCHAR(30),
+    room_code      VARCHAR(10),
     role           VARCHAR(30),
     status         VARCHAR(50),
     votes_received INT,

@@ -7,12 +7,11 @@ const { STATUS } = require('../constants/status.constant')
 
 const GameService = {
 
-    async connectRoom(user, roomCode, socketId) {
+    async connectRoom(user, roomCode) {
         //
         await RoomRepository.updateRoom([{
             id: user.id,
             room_code: roomCode,
-            socket_id: socketId,
             role: null,
             status: STATUS.JOINED,
             votes_received: null,

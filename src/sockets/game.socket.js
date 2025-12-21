@@ -10,11 +10,7 @@ module.exports = (io, socket) => {
         EVENTS.CONNECT_ROOM,
         socketErrorWrapper(async (socket, payload, ack) => {
             const { room } = payload || {};
-            const players = await gameService.connectRoom(
-                socket.user,
-                room.code,
-                socket.id
-            );
+            const players = await gameService.connectRoom(socket.user, room.code);
 
             // Broadcast for all players in room
             socket.join(room.code);
