@@ -117,6 +117,20 @@ const GameService = {
         //
         return players;
     },
+
+    async beginGameFlow(userId, roomCode) {
+        return {
+            current: {
+                message: "Cả làng đi ngủ"
+            },
+            next: {
+                data: {
+                    message: "Bảo vệ thức dậy, đêm nay bạn muốn bảo vệ ai"
+                },
+                after: 5000
+            }
+        }
+    }
 };
 
 module.exports = GameService;

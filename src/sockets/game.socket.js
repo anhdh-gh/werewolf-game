@@ -73,6 +73,31 @@ module.exports = (io, socket) => {
         })
     );
 
+    // ===== BEGIN_GAME_FLOW =====
+    socket.on(
+        EVENTS.BEGIN_GAME_FLOW,
+        socketErrorWrapper(async (socket, payload, ack) => {
+            const { room } = payload || {};
+
+            //
+            const dataFlow = await gameService.beginGameFlow(socket.user.id, room.code)
+            socket.join(room.code);
+            io.to(room.code).emit(EVENTS.NEXT_GAME_FLOW, dataFlow.current);
+            if(dataFlow?.next) {
+                setTimeout(() => {
+                    try {
+                        io.to(room.code).emit(EVENTS.NEXT_GAME_FLOW, dataFlow.next.data);
+                    } catch (err) {}
+                }, dataFlow.next.after);
+            }
+
+            // Ack for client
+            if (typeof ack === 'function') {
+                ack({ code: ERROR_CODES.SUCCESS.code, message: ERROR_CODES.SUCCESS.message });
+            }
+        })
+    );
+
     // ===== DISCONNECT =====
     socket.on('disconnect', async () => {
         try {
