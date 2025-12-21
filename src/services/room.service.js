@@ -6,10 +6,10 @@ const { SERVERS } = require('../constants/servers.constant');
 const RoomService = {
 
     async createRoom(req) {
-        return await RoomService.joinRoom(req.user.id, randomStr(5), true);
+        return await RoomService.joinRoom(req.user.id, randomStr(5));
     },
 
-    async joinRoom(userId, roomCode, is_host = null) {
+    async joinRoom(userId, roomCode) {
         //
         await RoomRepository.updateRoom([{
             id: userId,
@@ -19,7 +19,6 @@ const RoomService = {
             votes_received: null,
             witch_heal: null,
             witch_poison: null,
-            is_host
         }]);
 
         //

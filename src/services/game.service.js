@@ -4,7 +4,7 @@ const ERROR_CODES = require('../constants/errorCode.constants');
 const ArrayUtil = require('../utils/array.util')
 const { ROLES } = require('../constants/roles.constant')
 const { STATUS } = require('../constants/status.constant')
-const EVENTS = require("../constants/events");
+const EVENTS = require('../constants/events');
 
 const GameService = {
 
@@ -25,8 +25,15 @@ const GameService = {
     },
 
     async getByCode(code) {
-        const players = await RoomRepository.getByCode(code)
-        return GameService.checkHost(players);
+        return await RoomRepository.getByCode(code)
+    },
+
+    async checkEvent(code, event) {
+        return await RoomRepository.checkEvent(code, event)
+    },
+
+    async updateEvent(code, event) {
+        return await RoomRepository.updateEvent(code, event)
     },
 
     async leaveRoom(userId, roomCode) {
@@ -109,6 +116,7 @@ const GameService = {
             player.status = STATUS.ALIVE
             player.votes_received = 0
             player.voted_by = ''
+            player.room_role = JSON.stringify(shuffledRoles)
 
             // Reset status và init role_data
             if(assignedRole === ROLES.WITCH) {
@@ -165,7 +173,7 @@ const GameService = {
         return await GameService.processRole(ROLES.SILENCED, ROLES.WEREWOLF);
     },
 
-    async doneWolf(userId, roomCode, bittenUserId){
+    async wolfVoting(userId, roomCode, bittenUserId){
         // Update DB
         if(!await RoomRepository.incrVote(bittenUserId, roomCode, userId)) {
             return null;
@@ -173,11 +181,30 @@ const GameService = {
 
         // Check Sói vote done
         if(!await RoomRepository.isWolfVoteDone(roomCode)) {
+            await GameService.updateEvent(roomCode, EVENTS.WEREWOLF_VOTING)
+            // TODO:
             return userId;
         }
 
         // Next phù thủy
         return await GameService.processRole(ROLES.WEREWOLF, ROLES.WITCH);
+    },
+
+    async doneWitchSave(userId, roomCode, saveUserId){
+        // Update DB
+        if(!await RoomRepository.updateStatusExclude(killUserId, roomCode, STATUS.DEAD_WITCH, [ STATUS.PROTECTED ])) {
+            return null;
+        }
+
+        // Next bị nguyền
+        return {
+            current: {
+                message: 'Đem nay người này bị giết, bạn có muốn cứu không?',
+                user_killed: {
+
+                }
+            }
+        }
     },
 
     async doneGuard(roomCode, guardUserId) {
@@ -213,34 +240,6 @@ const GameService = {
         }
     },
 
-    async checkHost(players) {
-        if (!players || players.length < 1) return null;
-
-        // Lọc ra các player đang là host
-        const hosts = players.filter(p => p.is_host);
-
-        // Nếu đã đúng 1 host → không làm gì, trả về players luôn
-        if (hosts.length === 1) return players;
-
-        // Nếu không có host hoặc nhiều host → reset và chọn host mới
-        players.forEach(p => p.is_host = false);
-
-        // Chọn phần tử đầu tiên làm host mới
-        players[0].is_host = true;
-
-        // Chỉ update những player đã thay đổi
-        const toUpdate = players
-            .filter(p => p.is_host || hosts.includes(p))
-            .map(p => ({
-                id: p.id,
-                is_host: p.is_host
-            }));
-        await RoomRepository.updateRoom(toUpdate);
-
-
-        // Trả về mảng players đã được chỉnh sửa
-        return players;
-    }
 };
 
 module.exports = GameService;

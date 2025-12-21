@@ -1,5 +1,6 @@
 const EVENTS = require('../constants/events');
 const ERROR_CODES = require('../constants/errorCode.constants');
+const gameService = require('../services/game.service');
 
 module.exports.emitGameFlow = ({socket,io, roomCode, dataFlow, ack }) => {
     // Join room (safe nếu join nhiều lần)
@@ -31,5 +32,22 @@ module.exports.emitGameFlow = ({socket,io, roomCode, dataFlow, ack }) => {
             code: ERROR_CODES.SUCCESS.code,
             message: ERROR_CODES.SUCCESS.message
         });
+    }
+};
+
+module.exports.checkDuplicationEvent = async (roomCode, event, ack, handler, isUpdate = true) => {
+    if(await gameService.checkEvent(roomCode, event)) {
+        if (typeof ack === 'function') {
+            ack({ code: ERROR_CODES.SUCCESS.code, message: ERROR_CODES.SUCCESS.message });
+        }
+        return
+    }
+
+    //
+    await handler()
+
+    //
+    if(isUpdate) {
+        await gameService.updateEvent(roomCode, event)
     }
 };

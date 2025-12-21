@@ -23,7 +23,7 @@ const ROLES = {
         key: 'WITCH',
         team: TEAMS.VILLAGE,
         label: 'Phù thủy',
-        message: "Phù thủy thức dậy, đêm nay bạn muốn giết ai?"
+        message: "Phù thủy thức dậy, đêm nay người này bị giết, bạn có muốn cứu không?"
     },
 
     SEER: {

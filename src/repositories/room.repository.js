@@ -59,7 +59,7 @@ const RoomRepository = {
 
     async getByCode(code, role = null) {
         let sql = `
-            SELECT id, username, role, status, votes_received, witch_heal, witch_poison, is_host
+            SELECT id, username, role, status, votes_received, witch_heal, witch_poison, event_code
             FROM games
             WHERE room_code = ?
         `;
@@ -76,13 +76,49 @@ const RoomRepository = {
         return result;
     },
 
+    async checkEvent(code, event) {
+        let sql = `
+            SELECT event_code
+            FROM games
+            WHERE room_code = ? and event_code = ?
+            LIMIT 1
+        `;
+        const params = [code, event];
+        const [result] = await pool.execute(sql, params);
+        return result.length > 0;
+    },
+
+    async updateEvent(code, event) {
+        let sql = `
+            UPDATE games
+            SET event_code = ?
+            WHERE room_code = ?
+        `;
+        const params = [event, code];
+        const [result] = await pool.execute(sql, params);
+        return result;
+    },
+
     async updateStatus(userId, roomCode, status) {
+        return await RoomRepository.updateStatusExclude(userId, roomCode, status, [status])
+    },
+
+    async updateStatusExclude(userId, roomCode, status, excludeStatuses = []) {
         let sql = `
             UPDATE games
             SET status = ?
-            WHERE id = ? and room_code = ? and status != ?
+            WHERE id = ? AND room_code = ?
         `;
-        const params = [status, userId, roomCode, status];
+
+        const params = [status, userId, roomCode];
+
+        if (excludeStatuses.length > 0) {
+            // Tạo placeholders: ?, ?, ? ...
+            const placeholders = excludeStatuses.map(() => '?').join(', ');
+            sql += ` AND status NOT IN (${placeholders})`;
+            params.push(...excludeStatuses);
+        }
+
         const [result] = await pool.execute(sql, params);
         return result.affectedRows > 0;
     },
@@ -141,7 +177,24 @@ const RoomRepository = {
         } finally {
             connection.release();
         }
-    }
+    },
+
+    async getUserWolfKill(roomCode) {
+        const sql = `
+            SELECT id, username, role, status, votes_received, witch_heal, witch_poison
+            FROM games
+            WHERE room_code = ?
+              AND status IS NOT NULL
+              AND status NOT IN ('DEAD')
+              AND votes_received IS NOT NULL
+              AND votes_received > 0
+            ORDER BY votes_received DESC
+            LIMIT 1
+        `;
+
+        const [result] = await pool.execute(sql, [roomCode]);
+        return result;
+    },
 };
 
 module.exports = RoomRepository;
