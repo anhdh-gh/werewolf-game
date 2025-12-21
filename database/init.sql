@@ -15,5 +15,6 @@ CREATE TABLE games
     votes_received INT,
     witch_heal      INT,
     witch_poison      INT,
-    previous_role           VARCHAR(30)
+    previous_role           VARCHAR(30),
+    is_host boolean
 );

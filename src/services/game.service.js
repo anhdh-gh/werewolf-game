@@ -4,6 +4,7 @@ const ERROR_CODES = require('../constants/errorCode.constants');
 const ArrayUtil = require('../utils/array.util')
 const { ROLES } = require('../constants/roles.constant')
 const { STATUS } = require('../constants/status.constant')
+const EVENTS = require("../constants/events");
 
 const GameService = {
 
@@ -24,10 +25,11 @@ const GameService = {
     },
 
     async getByCode(code) {
-        return await RoomRepository.getByCode(code)
+        const players = await RoomRepository.getByCode(code)
+        return GameService.checkHost(players);
     },
 
-    async leaveRoom(userId) {
+    async leaveRoom(userId, roomCode) {
         //
         await RoomRepository.updateRoom([{
             id: userId,
@@ -40,7 +42,12 @@ const GameService = {
         }]);
 
         //
-        return userId;
+        if(roomCode) {
+            return await GameService.getByCode(roomCode);
+        }
+
+        //
+        return null;
     },
 
     async startNewGame(userId, roomCode) {
@@ -189,6 +196,35 @@ const GameService = {
             }
         }
     },
+
+    async checkHost(players) {
+        if (!players || players.length < 1) return null;
+
+        // Lọc ra các player đang là host
+        const hosts = players.filter(p => p.is_host);
+
+        // Nếu đã đúng 1 host → không làm gì, trả về players luôn
+        if (hosts.length === 1) return players;
+
+        // Nếu không có host hoặc nhiều host → reset và chọn host mới
+        players.forEach(p => p.is_host = false);
+
+        // Chọn phần tử đầu tiên làm host mới
+        players[0].is_host = true;
+
+        // Chỉ update những player đã thay đổi
+        const toUpdate = players
+            .filter(p => p.is_host || hosts.includes(p))
+            .map(p => ({
+                id: p.id,
+                is_host: p.is_host
+            }));
+        await RoomRepository.updateRoom(toUpdate);
+
+
+        // Trả về mảng players đã được chỉnh sửa
+        return players;
+    }
 };
 
 module.exports = GameService;

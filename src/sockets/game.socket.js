@@ -30,14 +30,11 @@ module.exports = (io, socket) => {
         socketErrorWrapper(async (socket, payload, ack) => {
             const { room } = payload || {};
 
-            //
-            await gameService.leaveRoom(socket.user.id);
-
             // Join socket.io room
             socket.leave(room.code);
 
             // Broadcast for all players in room
-            const players = await gameService.getByCode(room.code);
+            const players = await gameService.leaveRoom(socket.user.id, room.code);
             if(players && players.length > 0) {
                 io.to(room.code).emit(EVENTS.ROOM_PLAYERS, players);
             }
@@ -128,33 +125,6 @@ module.exports = (io, socket) => {
         })
     );
 
-    // ===== BODYGUARD_DONE =====
-    socket.on(
-        EVENTS.BODYGUARD_DONE,
-        socketErrorWrapper(async (socket, payload, ack) => {
-            //
-            const { room, guard_user_id } = payload || {};
-
-            //
-            const dataFlow = await gameService.doneGuard(room.code, guard_user_id)
-
-            //
-            const players = await gameService.getByCode(room.code);
-            if(players && players.length > 0) {
-                socket.join(room.code);
-                io.to(room.code).emit(EVENTS.ROOM_PLAYERS, players);
-            }
-
-            emitGameFlow({
-                socket,
-                io,
-                roomCode: room.code,
-                dataFlow,
-                ack
-            });
-        })
-    );
-
     // ===== SILENCED_DONE =====
     socket.on(
         EVENTS.SILENCED_DONE,
@@ -185,12 +155,10 @@ module.exports = (io, socket) => {
     // ===== DISCONNECT =====
     socket.on('disconnect', async () => {
         try {
-            await gameService.leaveRoom(socket.user.id);
-
             const roomCode = Array.from(socket.rooms).find(room => room !== socket.id)
             if(roomCode) {
                 socket.leave(roomCode);
-                const players = await gameService.getByCode(roomCode);
+                const players = await gameService.leaveRoom(socket.user.id, roomCode);
                 if(players && players.length > 0) {
                     io.to(roomCode).emit(EVENTS.ROOM_PLAYERS, players);
                 }
