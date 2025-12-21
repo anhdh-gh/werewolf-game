@@ -57,18 +57,35 @@ const RoomRepository = {
         }
     },
 
-    async getByCode(code) {
-        const [result] = await pool.execute(
-            `
-                SELECT id, username, role, status, votes_received, meta_data
-                FROM games
-                WHERE room_code = ?
-            `,
-            [code]
-        );
+    async getByCode(code, role = null) {
+        let sql = `
+            SELECT id, username, role, status, votes_received, meta_data
+            FROM games
+            WHERE room_code = ?
+        `;
+        const params = [code];
+
+        // Nếu role được truyền, thêm điều kiện
+        if (role !== null && role !== undefined) {
+            sql += ' AND role = ?';
+            params.push(role);
+        }
+
+        const [result] = await pool.execute(sql, params);
 
         return result;
     },
+
+    async updateStatus(userId, roomCode, status) {
+        let sql = `
+            UPDATE games
+            SET status = ?
+            WHERE id = ? and room_code = ? and status != ?
+        `;
+        const params = [status, userId, roomCode, status];
+        const [result] = await pool.execute(sql, params);
+        return result.affectedRows > 0;
+    }
 };
 
 module.exports = RoomRepository;

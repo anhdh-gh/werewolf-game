@@ -116,19 +116,64 @@ const GameService = {
         return players;
     },
 
-    async beginGameFlow(userId, roomCode) {
+    async beginSeer() {
+        return await GameService.processRole({label: 'Cả làng'}, ROLES.SEER);
+    },
+
+    async doneSeer(roomCode) {
+        // Bảo vệ
+        let currentRole = await GameService.handleRole(roomCode, ROLES.SEER, ROLES.BODYGUARD);
+        if(currentRole) {
+            return await GameService.processRole(ROLES.SEER, ROLES.BODYGUARD);
+        }
+
+        // Next
+        return await GameService.nextGuard(roomCode, ROLES.SEER);
+    },
+
+    async nextGuard(roomCode, previousRole = ROLES.BODYGUARD) {
+        // Bị câm
+        let currentRole = await GameService.handleRole(roomCode, previousRole, ROLES.SILENCED);
+        if(currentRole) {
+            return await GameService.processRole(previousRole, ROLES.SILENCED);
+        }
+
+        // Sói
+        return await GameService.processRole(previousRole, ROLES.WEREWOLF);
+    },
+
+    async doneGuard(roomCode, guardUserId) {
+        // Update DB
+        if(!await RoomRepository.updateStatus(guardUserId, roomCode, STATUS.PROTECTED)) {
+            throw new AppError(ERROR_CODES.INVALID_REQUEST, "Không được bảo vệ cùng một người hai đêm liên tiếp")
+        }
+
+        // Next
+        return await GameService.nextGuard(roomCode);
+    },
+
+    async handleRole(roomCode, previousRole, currentRole) {
+        const result = await RoomRepository.getByCode(roomCode, currentRole.key)
+        if(!result || result.length < 1) {
+            return null;
+        }
+        return GameService.processRole(previousRole, currentRole);
+    },
+
+    async processRole(previousRole, currentRole) {
         return {
             current: {
-                message: "Cả làng đi ngủ"
+                message: `${previousRole.label} đi ngủ`
             },
             next: {
                 data: {
-                    message: "Bảo vệ thức dậy, đêm nay bạn muốn bảo vệ ai"
+                    active: currentRole.key,
+                    message: currentRole.message
                 },
-                after: 5000
+                after: 3000
             }
         }
-    }
+    },
 };
 
 module.exports = GameService;

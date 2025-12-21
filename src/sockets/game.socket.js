@@ -2,6 +2,7 @@ const EVENTS = require('../constants/events');
 const socketErrorWrapper = require('../utils/socketError.wrapper');
 const gameService = require('../services/game.service');
 const ERROR_CODES = require('../constants/errorCode.constants');
+const { emitGameFlow } = require('../utils/socket.handler.util');
 
 module.exports = (io, socket) => {
 
@@ -69,28 +70,49 @@ module.exports = (io, socket) => {
         })
     );
 
-    // ===== BEGIN_GAME_FLOW =====
+    // ===== START_NIGHT =====
     socket.on(
-        EVENTS.BEGIN_GAME_FLOW,
+        EVENTS.START_NIGHT,
         socketErrorWrapper(async (socket, payload, ack) => {
             const { room } = payload || {};
+            emitGameFlow({
+                socket,
+                io,
+                roomCode: room.code,
+                dataFlow: await gameService.beginSeer(),
+                ack
+            });
+        })
+    );
 
-            //
-            const dataFlow = await gameService.beginGameFlow(socket.user.id, room.code)
-            socket.join(room.code);
-            io.to(room.code).emit(EVENTS.NEXT_GAME_FLOW, dataFlow.current);
-            if(dataFlow?.next) {
-                setTimeout(() => {
-                    try {
-                        io.to(room.code).emit(EVENTS.NEXT_GAME_FLOW, dataFlow.next.data);
-                    } catch (err) {}
-                }, dataFlow.next.after);
-            }
+    // ===== SEER_DONE =====
+    socket.on(
+        EVENTS.SEER_DONE,
+        socketErrorWrapper(async (socket, payload, ack) => {
+            const { room } = payload || {};
+            emitGameFlow({
+                socket,
+                io,
+                roomCode: room.code,
+                dataFlow: await gameService.doneSeer(room.code),
+                ack
+            });
+        })
+    );
 
-            // Ack for client
-            if (typeof ack === 'function') {
-                ack({ code: ERROR_CODES.SUCCESS.code, message: ERROR_CODES.SUCCESS.message });
-            }
+
+    // ===== BODYGUARD_DONE =====
+    socket.on(
+        EVENTS.BODYGUARD_DONE,
+        socketErrorWrapper(async (socket, payload, ack) => {
+            const { room, guard_user_id } = payload || {};
+            emitGameFlow({
+                socket,
+                io,
+                roomCode: room.code,
+                dataFlow: await gameService.doneGuard(room.code, guard_user_id),
+                ack
+            });
         })
     );
 
