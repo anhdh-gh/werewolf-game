@@ -15,7 +15,8 @@ const GameService = {
             role: null,
             status: STATUS.JOINED,
             votes_received: null,
-            meta_data: null
+            witch_heal: null,
+            witch_poison: null
         }]);
 
         //
@@ -34,7 +35,8 @@ const GameService = {
             role: null,
             status: null,
             votes_received: null,
-            meta_data: null
+            witch_heal: null,
+            witch_poison: null
         }]);
 
         //
@@ -97,12 +99,14 @@ const GameService = {
 
             // Gán vào object hiện tại để trả về client ngay
             player.role = assignedRole.key;
-            player.meta_data = {}
             player.status = STATUS.ALIVE
             player.votes_received = 0
 
             // Reset status và init role_data
-            if(assignedRole === ROLES.WITCH) player.meta_data = { heal: 1, poison: 1 };
+            if(assignedRole === ROLES.WITCH) {
+                player.witch_heal = 1
+                player.witch_poison = 1
+            }
 
             //
             return players

@@ -17,7 +17,8 @@ const RoomService = {
             role: null,
             status: null,
             votes_received: null,
-            meta_data: null
+            witch_heal: null,
+            witch_poison: null
         }]);
 
         //

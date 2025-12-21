@@ -105,12 +105,24 @@ module.exports = (io, socket) => {
     socket.on(
         EVENTS.BODYGUARD_DONE,
         socketErrorWrapper(async (socket, payload, ack) => {
+            //
             const { room, guard_user_id } = payload || {};
+
+            //
+            const dataFlow = await gameService.doneGuard(room.code, guard_user_id)
+
+            //
+            const players = await gameService.getByCode(room.code);
+            if(players && players.length > 0) {
+                socket.join(room.code);
+                io.to(room.code).emit(EVENTS.ROOM_PLAYERS, players);
+            }
+
             emitGameFlow({
                 socket,
                 io,
                 roomCode: room.code,
-                dataFlow: await gameService.doneGuard(room.code, guard_user_id),
+                dataFlow,
                 ack
             });
         })

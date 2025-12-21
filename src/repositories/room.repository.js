@@ -59,7 +59,7 @@ const RoomRepository = {
 
     async getByCode(code, role = null) {
         let sql = `
-            SELECT id, username, role, status, votes_received, meta_data
+            SELECT id, username, role, status, votes_received, witch_heal, witch_poison
             FROM games
             WHERE room_code = ?
         `;

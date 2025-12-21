@@ -13,5 +13,6 @@ CREATE TABLE games
     role           VARCHAR(30),
     status         VARCHAR(50),
     votes_received INT,
-    meta_data      JSON
+    witch_heal      INT,
+    witch_poison      INT
 );
