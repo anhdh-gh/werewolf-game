@@ -128,6 +128,60 @@ module.exports = (io, socket) => {
         })
     );
 
+    // ===== BODYGUARD_DONE =====
+    socket.on(
+        EVENTS.BODYGUARD_DONE,
+        socketErrorWrapper(async (socket, payload, ack) => {
+            //
+            const { room, guard_user_id } = payload || {};
+
+            //
+            const dataFlow = await gameService.doneGuard(room.code, guard_user_id)
+
+            //
+            const players = await gameService.getByCode(room.code);
+            if(players && players.length > 0) {
+                socket.join(room.code);
+                io.to(room.code).emit(EVENTS.ROOM_PLAYERS, players);
+            }
+
+            emitGameFlow({
+                socket,
+                io,
+                roomCode: room.code,
+                dataFlow,
+                ack
+            });
+        })
+    );
+
+    // ===== SILENCED_DONE =====
+    socket.on(
+        EVENTS.SILENCED_DONE,
+        socketErrorWrapper(async (socket, payload, ack) => {
+            //
+            const { room, silenced_user_id } = payload || {};
+
+            //
+            const dataFlow = await gameService.doneSilenced(room.code, silenced_user_id)
+
+            //
+            const players = await gameService.getByCode(room.code);
+            if(players && players.length > 0) {
+                socket.join(room.code);
+                io.to(room.code).emit(EVENTS.ROOM_PLAYERS, players);
+            }
+
+            emitGameFlow({
+                socket,
+                io,
+                roomCode: room.code,
+                dataFlow,
+                ack
+            });
+        })
+    );
+
     // ===== DISCONNECT =====
     socket.on('disconnect', async () => {
         try {

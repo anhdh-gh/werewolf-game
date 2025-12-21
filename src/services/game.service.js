@@ -107,6 +107,9 @@ const GameService = {
                 player.witch_heal = 1
                 player.witch_poison = 1
             }
+            if(assignedRole === ROLES.CURSED) {
+                player.previous_role = player.role
+            }
 
             //
             return players
@@ -144,6 +147,14 @@ const GameService = {
 
         // Sói
         return await GameService.processRole(previousRole, ROLES.WEREWOLF);
+    },
+
+    async doneSilenced(roomCode, silencedUserId) {
+        // Update DB
+        await RoomRepository.updateStatus(silencedUserId, roomCode, STATUS.SILENCED)
+
+        // Next Sói
+        return await GameService.processRole(ROLES.SILENCED, ROLES.WEREWOLF);
     },
 
     async doneGuard(roomCode, guardUserId) {

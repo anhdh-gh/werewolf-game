@@ -14,5 +14,6 @@ CREATE TABLE games
     status         VARCHAR(50),
     votes_received INT,
     witch_heal      INT,
-    witch_poison      INT
+    witch_poison      INT,
+    previous_role           VARCHAR(30)
 );
