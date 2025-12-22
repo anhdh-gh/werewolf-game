@@ -6,7 +6,7 @@ const PlayerRepository = {
         const [result] = await pool.query(
             `UPDATE players 
              SET is_connected = FALSE, is_alive = FALSE
-             WHERE id = ?`,
+             WHERE player_id = ?`,
             [userId]
         );
 

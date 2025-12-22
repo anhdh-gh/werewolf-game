@@ -5,9 +5,12 @@ const EVENTS = require('../constants/events');
 module.exports.socketHandlerError = (handler) => {
     return async function (payload, ack) {
         try {
-            await handler(this, payload, ack);
+            const res = await handler(this, payload, ack);
             if (typeof ack === 'function') {
                 ack({ code: ERROR_CODES.SUCCESS.code, message: ERROR_CODES.SUCCESS.message });
+            }
+            if(res && res?.disconnected) {
+                this.disconnect(true);
             }
         } catch (err) {
             // AppError
