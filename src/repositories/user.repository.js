@@ -5,7 +5,7 @@ const UserRepository = {
     async create({email, username, password}) {
         const [result] = await pool.execute(
             `
-                INSERT INTO games (email, username, password)
+                INSERT INTO users (email, username, password)
                 VALUES (?, ?, ?)
             `,
             [email, username, password]
@@ -22,7 +22,7 @@ const UserRepository = {
         const [rows] = await pool.execute(
             `
                 SELECT id, email, username
-                FROM games
+                FROM users
                 WHERE email = ?
             `,
             [email]
@@ -35,7 +35,7 @@ const UserRepository = {
         const [rows] = await pool.execute(
             `
                 SELECT id, email, username, password
-                FROM games
+                FROM users
                 WHERE username = ?
             `,
             [username]
@@ -48,7 +48,7 @@ const UserRepository = {
         const [rows] = await pool.execute(
             `
                 SELECT id, email, username, refresh_token
-                FROM games
+                FROM users
                 WHERE id = ?
             `,
             [id]
@@ -60,7 +60,7 @@ const UserRepository = {
     async updateRefreshToken(id, refreshToken) {
         await pool.execute(
             `
-                UPDATE games
+                UPDATE users
                 SET refresh_token = ?
                 WHERE id = ?
             `,
@@ -72,7 +72,7 @@ const UserRepository = {
         await pool.execute(
             `
                 DELETE
-                FROM games
+                FROM users
                 WHERE id = ?
             `,
             [id]
@@ -83,7 +83,7 @@ const UserRepository = {
         const [rows] = await pool.execute(
             `
                 SELECT id, email, username
-                FROM games
+                FROM users
                 WHERE id = ?
             `,
             [id]
