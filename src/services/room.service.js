@@ -1,4 +1,3 @@
-const RoomRepository = require('../repositories/room.repository');
 const { randomStr } = require('../utils/string.util');
 const EVENTS = require('../constants/events');
 const { SERVERS } = require('../constants/servers.constant');
@@ -10,18 +9,6 @@ const RoomService = {
     },
 
     async joinRoom(userId, roomCode) {
-        //
-        await RoomRepository.updateRoom([{
-            id: userId,
-            room_code: roomCode,
-            role: null,
-            status: null,
-            votes_received: null,
-            witch_heal: null,
-            witch_poison: null,
-        }]);
-
-        //
         return {
             room: { code: roomCode },
             next_step: {
