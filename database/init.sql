@@ -24,7 +24,7 @@ CREATE TABLE rooms
         'DAY_VOTE',
         'END'
         )                                               NOT NULL,
-    max_players INT NOT NULL
+    max_players INT NOT NULL,
     phase_expires_at DATETIME,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     ended_at   DATETIME NULL
