@@ -21,7 +21,12 @@ module.exports = {
 
     LOCK_TIMEOUT: {
         code: 4004,
-        message: 'LOck timeout'
+        message: 'Lock timeout'
+    },
+
+    ALREADY_CONNECTED: {
+        code: 4005,
+        message: 'You are already connected from another session'
     },
 
     UNAUTHORIZED: {

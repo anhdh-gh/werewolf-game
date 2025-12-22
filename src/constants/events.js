@@ -1,7 +1,7 @@
 module.exports = {
     //
     CONNECTION: 'connection',
-    DISCONNECTION: 'disconnect',
+    DISCONNECT: 'disconnect',
 
     //
     SOCKET_ERROR: 'SOCKET_ERROR',

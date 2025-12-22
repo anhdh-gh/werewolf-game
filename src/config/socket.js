@@ -1,6 +1,7 @@
 const { Server } = require('socket.io');
 const gameSocket = require('../sockets/game.socket');
 const socketAuth = require('../middlewares/socketAuth.middleware');
+const EVENTS = require('../constants/events');
 
 module.exports = (server) => {
     //
@@ -14,7 +15,7 @@ module.exports = (server) => {
     io.use(socketAuth);
 
     //
-    io.on('connection', (socket) => {
+    io.on(EVENTS.CONNECTION, (socket) => {
         gameSocket(io, socket);
     });
 };
