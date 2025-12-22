@@ -46,6 +46,7 @@ const GameService = {
         //
         if(STATUS.PLAYING === room.status) {
             await PlayerRepository.playerDisconnected(playerId, roomCode)
+            return;
         }
 
         //
