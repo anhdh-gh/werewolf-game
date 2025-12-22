@@ -40,6 +40,11 @@ module.exports = (io, socket) => {
         return { disconnected: true }
     }));
 
+    /**[ PLAYER_READY ]* */
+    socket.on(EVENTS.PLAYER_READY, socketHandlerError(async (socket, payload, ack) => {
+        await GameService.playerReady(socket.user.id, payload.room.code)
+    }));
+
     /**[ ERROR ]* */
     socket.on(EVENTS.ERROR, err => {
         console.error('Socket error:', err);

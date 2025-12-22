@@ -5,6 +5,7 @@ const ERROR_CODES = require('../constants/errorCode.constants');
 const ArrayUtil = require('../utils/array.util')
 const { ROLES } = require('../constants/roles.constant')
 const { STATUS } = require('../constants/status.constant')
+const { PHASE } = require('../constants/phase.constant')
 const EVENTS = require('../constants/events');
 
 const GameService = {
@@ -32,12 +33,6 @@ const GameService = {
 
     /**[ LEAVE_ROOM ]* */
     async leaveRoom(playerId, roomCode) {
-        //
-        if(!roomCode) {
-            return
-        }
-
-        //
         const room = await RoomRepository.getByCode(roomCode)
         if(!room) {
             throw new AppError(ERROR_CODES.ROOM_NOT_FOUND)
@@ -51,6 +46,22 @@ const GameService = {
 
         //
         await PlayerRepository.leaveRoom(playerId, roomCode)
+    },
+
+    /**[ PLAYER_READY ]* */
+    async playerReady(playerId, roomCode) {
+        const room = await RoomRepository.getByCode(roomCode)
+        if(!room) {
+            throw new AppError(ERROR_CODES.ROOM_NOT_FOUND)
+        }
+
+        //
+        if(STATUS.WAITING !== room.status || PHASE.LOBBY !== room.current_phase) {
+            throw new AppError(ERROR_CODES.ROOM_PLAYING)
+        }
+
+        //
+        await PlayerRepository.playerReady(playerId, roomCode)
     }
 };
 

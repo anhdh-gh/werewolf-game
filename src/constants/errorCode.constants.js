@@ -29,6 +29,11 @@ module.exports = {
         message: 'You are already connected from another session'
     },
 
+    ROOM_PLAYING: {
+        code: 4043,
+        message: 'Room is playing'
+    },
+
     UNAUTHORIZED: {
         code: 4011,
         message: 'Unauthorized'

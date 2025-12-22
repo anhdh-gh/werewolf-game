@@ -31,6 +31,17 @@ const PlayerRepository = {
         );
     },
 
+    async playerReady(playerId, roomCode) {
+        await pool.query(
+            `INSERT INTO players(player_id, room_code, is_ready, is_connected)
+             VALUES (?, ?, true, true)
+             ON DUPLICATE KEY UPDATE
+               is_connected = true,
+               is_ready = true`,
+            [playerId, roomCode]
+        );
+    },
+
     async getRoom(playerId) {
         const [result] = await pool.query(
             `SELECT room_code FROM players

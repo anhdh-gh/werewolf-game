@@ -38,6 +38,10 @@ const RoomRepository = {
     },
 
     async getByCode(roomCode) {
+        if(!roomCode) {
+            return
+        }
+
         const [result] = await pool.query(
             `SELECT status, current_phase FROM rooms
              WHERE code = ?`,
