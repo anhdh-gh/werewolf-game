@@ -59,12 +59,19 @@ const GameService = {
         }
 
         //
-        if(STATUS.WAITING !== room.status || PHASE.LOBBY !== room.current_phase) {
+        if(STATUS.WAITING !== room.status || PHASE.LOBBY.key !== room.current_phase) {
             throw new AppError(ERROR_CODES.ROOM_PLAYING)
         }
 
         //
         await PlayerRepository.playerReady(playerId, roomCode)
+
+        //
+        return true;
+    },
+
+    async startGame(roomCode, handler) {
+        // TODO:
     }
 };
 

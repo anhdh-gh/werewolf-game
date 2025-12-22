@@ -9,6 +9,7 @@ module.exports = {
     PLAYER_READY: 'PLAYER_READY',
 
     //
+    GAME_DATA_FLOW: 'GAME_DATA_FLOW',
     SOCKET_ERROR: 'SOCKET_ERROR',
     ERROR: 'error',
 };

@@ -19,7 +19,7 @@ const RoomRepository = {
                 await pool.query(
                     `INSERT INTO rooms (code, status, current_phase, max_players) 
                      VALUES (?, ?, ?, ?)`,
-                    [code, STATUS.WAITING, PHASE.LOBBY, max_players]
+                    [code, STATUS.WAITING, PHASE.LOBBY.key, max_players]
                 );
 
                 // Success: return the room code

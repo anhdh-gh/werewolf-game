@@ -2,6 +2,7 @@ const EVENTS = require('../constants/events');
 const ERROR_CODES = require('../constants/errorCode.constants');
 const GameService = require('../services/game.service');
 const { socketHandlerError } = require('../utils/socketError.wrapper');
+const {PHASE} = require("../constants/phase.constant");
 
 // key: userId, value: socket.id
 const userSocketMap = new Map();
@@ -42,7 +43,12 @@ module.exports = (io, socket) => {
 
     /**[ PLAYER_READY ]* */
     socket.on(EVENTS.PLAYER_READY, socketHandlerError(async (socket, payload, ack) => {
-        await GameService.playerReady(socket.user.id, payload.room.code)
+        if(await GameService.playerReady(socket.user.id, payload.room.code)) {
+            GameService.startGame(payload.room.code, (playerId, role) => io.to(userSocketMap.get(playerId)).emit(EVENTS.GAME_DATA_FLOW, {
+                current_phase: PHASE.ALL_VIEW_ROLE,
+                data: { role }
+            }))
+        }
     }));
 
     /**[ ERROR ]* */
