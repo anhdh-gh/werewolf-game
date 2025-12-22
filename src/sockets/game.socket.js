@@ -34,6 +34,11 @@ module.exports = (io, socket) => {
        await GameService.connectRoom(socket.user.id, payload.room.code)
     }));
 
+    /**[ LEAVE_ROOM ]* */
+    socket.on(EVENTS.LEAVE_ROOM, socketHandlerError(async (socket, payload, ack) => {
+        await GameService.leaveRoom(socket.user.id, payload.room.code)
+    }));
+
     /**[ ERROR ]* */
     socket.on(EVENTS.ERROR, err => {
         console.error('Socket error:', err);

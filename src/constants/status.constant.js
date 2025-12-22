@@ -6,7 +6,8 @@ const STATUS = {
     SILENCED: 'SILENCED',
     ALIVE: 'ALIVE',
     JOINED: 'JOINED',
-    WAITING: 'WAITING'
+    WAITING: 'WAITING',
+    PLAYING: 'PLAYING'
 };
 
 module.exports = {

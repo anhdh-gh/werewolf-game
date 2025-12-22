@@ -5,6 +5,7 @@ module.exports = {
 
     //
     CONNECT_ROOM: 'CONNECT_ROOM',
+    LEAVE_ROOM: 'LEAVE_ROOM',
 
     //
     SOCKET_ERROR: 'SOCKET_ERROR',

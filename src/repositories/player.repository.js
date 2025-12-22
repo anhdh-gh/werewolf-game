@@ -2,7 +2,6 @@ const pool = require('../config/database');
 
 const PlayerRepository = {
 
-    /**[ DISCONNECT ]* */
     async playerDisconnected(userId) {
         const [result] = await pool.query(
             `UPDATE players 
@@ -14,6 +13,14 @@ const PlayerRepository = {
         return result.affectedRows;
     },
 
+    async leaveRoom(playerId, roomCode) {
+        await pool.query(
+            `DELETE FROM players
+             WHERE player_id = ? and room_code = ?`,
+            [playerId, roomCode]
+        );
+    },
+
     async connectRoom(playerId, roomCode) {
         await pool.query(
             `INSERT INTO players(player_id, room_code, is_connected)
@@ -22,6 +29,15 @@ const PlayerRepository = {
                 is_connected = true`,
             [playerId, roomCode]
         );
+    },
+
+    async getRoom(playerId) {
+        const [result] = await pool.query(
+            `SELECT room_code FROM players
+             WHERE player_id = ?`,
+            [playerId]
+        );
+        return result;
     }
 };
 

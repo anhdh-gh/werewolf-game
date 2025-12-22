@@ -11,7 +11,11 @@ const GameService = {
 
     /**[ DISCONNECT ]* */
     async playerDisconnected(userId) {
-        await PlayerRepository.playerDisconnected(userId)
+        //
+        const rooms = await PlayerRepository.getRoom(userId);
+        for (let room of rooms) {
+            GameService.leaveRoom(userId, room?.room_code).catch(err => console.log(err))
+        }
     },
 
     /**[ CONNECT_ROOM ]* */
@@ -24,6 +28,28 @@ const GameService = {
 
         //
         await PlayerRepository.connectRoom(playerId, roomCode)
+    },
+
+    /**[ LEAVE_ROOM ]* */
+    async leaveRoom(playerId, roomCode) {
+        //
+        if(!roomCode) {
+            return
+        }
+
+        //
+        const room = await RoomRepository.getByCode(roomCode)
+        if(!room) {
+            throw new AppError(ERROR_CODES.ROOM_NOT_FOUND)
+        }
+
+        //
+        if(STATUS.PLAYING === room.status) {
+            await PlayerRepository.playerDisconnected(playerId, roomCode)
+        }
+
+        //
+        await PlayerRepository.leaveRoom(playerId, roomCode)
     }
 };
 
