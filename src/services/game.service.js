@@ -11,11 +11,11 @@ const EVENTS = require('../constants/events');
 const GameService = {
 
     /**[ DISCONNECT ]* */
-    async playerDisconnected(userId) {
+    async playerDisconnected(userId, cleaner) {
         //
         const rooms = await PlayerRepository.getRoom(userId);
         for (let room of rooms) {
-            GameService.leaveRoom(userId, room?.room_code).catch(err => console.log(err))
+            GameService.leaveRoom(userId, room?.room_code).then(() => cleaner(room?.room_code)).catch(err => console.log(err))
         }
     },
 
@@ -46,6 +46,9 @@ const GameService = {
 
         //
         await PlayerRepository.leaveRoom(playerId, roomCode)
+
+        //
+        return roomCode
     },
 
     /**[ PLAYER_READY ]* */

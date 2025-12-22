@@ -25,7 +25,7 @@ module.exports = (io, socket) => {
         const currentSocketId = userSocketMap.get(socket.user.id);
         if (currentSocketId === socket.id) {
             userSocketMap.delete(socket.user.id);
-            GameService.playerDisconnected(socket.user.id).catch(console.error)
+            GameService.playerDisconnected(socket.user.id, roomCode => roomCode && socket.leave(roomCode)).catch(console.error)
         }
     });
 

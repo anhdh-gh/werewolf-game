@@ -5,11 +5,17 @@ const EVENTS = require('../constants/events');
 module.exports.socketHandlerError = (handler) => {
     return async function (payload, ack) {
         try {
+            if(payload && payload?.room && payload?.room?.code) {
+                this.join(payload?.room?.code)
+            }
             const res = await handler(this, payload, ack);
             if (typeof ack === 'function') {
                 ack({ code: ERROR_CODES.SUCCESS.code, message: ERROR_CODES.SUCCESS.message });
             }
             if(res && res?.disconnected) {
+                if(payload && payload?.room && payload?.room?.code) {
+                    this.leave(payload?.room?.code);
+                }
                 this.disconnect(true);
             }
         } catch (err) {
