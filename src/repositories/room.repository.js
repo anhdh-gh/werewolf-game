@@ -16,9 +16,9 @@ const RoomRepository = {
                 const now = new Date();
                 // Insert room into DB
                 await pool.query(
-                    `INSERT INTO rooms (code, status, current_phase, phase_expires_at) 
-                     VALUES (?, ?, ?, ?)`,
-                    [code, STATUS.WAITING, PHASE.LOBBY, new Date(now.getTime() + 10 * 60 * 1000)] // 10 minutes
+                    `INSERT INTO rooms (code, status, current_phase) 
+                     VALUES (?, ?, ?)`,
+                    [code, STATUS.WAITING, PHASE.LOBBY]
                 );
 
                 // Success: return the room code
