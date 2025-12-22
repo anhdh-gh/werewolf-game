@@ -1,22 +1,72 @@
-DROP TABLE IF EXISTS games;
-CREATE TABLE games
+DROP TABLE IF EXISTS users;
+CREATE TABLE users
 (
-    # User
-    id             BIGINT AUTO_INCREMENT PRIMARY KEY,
-    username       VARCHAR(50) UNIQUE NOT NULL,
-    email          VARCHAR(50) UNIQUE NOT NULL,
-    password       VARCHAR(255)       NOT NULL,
-    refresh_token  TEXT,
+    id            BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username      VARCHAR(50) UNIQUE,
+    email         VARCHAR(50) UNIQUE,
+    password      VARCHAR(255),
+    refresh_token TEXT
+);
 
-    #              Game
-    room_code      VARCHAR(10),
-    role           VARCHAR(30),
-    status         VARCHAR(50),
-    votes_received INT,
-    witch_heal      INT,
-    witch_poison      INT,
-    previous_role           VARCHAR(30),
-    voted_by       VARCHAR(255),
-    event_code VARCHAR(50),
-    room_role      VARCHAR(255),
+# Cleanup ended_at < NOW() - INTERVAL 1 DAY and status = 'ENDED'
+DROP TABLE IF EXISTS rooms;
+CREATE TABLE rooms
+(
+    code             VARCHAR(10) PRIMARY KEY,
+    status           ENUM ('WAITING','PLAYING','ENDED') NOT NULL,
+    current_day      INT                                NOT NULL DEFAULT 0,
+    current_phase    ENUM (
+        'LOBBY',
+        'NIGHT_WOLF',
+        'NIGHT_WITCH',
+        'NIGHT_GUARD',
+        'DAY_DISCUSSION',
+        'DAY_VOTE',
+        'END'
+        )                                               NOT NULL,
+    phase_expires_at DATETIME                           NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ended_at   DATETIME NULL
+);
+
+# Cleanup DELETE FROM players WHERE room_code = :room
+DROP TABLE IF EXISTS players;
+CREATE TABLE players
+(
+    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+    player_id           BIGINT      NOT NULL,
+    room_code           VARCHAR(10) NOT NULL,
+    role                VARCHAR(30),
+    initial_role        VARCHAR(30),
+    is_alive            BOOLEAN DEFAULT TRUE,
+    is_ready            BOOLEAN DEFAULT FALSE,
+    is_muted            BOOLEAN DEFAULT FALSE,
+    protected_until_day INT,
+    UNIQUE (player_id, room_code)
+);
+
+# Cleanup DELETE FROM actions WHERE room_code = :room;
+# Action client gửi lên => Idempotence
+DROP TABLE IF EXISTS actions;
+CREATE TABLE actions
+(
+    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+    room_code   VARCHAR(10),
+    current_day INT,
+    phase       VARCHAR(30),
+    actor_id    BIGINT,
+    target_id   BIGINT,
+    event_id    VARCHAR(50) UNIQUE
+);
+
+# Cleanup Vote chỉ tồn tại trong 1 phase => Resolve xong → clear luôn
+DROP TABLE IF EXISTS votes;
+CREATE TABLE votes
+(
+    id        BIGINT AUTO_INCREMENT PRIMARY KEY,
+    room_code VARCHAR(10),
+    phase     VARCHAR(30),
+    voter_id  BIGINT,
+    target_id BIGINT,
+    UNIQUE (room_code, phase, voter_id)
 );
