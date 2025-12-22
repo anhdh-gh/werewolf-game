@@ -5,7 +5,8 @@ const STATUS = {
     PROTECTED: 'PROTECTED',
     SILENCED: 'SILENCED',
     ALIVE: 'ALIVE',
-    JOINED: 'JOINED'
+    JOINED: 'JOINED',
+    WAITING: 'WAITING'
 };
 
 module.exports = {

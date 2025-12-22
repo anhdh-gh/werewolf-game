@@ -1,11 +1,11 @@
-const { randomStr } = require('../utils/string.util');
 const EVENTS = require('../constants/events');
 const { SERVERS } = require('../constants/servers.constant');
+const RoomRepository = require('../repositories/room.repository')
 
 const RoomService = {
 
     async createRoom(req) {
-        return await RoomService.joinRoom(req.user.id, randomStr(5));
+        return await RoomService.joinRoom(req.user.id, await RoomRepository.createRoom());
     },
 
     async joinRoom(userId, roomCode) {
