@@ -4,8 +4,8 @@ const RoomRepository = require('../repositories/room.repository')
 
 const RoomService = {
 
-    async createRoom(req) {
-        return await RoomService.joinRoom(req.user.id, await RoomRepository.createRoom());
+    async createRoom(userId, maxPlayers) {
+        return await RoomService.joinRoom(userId, await RoomRepository.createRoom(maxPlayers));
     },
 
     async joinRoom(userId, roomCode) {

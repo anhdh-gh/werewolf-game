@@ -3,7 +3,7 @@ const { success } = require('../utils/response');
 const errorWrapper = require('../utils/error.wrapper');
 
 exports.createRoom = errorWrapper(async (req, res) => {
-    return success(res, await RoomService.createRoom(req));
+    return success(res, await RoomService.createRoom(req.user.id, req.body.room.max_players));
 });
 
 exports.joinRoom = errorWrapper(async (req, res) => {

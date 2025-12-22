@@ -1,4 +1,3 @@
-// middlewares/validate.middleware.js
 const AppError = require('../errors/AppError');
 const ERROR_CODES = require('../constants/errorCode.constants');
 
