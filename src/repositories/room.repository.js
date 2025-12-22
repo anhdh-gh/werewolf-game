@@ -40,7 +40,7 @@ const RoomRepository = {
     async getByCode(roomCode) {
         const [result] = await pool.query(
             `SELECT status, current_phase FROM rooms
-                 WHERE code = ?`,
+             WHERE code = ?`,
             [roomCode]
         );
 
