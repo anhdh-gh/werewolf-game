@@ -44,9 +44,14 @@ module.exports = {
         message: 'Resource not found'
     },
 
+    ROOM_NOT_FOUND: {
+        code: 4042,
+        message: 'Room not found'
+    },
+
     // 5xxx – System errors
     INTERNAL_ERROR: {
         code: 5000,
-        message: 'Internal server error'
+        message: 'Internal server error. Try again'
     }
 };

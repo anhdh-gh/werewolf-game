@@ -38,9 +38,10 @@ CREATE TABLE players
     room_code           VARCHAR(10) NOT NULL,
     role                VARCHAR(30),
     initial_role        VARCHAR(30),
-    is_alive            BOOLEAN DEFAULT TRUE,
+    is_alive            BOOLEAN DEFAULT FALSE,
     is_ready            BOOLEAN DEFAULT FALSE,
     is_muted            BOOLEAN DEFAULT FALSE,
+    is_connected        BOOLEAN DEFAULT FALSE,
     protected_until_day INT,
     UNIQUE (player_id, room_code)
 );

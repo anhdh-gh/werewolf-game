@@ -2,6 +2,8 @@ const EVENTS = require('../constants/events');
 const ERROR_CODES = require('../constants/errorCode.constants');
 const gameService = require('../services/game.service');
 
+module.exports.ok
+
 module.exports.emitGameFlow = ({socket,io, roomCode, dataFlow, ack }) => {
     // Join room (safe nếu join nhiều lần)
     socket.join(roomCode);

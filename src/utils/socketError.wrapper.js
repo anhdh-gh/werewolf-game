@@ -2,10 +2,13 @@ const ERROR_CODES = require('../constants/errorCode.constants');
 const AppError = require('../errors/AppError');
 const EVENTS = require('../constants/events');
 
-module.exports = (handler) => {
+module.exports.socketHandlerError = (handler) => {
     return async function (payload, ack) {
         try {
-            return await handler(this, payload, ack);
+            await handler(this, payload, ack);
+            if (typeof ack === 'function') {
+                ack({ code: ERROR_CODES.SUCCESS.code, message: ERROR_CODES.SUCCESS.message });
+            }
         } catch (err) {
             // AppError
             if (err instanceof AppError) {

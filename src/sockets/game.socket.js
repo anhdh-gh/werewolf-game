@@ -1,5 +1,7 @@
 const EVENTS = require('../constants/events');
 const ERROR_CODES = require('../constants/errorCode.constants');
+const GameService = require('../services/game.service');
+const { socketHandlerError } = require('../utils/socketError.wrapper');
 
 // key: userId, value: socket.id
 const userSocketMap = new Map();
@@ -23,6 +25,17 @@ module.exports = (io, socket) => {
         const currentSocketId = userSocketMap.get(socket.user.id);
         if (currentSocketId === socket.id) {
             userSocketMap.delete(socket.user.id);
+            GameService.playerDisconnected(socket.user.id).catch(console.error)
         }
+    });
+
+    /**[ CONNECT_ROOM ]* */
+    socket.on(EVENTS.CONNECT_ROOM, socketHandlerError(async (socket, payload, ack) => {
+       await GameService.connectRoom(socket.user.id, payload.room.code)
+    }));
+
+    /**[ ERROR ]* */
+    socket.on(EVENTS.ERROR, err => {
+        console.error('Socket error:', err);
     });
 };

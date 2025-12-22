@@ -4,5 +4,9 @@ module.exports = {
     DISCONNECT: 'disconnect',
 
     //
+    CONNECT_ROOM: 'CONNECT_ROOM',
+
+    //
     SOCKET_ERROR: 'SOCKET_ERROR',
+    ERROR: 'error',
 };
