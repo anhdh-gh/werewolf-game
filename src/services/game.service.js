@@ -16,11 +16,11 @@ const GameService = {
 
     /**[ CONNECT_ROOM ]* */
     async connectRoom(playerId, roomCode) {
-        // TODO: Uncomment
-        // const room = await RoomRepository.getByCode(roomCode)
-        // if(!room) {
-        //     throw new AppError(ERROR_CODES.ROOM_NOT_FOUND)
-        // }
+        //
+        const room = await RoomRepository.getByCode(roomCode)
+        if(!room) {
+            throw new AppError(ERROR_CODES.ROOM_NOT_FOUND)
+        }
 
         //
         await PlayerRepository.connectRoom(playerId, roomCode)
