@@ -81,7 +81,7 @@ const PhaseService = {
                         code: roomCode,
                         status: STATUS.PLAYING,
                         current_phase: PHASE.ALL_VIEW_ROLE.key,
-                        phase_expires_at: await RoomRepository.raw('TIMESTAMPADD(SECOND, ?, NOW())', [10])
+                        phase_expires_at: await RoomRepository.raw('TIMESTAMPADD(SECOND, ?, NOW())', [PHASE.ALL_VIEW_ROLE.time])
                     }
                 ])
 
