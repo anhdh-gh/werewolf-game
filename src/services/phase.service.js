@@ -79,7 +79,7 @@ const PhaseService = {
                 await RoomRepository.updateRooms([
                     {
                         code: roomCode,
-                        current_phase: PHASE.ALL_VIEW_ROLE,
+                        current_phase: PHASE.ALL_VIEW_ROLE.key,
                         phase_expires_at: await RoomRepository.raw('TIMESTAMPADD(SECOND, ?, NOW())', [10])
                     }
                 ])

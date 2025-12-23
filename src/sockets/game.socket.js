@@ -64,8 +64,7 @@ module.exports = (io, socket) => {
                     if (!socketId) return
 
                     io.to(socketId).emit(EVENTS.GAME_DATA_FLOW, {
-                        room_code: payload.room.code,
-                        phase: PHASE.ALL_VIEW_ROLE,
+                        current_phase: PHASE.ALL_VIEW_ROLE.key,
                         data: {
                             role: player.role
                         }
