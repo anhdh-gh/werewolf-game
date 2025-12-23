@@ -114,6 +114,9 @@ const PhaseService = {
                 if(PHASE.ALL_VIEW_ROLE.key === roomCurrent.current_phase) {
                     data = await PhaseService.resolveAllSleep()
                 }
+                if(PHASE.NIGHT_ALL_SLEEP.key === roomCurrent.current_phase) {
+                    data = await PhaseService.resolveSeer(room.code)
+                }
 
                 //
                 if(!data || !data?.phase) {
@@ -139,6 +142,17 @@ const PhaseService = {
     async resolveAllSleep() {
         return {
             phase: PHASE.NIGHT_ALL_SLEEP
+        }
+    },
+
+    async resolveSeer(roomCode) {
+        const isAlive = await PlayerRepository.checkRoleAlive(roomCode, ROLES.SEER.key);
+        return {
+            phase: {
+                key: PHASE.NIGHT_SEER.key,
+                message: PHASE.NIGHT_SEER.message,
+                time: isAlive ? PHASE.NIGHT_SEER.time_alive : PHASE.NIGHT_SEER.time
+            }
         }
     }
 };
