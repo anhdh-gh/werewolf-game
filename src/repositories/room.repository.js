@@ -43,7 +43,7 @@ const RoomRepository = {
         }
 
         const [result] = await pool.query(
-            `SELECT status, current_phase FROM rooms
+            `SELECT status, current_phase, max_players FROM rooms
              WHERE code = ?`,
             [roomCode]
         );

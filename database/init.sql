@@ -48,6 +48,8 @@ CREATE TABLE players
     is_ready            BOOLEAN DEFAULT FALSE,
     is_muted            BOOLEAN DEFAULT FALSE,
     is_connected        BOOLEAN DEFAULT FALSE,
+    witch_heal          INT DEFAULT 1,
+    witch_poison        INT DEFAULT 1,
     protected_until_day INT,
     UNIQUE (player_id, room_code)
 );
