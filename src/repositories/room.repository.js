@@ -50,6 +50,7 @@ const RoomRepository = {
 
         return result?.[0];
     },
+
     async updateRooms(list) {
         const conn = await pool.getConnection();
 
@@ -116,6 +117,25 @@ const RoomRepository = {
             __raw: true,
             sql,
             params
+        }
+    },
+
+    async findExpiredPhases() {
+        const conn = await pool.getConnection();
+        try {
+            const [rows] = await conn.query(
+                `
+                SELECT code, current_phase
+                FROM rooms
+                WHERE status = 'PLAYING'
+                  AND phase_expires_at IS NOT NULL
+                  AND phase_expires_at <= NOW()
+                `
+            );
+
+            return rows;
+        } finally {
+            conn.release();
         }
     }
 };

@@ -60,6 +60,24 @@ const PlayerRepository = {
         return result;
     },
 
+    async checkRoleAlive(roomCode, role) {
+        const [rows] = await pool.query(
+            `
+                SELECT 1
+                FROM players
+                WHERE room_code = ?
+                  AND (role = ? OR initial_role = ?)
+                  AND is_alive = true
+                  AND is_ready = true
+                  AND is_connected = true
+                    LIMIT 1
+            `,
+            [roomCode, role, role]
+        );
+
+        return rows.length > 0;
+    },
+
     async updatePlayers(list) {
         const conn = await pool.getConnection(); // Lấy 1 connection duy nhất
 

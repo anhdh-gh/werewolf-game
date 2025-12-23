@@ -6,10 +6,9 @@ const ArrayUtil = require('../utils/array.util')
 const { ROLES } = require('../constants/roles.constant')
 const { STATUS } = require('../constants/status.constant')
 const { PHASE } = require('../constants/phase.constant')
-const EVENTS = require('../constants/events');
-const roomsCount = new Map()
-const phaseBarrier = require('../model/PhaseBarrierManager')
 const RoomService = require('../services/room.service')
+
+const PHASE_TIMEOUT = 300000;
 
 const PhaseService = {
 
@@ -19,6 +18,9 @@ const PhaseService = {
             async () => {
                 //
                 const players = await PlayerRepository.getPlayers(roomCode)
+                if(!players || players?.length < 4) {
+                    throw new AppError(ERROR_CODES.INVALID_REQUEST, "Players must be > 3")
+                }
 
                 // A. Các role cố định ban đầu (3 role)
                 let rolePool = [];
@@ -88,8 +90,56 @@ const PhaseService = {
                 //
                 return players;
             },
-            300_000
+            PHASE_TIMEOUT
         );
+    },
+
+    async getNextPhase(room, emit) {
+        //
+        if(!room || !room?.code || !room?.current_phase) {
+            return;
+        }
+
+        return await RoomService.runWithTimeout(
+            await RoomService.getRoomLock(room.code),
+            async () => {
+                //
+                const roomCurrent = await RoomRepository.getByCode(room.code);
+                if(roomCurrent?.current_phase !== room.current_phase) {
+                    return;
+                }
+
+                // Resolve
+                let data = null;
+                if(PHASE.ALL_VIEW_ROLE.key === roomCurrent.current_phase) {
+                    data = await PhaseService.resolveAllSleep()
+                }
+
+                //
+                if(!data || !data?.phase) {
+                    return;
+                }
+
+                // Next phase
+                emit(data)
+                await RoomRepository.updateRooms([
+                    {
+                        code: room.code,
+                        status: STATUS.PLAYING,
+                        current_phase: data.phase.key,
+                        current_day: await RoomRepository.raw('current_day + 1'),
+                        phase_expires_at: await RoomRepository.raw('TIMESTAMPADD(SECOND, ?, NOW())', [data.phase.time])
+                    }
+                ])
+            },
+            PHASE_TIMEOUT
+        );
+    },
+
+    async resolveAllSleep() {
+        return {
+            phase: PHASE.NIGHT_ALL_SLEEP
+        }
     }
 };
 

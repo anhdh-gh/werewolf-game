@@ -64,13 +64,11 @@ module.exports = (io, socket) => {
                     if (!socketId) return
 
                     io.to(socketId).emit(EVENTS.GAME_DATA_FLOW, {
-                        current_phase: PHASE.ALL_VIEW_ROLE.key,
-                        data: {
-                            role: player.role
-                        }
+                        role: player.role,
+                        phase: PHASE.ALL_VIEW_ROLE
                     })
                 })
-            })
+            }).catch(err => console.log(err))
         }
     }));
 

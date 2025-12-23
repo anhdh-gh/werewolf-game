@@ -80,12 +80,13 @@ const GameService = {
     async startGame(roomCode, handler) {
         //
         const players = await PhaseService.allViewRole(roomCode)
+        if(players) {
+            //
+            handler(players)
 
-        //
-        handler(players)
-
-        // Finally
-        phaseBarrier.clear(roomCode, PHASE.LOBBY.key)
+            // Finally
+            phaseBarrier.clear(roomCode, PHASE.LOBBY.key)
+        }
     }
 };
 
