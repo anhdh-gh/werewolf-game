@@ -32,12 +32,20 @@ module.exports = (io, socket) => {
 
     /**[ CONNECT_ROOM ]* */
     socket.on(EVENTS.CONNECT_ROOM, socketHandlerError(async (socket, payload, ack) => {
-       await GameService.connectRoom(socket.user.id, payload.room.code)
+        try {
+            await GameService.connectRoom(socket.user.id, payload.room.code)
+        } catch (err) {
+            userSocketMap.delete(socket.user.id);
+            return { disconnected: true }
+        }
     }));
 
     /**[ LEAVE_ROOM ]* */
     socket.on(EVENTS.LEAVE_ROOM, socketHandlerError(async (socket, payload, ack) => {
-        await GameService.leaveRoom(socket.user.id, payload.room.code)
+        try {
+            await GameService.leaveRoom(socket.user.id, payload.room.code)
+        } catch (err) {}
+        userSocketMap.delete(socket.user.id);
         return { disconnected: true }
     }));
 

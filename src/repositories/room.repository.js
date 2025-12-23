@@ -49,6 +49,74 @@ const RoomRepository = {
         );
 
         return result?.[0];
+    },
+    async updateRooms(list) {
+        const conn = await pool.getConnection();
+
+        try {
+            await conn.beginTransaction();
+
+            for (const item of list) {
+                const { code, ...fieldsData } = item;
+                if (!code) continue;
+
+                const fields = [];
+                const values = [];
+
+                for (const [key, value] of Object.entries(fieldsData)) {
+                    if (value === undefined) continue;
+
+                    // ✅ CASE 1: RAW SQL (TIMESTAMPADD, NOW, ...)
+                    if (value && value.__raw === true) {
+                        fields.push(`${key} = ${value.sql}`);
+                        if (Array.isArray(value.params)) {
+                            values.push(...value.params);
+                        }
+                        continue;
+                    }
+
+                    // ✅ CASE 2: Normal value
+                    fields.push(`${key} = ?`);
+
+                    if (value !== null && typeof value === 'object') {
+                        values.push(JSON.stringify(value));
+                    } else {
+                        values.push(value);
+                    }
+                }
+
+                if (fields.length === 0) continue;
+
+                values.push(code);
+
+                const sql = `
+                    UPDATE rooms
+                    SET ${fields.join(', ')}
+                    WHERE code = ?
+                `;
+
+                await conn.execute(sql, values);
+            }
+
+            await conn.commit();
+        } catch (err) {
+            try {
+                await conn.rollback();
+            } catch (rollbackErr) {
+                console.error('Rollback failed', rollbackErr);
+            }
+            throw err;
+        } finally {
+            conn.release();
+        }
+    },
+
+    async raw(sql, params = []) {
+        return {
+            __raw: true,
+            sql,
+            params
+        }
     }
 };
 
