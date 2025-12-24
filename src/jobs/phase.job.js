@@ -15,8 +15,13 @@ async function runRoomPhaseJob() {
         // Run all room phase resolutions in parallel
         await Promise.all(
             expiredRooms.map(room =>
-                PhaseService.getNextPhase(room, data => {
-                    io.to(room.code).emit(EVENTS.GAME_DATA_FLOW, data);
+                PhaseService.getNextPhase(
+                room,
+                data => io.to(room.code).emit(EVENTS.GAME_DATA_FLOW, data)
+                ).then(res => {
+                    if(!res) {
+                        io.in(room.code).disconnectSockets(true);
+                    }
                 })
             )
         );

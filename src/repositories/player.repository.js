@@ -60,10 +60,20 @@ const PlayerRepository = {
         return result;
     },
 
-    async checkRoleAlive(roomCode, role) {
+    async getRoles(roomCode) {
+        const [result] = await pool.query(
+            `SELECT DISTINCT initial_role
+             FROM players
+             WHERE room_code = ?`,
+            [roomCode]
+        );
+        return result;
+    },
+
+    async getRoleAlive(roomCode, role) {
         const [rows] = await pool.query(
             `
-                SELECT 1
+                SELECT role
                 FROM players
                 WHERE room_code = ?
                   AND (role = ? OR initial_role = ?)

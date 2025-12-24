@@ -51,6 +51,23 @@ const RoomRepository = {
         return result?.[0];
     },
 
+    async clearData(roomCode) {
+        if (!roomCode) return;
+
+        pool.getConnection()
+            .then(conn => {
+                return Promise.all([
+                    conn.query('DELETE FROM actions WHERE room_code = ?', [roomCode]),
+                    conn.query('DELETE FROM votes WHERE room_code = ?', [roomCode]),
+                    conn.query('DELETE FROM players WHERE room_code = ?', [roomCode]),
+                    conn.query('DELETE FROM rooms WHERE code = ?', [roomCode]),
+                ]).finally(() => conn.release());
+            })
+            .catch(err => {
+                console.error('clearData failed', err);
+            });
+    },
+
     async updateRooms(list) {
         const conn = await pool.getConnection();
 

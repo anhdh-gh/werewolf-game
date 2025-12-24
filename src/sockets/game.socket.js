@@ -3,6 +3,7 @@ const ERROR_CODES = require('../constants/errorCode.constants');
 const GameService = require('../services/game.service');
 const { socketHandlerError } = require('../utils/socketError.wrapper');
 const {PHASE} = require("../constants/phase.constant");
+const { ACTIONS } = require('../constants/action.constant')
 
 // key: userId, value: socket.id
 const userSocketMap = new Map();
@@ -65,7 +66,12 @@ module.exports = (io, socket) => {
 
                     io.to(socketId).emit(EVENTS.GAME_DATA_FLOW, {
                         role: player.role,
-                        phase: PHASE.ALL_VIEW_ROLE
+                        phase: PHASE.ALL_VIEW_ROLE,
+                        message: 'Cả làng xem chức năng của mình đi',
+                        event: {
+                            role: player.role,
+                            action: ACTIONS.VIEW
+                        }
                     })
                 })
             }).catch(err => console.log(err))

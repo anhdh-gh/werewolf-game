@@ -5,7 +5,8 @@ const ERROR_CODES = require('../constants/errorCode.constants');
 const ArrayUtil = require('../utils/array.util')
 const { ROLES } = require('../constants/roles.constant')
 const { STATUS } = require('../constants/status.constant')
-const { PHASE } = require('../constants/phase.constant')
+const { PHASE, PHASE_FLOW } = require('../constants/phase.constant')
+const { ACTIONS } = require('../constants/action.constant')
 const RoomService = require('../services/room.service')
 
 const PHASE_TIMEOUT = 300000;
@@ -100,60 +101,97 @@ const PhaseService = {
             return;
         }
 
+        //
+        const roles = await PlayerRepository.getRoles(room.code)
+        if(!roles || roles?.length < 1) {
+            RoomRepository.clearData(room.code)
+            return;
+        }
+
+        //
         return await RoomService.runWithTimeout(
             await RoomService.getRoomLock(room.code),
             async () => {
-                //
+                // Check phase
                 const roomCurrent = await RoomRepository.getByCode(room.code);
                 if(roomCurrent?.current_phase !== room.current_phase) {
-                    return;
+                    return true;
                 }
+                let currentPhaseTempt = roomCurrent.current_phase
 
-                // Resolve
-                let data = null;
-                if(PHASE.ALL_VIEW_ROLE.key === roomCurrent.current_phase) {
-                    data = await PhaseService.resolveAllSleep()
-                }
-                if(PHASE.NIGHT_ALL_SLEEP.key === roomCurrent.current_phase) {
-                    data = await PhaseService.resolveSeer(room.code)
+                // Current handle
+                const curPhase = PHASE_FLOW.filter(p => p.next.key === currentPhaseTempt)?.[0];
+
+                // Next handle
+                let nextPhase;
+                let data = {}
+                let roleAlive
+                for(const pi in PHASE_FLOW) {
+                    //
+                    nextPhase = PHASE_FLOW.filter(p => p.phase.key === currentPhaseTempt)?.[0];
+                    if (!nextPhase) {
+                        RoomRepository.clearData(room.code)
+                        return;
+                    }
+                    data.phase = nextPhase.next.key;
+                    data.message = nextPhase.next.message;
+                    data.time = nextPhase.time;
+                    data.event = {
+                        role: nextPhase?.role?.key || ROLES.ALL.key,
+                        action: ACTIONS.WAKEUP
+                    }
+
+                    //
+                    if(!nextPhase?.role) {
+                        break;
+                    }
+
+                    //
+                    if(roles.filter(r => r.initial_role === nextPhase.role.key).length < 1) {
+                        currentPhaseTempt = data.phase
+                        continue;
+                    }
+
+                    //
+                    roleAlive = await PlayerRepository.getRoleAlive(room.code, nextPhase?.role.key);
+                    if(!roleAlive) {
+                        data.time = 2 // TODO: Change
+                    }
+                    break;
                 }
 
                 //
                 if(!data || !data?.phase) {
+                    RoomRepository.clearData(room.code)
                     return;
                 }
 
+                //
+                if(curPhase && curPhase?.role && curPhase?.role.key !== data.event.role) {
+                    emit({
+                        message: `${curPhase.role.label} đi ngủ`,
+                        event: {
+                            role: curPhase.role.key,
+                            action: ACTIONS.SLEEP
+                        }
+                    })
+                }
+
                 // Next phase
-                emit(data)
                 await RoomRepository.updateRooms([
                     {
                         code: room.code,
                         status: STATUS.PLAYING,
-                        current_phase: data.phase.key,
-                        current_day: await RoomRepository.raw('current_day + 1'),
-                        phase_expires_at: await RoomRepository.raw('TIMESTAMPADD(SECOND, ?, NOW())', [data.phase.time])
+                        current_phase: data?.phase,
+                        current_day: await RoomRepository.raw(`current_day + ${data?.phase === PHASE.NIGHT_ALL_SLEEP ? 1 : 0}`),
+                        phase_expires_at: await RoomRepository.raw('TIMESTAMPADD(SECOND, ?, NOW())', [data?.time])
                     }
                 ])
+                emit(data)
+                return true
             },
             PHASE_TIMEOUT
         );
-    },
-
-    async resolveAllSleep() {
-        return {
-            phase: PHASE.NIGHT_ALL_SLEEP
-        }
-    },
-
-    async resolveSeer(roomCode) {
-        const isAlive = await PlayerRepository.checkRoleAlive(roomCode, ROLES.SEER.key);
-        return {
-            phase: {
-                key: PHASE.NIGHT_SEER.key,
-                message: PHASE.NIGHT_SEER.message,
-                time: isAlive ? PHASE.NIGHT_SEER.time_alive : PHASE.NIGHT_SEER.time
-            }
-        }
     }
 };
 
