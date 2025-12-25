@@ -77,6 +77,16 @@ const GameService = {
         return phaseBarrier.register(roomCode, PHASE.LOBBY.key, room.max_players, player.id)
     },
 
+    /**[ PLAYER_INFO ]* */
+    async playerInfo(playerIds, roomCode) {
+        const room = await RoomRepository.getByCode(roomCode)
+        if(!room) {
+            throw new AppError(ERROR_CODES.ROOM_NOT_FOUND)
+        }
+        //
+        return await PlayerRepository.getPlayerInfo(roomCode, playerIds);
+    },
+
     async startGame(roomCode, handler) {
         //
         const players = await PhaseService.allViewRole(roomCode)

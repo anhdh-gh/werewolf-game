@@ -78,6 +78,11 @@ module.exports = (io, socket) => {
         }
     }));
 
+    /**[ PLAYER_INFO ]* */
+    socket.on(EVENTS.PLAYER_INFO, socketHandlerError(async (socket, payload, ack) => {
+        return { data: { players: await GameService.playerInfo(payload.player.ids, payload.room.code) } }
+    }));
+
     /**[ ERROR ]* */
     socket.on(EVENTS.ERROR, err => {
         console.error('Socket error:', err);

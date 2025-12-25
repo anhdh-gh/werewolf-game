@@ -62,6 +62,21 @@ const PlayerRepository = {
         return result;
     },
 
+    async getPlayerInfo(roomCode, playerIds) {
+        //
+        if(!playerIds) {
+            return []
+        }
+
+        //
+        const [result] = await pool.query(
+            `SELECT player_id, username, role, initial_role, is_alive, is_ready, is_muted, is_connected, witch_heal, witch_poison, protected_until_day FROM players
+             WHERE room_code = ? and player_id in (?)`,
+            [roomCode, playerIds]
+        );
+        return result;
+    },
+
     async getRoles(roomCode) {
         const [result] = await pool.query(
             `SELECT DISTINCT initial_role

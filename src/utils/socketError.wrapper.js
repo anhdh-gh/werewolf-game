@@ -10,7 +10,7 @@ module.exports.socketHandlerError = (handler) => {
             }
             const res = await handler(this, payload, ack);
             if (typeof ack === 'function') {
-                ack({ code: ERROR_CODES.SUCCESS.code, message: ERROR_CODES.SUCCESS.message });
+                ack({ code: ERROR_CODES.SUCCESS.code, message: ERROR_CODES.SUCCESS.message, data: res && res?.data ? res?.data : null });
             }
             if(res && res?.disconnected) {
                 if(payload && payload?.room && payload?.room?.code) {

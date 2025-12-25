@@ -258,6 +258,8 @@ const PhaseService = {
 
         // TODO: Remove data thừa
 
+        // TODO: Update result
+
         // Next phase
         await RoomRepository.updateRooms([
             {
