@@ -41,7 +41,7 @@ CREATE TABLE players
 (
     id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
     player_id           BIGINT      NOT NULL,
-    username      VARCHAR(50) UNIQUE,
+    username      VARCHAR(50),
     room_code           VARCHAR(10) NOT NULL,
     role                VARCHAR(30),
     initial_role        VARCHAR(30),
