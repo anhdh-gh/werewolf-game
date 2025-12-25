@@ -1,4 +1,4 @@
-// app/signup/SignupForm.tsx
+/* eslint-disable jsx-a11y/label-has-associated-control */
 "use client";
 
 import { useState } from 'react';
@@ -7,7 +7,6 @@ import { useRouter } from 'next/navigation';
 import s from './signup.module.css';
 
 export default function SignupForm() {
-  // 1. Giữ nguyên state lưu dữ liệu
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -16,7 +15,7 @@ export default function SignupForm() {
   });
 
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // 2. Thêm state loading
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -28,9 +27,8 @@ export default function SignupForm() {
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(""); // Xóa lỗi cũ trước khi chạy mới
+    setError("");
 
-    // --- Validate Client ---
     if (formData.password !== formData.confirmPassword) {
         setError("Mật khẩu nhập lại không khớp!");
         return;
@@ -41,18 +39,15 @@ export default function SignupForm() {
         return;
     }
 
-    // --- BẮT ĐẦU GỌI API ---
     setIsLoading(true);
 
     try {
-      // Thay URL này bằng API Backend thật của bạn
       const res = await fetch('https://werewolf.anhdh.net/api/v1/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          // Chỉ gửi những gì Backend cần (bỏ confirmPassword đi)
           username: formData.username,
           email: formData.email,
           password: formData.password
@@ -62,41 +57,41 @@ export default function SignupForm() {
       const data = await res.json();
 
       if (!res.ok) {
-        // Nếu Server báo lỗi (VD: Email trùng) thì ném lỗi xuống catch
         throw new Error(data.message || 'Đăng ký thất bại!');
       }
 
-      // --- THÀNH CÔNG ---
       alert(`Chào mừng ${formData.username}! Hãy đăng nhập để vào hang.`);
       router.push('/signin');
 
     } catch (err: any) {
-      // Bắt lỗi và hiện lên màn hình
       console.error(err);
       setError(err.message || "Lỗi kết nối Server!");
     } finally {
-      setIsLoading(false); // Tắt loading dù thành công hay thất bại
+      setIsLoading(false);
     }
   };
 
   return (
     <form onSubmit={handleSignup}>
-      {/* Hiện thông báo lỗi màu đỏ */}
       {error && <div className={s.errorMsg}>⚠️ {error}</div>}
 
+      {/* Đã thêm htmlFor và id đầy đủ */}
+      
       <div className={s.inputGroup}>
-        <label className={s.label}>Tên nhân vật</label>
+        <label htmlFor="reg-user" className={s.label}>Tên nhân vật</label>
         <input 
+            id="reg-user"
             name="username" type="text" placeholder="Ví dụ: Sói Cô Đơn"
             className={s.inputField} required
             onChange={handleChange}
-            disabled={isLoading} // Khóa khi đang tải
+            disabled={isLoading}
         />
       </div>
 
       <div className={s.inputGroup}>
-        <label className={s.label}>Email</label>
+        <label htmlFor="reg-email" className={s.label}>Email</label>
         <input 
+            id="reg-email"
             name="email" type="email" placeholder="soi@gmail.com"
             className={s.inputField} required
             onChange={handleChange}
@@ -105,8 +100,9 @@ export default function SignupForm() {
       </div>
 
       <div className={s.inputGroup}>
-        <label className={s.label}>Mật khẩu</label>
+        <label htmlFor="reg-pass" className={s.label}>Mật khẩu</label>
         <input 
+            id="reg-pass"
             name="password" type="password" 
             className={s.inputField} required
             onChange={handleChange}
@@ -115,8 +111,9 @@ export default function SignupForm() {
       </div>
 
       <div className={s.inputGroup}>
-        <label className={s.label}>Nhập lại mật khẩu</label>
+        <label htmlFor="reg-confirm" className={s.label}>Nhập lại mật khẩu</label>
         <input 
+            id="reg-confirm"
             name="confirmPassword" type="password" 
             className={s.inputField} required
             onChange={handleChange}
