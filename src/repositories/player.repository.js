@@ -21,24 +21,26 @@ const PlayerRepository = {
         );
     },
 
-    async connectRoom(playerId, roomCode) {
+    async connectRoom(player, roomCode) {
         await pool.query(
-            `INSERT INTO players(player_id, room_code, is_connected)
-             VALUES (?, ?, true)
+            `INSERT INTO players(player_id, username, room_code, is_connected)
+             VALUES (?, ?, ?, true)
              ON DUPLICATE KEY UPDATE
+                username = VALUES(username),
                 is_connected = true`,
-            [playerId, roomCode]
+            [player.id, player.username, roomCode]
         );
     },
 
-    async playerReady(playerId, roomCode) {
+    async playerReady(player, roomCode) {
         await pool.query(
-            `INSERT INTO players(player_id, room_code, is_ready, is_connected)
-             VALUES (?, ?, true, true)
+            `INSERT INTO players(player_id, username, room_code, is_ready, is_connected)
+             VALUES (?, ?, ?, true, true)
              ON DUPLICATE KEY UPDATE
+               username = VALUES(username),
                is_connected = true,
                is_ready = true`,
-            [playerId, roomCode]
+            [player.id, player.username, roomCode]
         );
     },
 

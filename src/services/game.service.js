@@ -22,7 +22,7 @@ const GameService = {
     },
 
     /**[ CONNECT_ROOM ]* */
-    async connectRoom(playerId, roomCode) {
+    async connectRoom(player, roomCode) {
         //
         const room = await RoomRepository.getByCode(roomCode)
         if(!room) {
@@ -35,7 +35,7 @@ const GameService = {
         }
 
         //
-        await PlayerRepository.connectRoom(playerId, roomCode)
+        await PlayerRepository.connectRoom(player, roomCode)
     },
 
     /**[ LEAVE_ROOM ]* */
@@ -59,7 +59,7 @@ const GameService = {
     },
 
     /**[ PLAYER_READY ]* */
-    async playerReady(playerId, roomCode) {
+    async playerReady(player, roomCode) {
         const room = await RoomRepository.getByCode(roomCode)
         if(!room) {
             throw new AppError(ERROR_CODES.ROOM_NOT_FOUND)
@@ -71,10 +71,10 @@ const GameService = {
         }
 
         //
-        await PlayerRepository.playerReady(playerId, roomCode);
+        await PlayerRepository.playerReady(player, roomCode);
 
         //
-        return phaseBarrier.register(roomCode, PHASE.LOBBY.key, room.max_players, playerId)
+        return phaseBarrier.register(roomCode, PHASE.LOBBY.key, room.max_players, player.id)
     },
 
     async startGame(roomCode, handler) {

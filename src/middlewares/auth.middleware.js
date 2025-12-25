@@ -16,7 +16,8 @@ module.exports = (req, res, next) => {
     try {
         const decoded = jwtUtil.verifyAccessToken(token);
         req.user = {
-            id: decoded.sub
+            id: decoded.sub,
+            username: decoded.username
         };
         next();
     } catch (err) {

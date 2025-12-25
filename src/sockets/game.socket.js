@@ -34,7 +34,7 @@ module.exports = (io, socket) => {
     /**[ CONNECT_ROOM ]* */
     socket.on(EVENTS.CONNECT_ROOM, socketHandlerError(async (socket, payload, ack) => {
         try {
-            await GameService.connectRoom(socket.user.id, payload.room.code)
+            await GameService.connectRoom(socket.user, payload.room.code)
         } catch (err) {
             userSocketMap.delete(socket.user.id);
             return { disconnected: true }
@@ -52,7 +52,7 @@ module.exports = (io, socket) => {
 
     /**[ PLAYER_READY ]* */
     socket.on(EVENTS.PLAYER_READY, socketHandlerError(async (socket, payload, ack) => {
-        const allReady = await GameService.playerReady(socket.user.id, payload.room.code);
+        const allReady = await GameService.playerReady(socket.user, payload.room.code);
         if(allReady) {
             GameService.startGame(payload.room.code, (players) => {
                 if(!players || players.length < 1) {

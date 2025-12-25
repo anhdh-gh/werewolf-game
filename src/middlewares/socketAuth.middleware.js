@@ -13,7 +13,8 @@ module.exports = (socket, next) => {
         const decoded = jwtUtil.verifyAccessToken(token);
 
         socket.user = {
-            id: decoded.sub
+            id: decoded.sub,
+            username: decoded.username
         };
 
         next();
