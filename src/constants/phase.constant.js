@@ -7,7 +7,7 @@ const PHASE = {
 
     ALL_VIEW_ROLE: {
         key: 'ALL_VIEW_ROLE',
-        time: 3
+        time: 3 // TODO: Change
     },
 
     NIGHT_ALL_SLEEP: {
@@ -61,6 +61,7 @@ const PHASE = {
     },
 };
 
+// TODO: Change
 const PHASE_FLOW = [
     {
         phase: PHASE.ALL_VIEW_ROLE,

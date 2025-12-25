@@ -169,10 +169,10 @@ const PhaseService = {
                 //
                 if(curPhase && curPhase?.role && curPhase?.role.key !== data.event.role) {
                     emit({
-                        message: `${curPhase.role.label} đi ngủ`,
+                        message: `${curPhase.role.label} ${PHASE.DAY_DISCUSSION.key === curPhase.phase.key ? 'thức dậy' : 'đi ngủ'}`,
                         event: {
                             role: curPhase.role.key,
-                            action: ACTIONS.SLEEP
+                            action: PHASE.DAY_DISCUSSION.key === curPhase.phase.key ? ACTIONS.WAKEUP : ACTIONS.SLEEP
                         }
                     })
                 }
