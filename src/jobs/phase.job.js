@@ -30,6 +30,21 @@ async function runRoomPhaseJob() {
     }
 }
 
+async function clearRoom(rooms) {
+    try {
+        if (!rooms.length) return;
+
+        // Run all room phase resolutions in parallel
+        await Promise.all(
+            rooms.map(room =>
+                RoomRepository.clearData(room.code)
+            )
+        );
+    } catch (err) {
+        console.error('[ClearRoom]', err);
+    }
+}
+
 function startRoomPhaseJob() {
     async function loop() {
         await runRoomPhaseJob();
@@ -39,4 +54,31 @@ function startRoomPhaseJob() {
     loop(); // start once
 }
 
-module.exports = { startRoomPhaseJob };
+function startClearRoomJob() {
+    async function loop() {
+        await clearRoom(await RoomRepository.findRoomsCreatedOverHours(8));
+        setTimeout(loop, 1800000);
+    }
+
+    loop(); // start once
+}
+
+function startClearRoomDisconnectJob() {
+    async function loop() {
+        await clearRoom(await RoomRepository.findRoomsAllDisconnected());
+        setTimeout(loop, 900000);
+    }
+
+    loop(); // start once
+}
+
+function startClearRoomNotPlayerJob() {
+    async function loop() {
+        await clearRoom(await RoomRepository.findEmptyRoomsCreatedOverHours(1));
+        setTimeout(loop, 1200000);
+    }
+
+    loop(); // start once
+}
+
+module.exports = { startRoomPhaseJob, startClearRoomJob, startClearRoomDisconnectJob, startClearRoomNotPlayerJob };

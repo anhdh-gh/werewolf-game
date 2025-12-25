@@ -147,9 +147,67 @@ const RoomRepository = {
                 WHERE status = 'PLAYING'
                   AND phase_expires_at IS NOT NULL
                   AND phase_expires_at <= NOW()
+                LIMIT 20
                 `
             );
 
+            return rows;
+        } finally {
+            conn.release();
+        }
+    },
+
+    async findRoomsCreatedOverHours(hours) {
+        const conn = await pool.getConnection();
+        try {
+            const [rows] = await conn.query(
+                `
+                    SELECT code
+                    FROM rooms
+                    WHERE created_at <= NOW() - INTERVAL ? HOUR
+                    LIMIT 20
+                `,
+                [hours]
+            );
+            return rows;
+        } finally {
+            conn.release();
+        }
+    },
+
+    async findRoomsAllDisconnected(limit = 20) {
+        const conn = await pool.getConnection();
+        try {
+            const [rows] = await conn.query(
+                `
+                    SELECT room_code as code
+                    FROM players
+                    GROUP BY room_code
+                    HAVING SUM(is_connected = 1) = 0 LIMIT ?
+                `,
+                [limit]
+            );
+            return rows;
+        } finally {
+            conn.release();
+        }
+    },
+
+    async findEmptyRoomsCreatedOverHours(hours, limit = 20) {
+        const conn = await pool.getConnection();
+        try {
+            const [rows] = await conn.query(
+                `
+                    SELECT r.code as code
+                    FROM rooms r
+                    WHERE r.created_at <= DATE_SUB(NOW(), INTERVAL ? HOUR)
+                      AND NOT EXISTS (SELECT 1
+                                      FROM players p
+                                      WHERE p.room_code = r.code)
+                        LIMIT ?
+                `,
+                [hours, limit]
+            );
             return rows;
         } finally {
             conn.release();
