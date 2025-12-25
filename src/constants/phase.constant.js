@@ -2,12 +2,14 @@ const { ROLES } = require('../constants/roles.constant')
 
 const PHASE = {
     LOBBY: {
-        key: 'LOBBY'
+        key: 'LOBBY',
+        message: 'Cả làng sẵn sàng đê'
     },
 
     ALL_VIEW_ROLE: {
         key: 'ALL_VIEW_ROLE',
-        time: 3 // TODO: Change
+        time: 3, // TODO: Change
+        message: 'Cả làng xem chức năng của mình đê',
     },
 
     NIGHT_ALL_SLEEP: {
@@ -52,12 +54,14 @@ const PHASE = {
 
     DAY_DISCUSSION: {
         key: 'DAY_DISCUSSION',
-        message: 'Cả làng thức dậy, đêm qua'
+        message: 'Cả làng thức dậy',
+        time: 10, // TODO: Change
     },
 
     END: {
         key: 'END',
-        message: 'Kết thúc phe thắng cuộc là:'
+        message: 'Kết thúc phe thắng cuộc là: ',
+        time: 3, // TODO: Change
     },
 };
 
@@ -113,6 +117,11 @@ const PHASE_FLOW = [
     {
         phase: PHASE.NIGHT_CURSED,
         next: PHASE.DAY_DISCUSSION,
+        time: 3
+    },
+    {
+        phase: PHASE.END,
+        next: PHASE.LOBBY,
         time: 3
     }
 ]

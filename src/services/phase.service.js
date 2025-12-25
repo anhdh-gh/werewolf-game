@@ -120,12 +120,21 @@ const PhaseService = {
                 let currentPhaseTempt = roomCurrent.current_phase
 
                 // Current handle
-                const curPhase = PHASE_FLOW.filter(p => p.next.key === currentPhaseTempt)?.[0];
+                let curPhase = PHASE_FLOW.filter(p => p.next.key === currentPhaseTempt)?.[0];
+                if(curPhase && PHASE.DAY_DISCUSSION.key === curPhase?.next?.key) {
+                    // Check end
+                    if(await PhaseService.checkEnd(room.code, roles, emit)) {
+                        return true;
+                    }
+
+                    // Handle next night
+                    return await PhaseService.handleNextNight(room.code, roles, emit);
+                }
 
                 // Next handle
                 let nextPhase;
                 let data = {}
-                let roleAlive
+                let isRoleAlive
                 for(const pi in PHASE_FLOW) {
                     //
                     nextPhase = PHASE_FLOW.filter(p => p.phase.key === currentPhaseTempt)?.[0];
@@ -153,8 +162,8 @@ const PhaseService = {
                     }
 
                     //
-                    roleAlive = await PlayerRepository.getRoleAlive(room.code, nextPhase?.role.key);
-                    if(!roleAlive) {
+                    isRoleAlive = await PlayerRepository.isRoleAlive(room.code, [nextPhase?.role.key]);
+                    if(!isRoleAlive) {
                         data.time = 2 // TODO: Change
                     }
                     break;
@@ -192,6 +201,75 @@ const PhaseService = {
             },
             PHASE_TIMEOUT
         );
+    },
+
+    async checkEnd(roomCode, roles, emit) {
+        // WEREWOLF
+        let numWolf = await PlayerRepository.countRoleAlive(roomCode, ROLES.WEREWOLF.key)
+        if(numWolf < 1) {
+            return await PhaseService.handleEnd(roomCode, emit, ROLES.VILLAGER.label)
+        }
+        let numVillager = await PlayerRepository.countRoleRemainAlive(roomCode, [ROLES.WEREWOLF.key, ROLES.TANNER.key])
+        if(numWolf >= numVillager) {
+            return await PhaseService.handleEnd(roomCode, emit, ROLES.WEREWOLF.label)
+        }
+
+        // TANNER
+        if(roles.filter(r => r.initial_role === ROLES.TANNER.key).length >= 1
+            && !await PlayerRepository.isRoleAlive(roomCode, [ROLES.TANNER.key])) {
+            return await PhaseService.handleEnd(roomCode, emit, ROLES.TANNER.label)
+        }
+
+        //
+        return false
+    },
+
+    async handleEnd(roomCode, emit, roleWin) {
+        //
+        if(!roleWin) {
+            return false;
+        }
+
+        //
+        await RoomRepository.updateRooms([
+            {
+                code: roomCode,
+                status: STATUS.ENDED,
+                current_phase: PHASE.END.key,
+                phase_expires_at: await RoomRepository.raw('TIMESTAMPADD(SECOND, ?, NOW())', [PHASE.END?.time])
+            }
+        ])
+
+        //
+        emit({
+            phase: PHASE.END.key,
+            message: PHASE.END.message + roleWin,
+            event: {
+                role: ROLES.ALL.key,
+                action: ACTIONS.VIEW
+            }
+        })
+
+        return true
+    },
+
+    async handleNextNight(roomCode, roles, emit) {
+        // TODO: Count số người chết và ai - ai là người bị câm, trả về data
+
+        // TODO: Remove data thừa
+
+        // Next phase
+        await RoomRepository.updateRooms([
+            {
+                code: roomCode,
+                status: STATUS.PLAYING,
+                current_phase: PHASE.ALL_VIEW_ROLE.key,
+                phase_expires_at: await RoomRepository.raw('TIMESTAMPADD(SECOND, ?, NOW())', [PHASE.DAY_DISCUSSION?.time])
+            }
+        ])
+
+        //
+        return true
     }
 };
 

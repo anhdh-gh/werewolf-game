@@ -72,22 +72,56 @@ const PlayerRepository = {
         return result;
     },
 
-    async getRoleAlive(roomCode, role) {
+    async isRoleAlive(roomCode, roles) {
         const [rows] = await pool.query(
             `
-                SELECT role
+                SELECT 1
                 FROM players
                 WHERE room_code = ?
-                  AND (role = ? OR initial_role = ?)
-                  AND is_alive = true
-                  AND is_ready = true
-                  AND is_connected = true
+                  AND initial_role IN (?)
+                  AND is_alive = TRUE
+                  AND is_ready = TRUE
+                  AND is_connected = TRUE
                     LIMIT 1
             `,
-            [roomCode, role, role]
+            [roomCode, roles]
         );
 
         return rows.length > 0;
+    },
+
+    async countRoleAlive(roomCode, role) {
+        const [rows] = await pool.query(
+            `
+            SELECT COUNT(*) AS num
+            FROM players
+            WHERE room_code = ?
+              AND role = ?
+              AND is_alive = TRUE
+              AND is_ready = TRUE
+              AND is_connected = TRUE
+            `,
+            [roomCode, role]
+        );
+
+        return rows[0].num;
+    },
+
+    async countRoleRemainAlive(roomCode, roles) {
+        const [rows] = await pool.query(
+            `
+            SELECT COUNT(*) AS num
+            FROM players
+            WHERE room_code = ?
+              AND role NOT IN (?)
+              AND is_alive = TRUE
+              AND is_ready = TRUE
+              AND is_connected = TRUE
+            `,
+            [roomCode, roles]
+        );
+
+        return rows[0].num;
     },
 
     async updatePlayers(list) {

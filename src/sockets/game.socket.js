@@ -66,8 +66,8 @@ module.exports = (io, socket) => {
 
                     io.to(socketId).emit(EVENTS.GAME_DATA_FLOW, {
                         role: player.role,
-                        phase: PHASE.ALL_VIEW_ROLE,
-                        message: 'Cả làng xem chức năng của mình đi',
+                        phase: PHASE.ALL_VIEW_ROLE.key,
+                        message: PHASE.ALL_VIEW_ROLE.message,
                         event: {
                             role: player.role,
                             action: ACTIONS.VIEW

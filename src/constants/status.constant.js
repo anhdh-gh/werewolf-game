@@ -7,6 +7,7 @@ const STATUS = {
     ALIVE: 'ALIVE',
     JOINED: 'JOINED',
     WAITING: 'WAITING',
+    ENDED: 'ENDED',
     PLAYING: 'PLAYING'
 };
 

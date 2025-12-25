@@ -1,7 +1,8 @@
 const ACTIONS = {
     SLEEP: 'SLEEP',
     WAKEUP: 'WAKEUP',
-    VIEW: 'VIEW'
+    VIEW: 'VIEW',
+    ENDED: 'ENDED'
 };
 
 module.exports = {

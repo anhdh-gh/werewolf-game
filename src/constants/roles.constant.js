@@ -37,6 +37,7 @@ const ROLES = {
     VILLAGER: {
         key: 'VILLAGER',
         team: TEAMS.VILLAGE,
+        label: 'Dân làng',
     },
 
     CURSED: {
