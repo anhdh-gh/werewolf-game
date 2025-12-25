@@ -4,10 +4,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import s from './signup.module.css'; // Import CSS module
+import s from './signup.module.css';
 
 export default function SignupForm() {
-  // Các biến lưu dữ liệu nhập
+  // 1. Giữ nguyên state lưu dữ liệu
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -16,9 +16,9 @@ export default function SignupForm() {
   });
 
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false); // 2. Thêm state loading
   const router = useRouter();
 
-  // Hàm cập nhật state khi gõ phím (Viết gộp cho gọn)
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
         ...formData,
@@ -26,33 +26,63 @@ export default function SignupForm() {
     });
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // 1. Kiểm tra mật khẩu trùng khớp
+    setError(""); // Xóa lỗi cũ trước khi chạy mới
+
+    // --- Validate Client ---
     if (formData.password !== formData.confirmPassword) {
-        setError("❌ Mật khẩu nhập lại không khớp!");
+        setError("Mật khẩu nhập lại không khớp!");
         return;
     }
 
-    // 2. Kiểm tra độ dài mật khẩu
     if (formData.password.length < 6) {
-        setError("❌ Mật khẩu phải dài hơn 6 ký tự!");
+        setError("Mật khẩu phải dài hơn 6 ký tự!");
         return;
     }
 
-    // 3. Nếu ngon lành -> Gửi API (Giả lập)
-    console.log("Dữ liệu đăng ký:", formData);
-    alert("Đăng ký thành công! Chào mừng Sói mới.");
-    
-    // Chuyển hướng về trang đăng nhập
-    router.push('/signin');
+    // --- BẮT ĐẦU GỌI API ---
+    setIsLoading(true);
+
+    try {
+      // Thay URL này bằng API Backend thật của bạn
+      const res = await fetch('https://werewolf.anhdh.net/api/v1/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          // Chỉ gửi những gì Backend cần (bỏ confirmPassword đi)
+          username: formData.username,
+          email: formData.email,
+          password: formData.password
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        // Nếu Server báo lỗi (VD: Email trùng) thì ném lỗi xuống catch
+        throw new Error(data.message || 'Đăng ký thất bại!');
+      }
+
+      // --- THÀNH CÔNG ---
+      alert(`Chào mừng ${formData.username}! Hãy đăng nhập để vào hang.`);
+      router.push('/signin');
+
+    } catch (err: any) {
+      // Bắt lỗi và hiện lên màn hình
+      console.error(err);
+      setError(err.message || "Lỗi kết nối Server!");
+    } finally {
+      setIsLoading(false); // Tắt loading dù thành công hay thất bại
+    }
   };
 
   return (
     <form onSubmit={handleSignup}>
-      {/* Hiện lỗi nếu có */}
-      {error && <div className={s.errorMsg}>{error}</div>}
+      {/* Hiện thông báo lỗi màu đỏ */}
+      {error && <div className={s.errorMsg}>⚠️ {error}</div>}
 
       <div className={s.inputGroup}>
         <label className={s.label}>Tên nhân vật</label>
@@ -60,15 +90,17 @@ export default function SignupForm() {
             name="username" type="text" placeholder="Ví dụ: Sói Cô Đơn"
             className={s.inputField} required
             onChange={handleChange}
+            disabled={isLoading} // Khóa khi đang tải
         />
       </div>
 
       <div className={s.inputGroup}>
-        <label className={s.label}>Email (để lấy lại pass)</label>
+        <label className={s.label}>Email</label>
         <input 
             name="email" type="email" placeholder="soi@gmail.com"
             className={s.inputField} required
             onChange={handleChange}
+            disabled={isLoading}
         />
       </div>
 
@@ -78,6 +110,7 @@ export default function SignupForm() {
             name="password" type="password" 
             className={s.inputField} required
             onChange={handleChange}
+            disabled={isLoading}
         />
       </div>
 
@@ -87,11 +120,17 @@ export default function SignupForm() {
             name="confirmPassword" type="password" 
             className={s.inputField} required
             onChange={handleChange}
+            disabled={isLoading}
         />
       </div>
 
-      <button type="submit" className={s.submitButton}>
-        📝 Tạo Tài Khoản
+      <button 
+        type="submit" 
+        className={s.submitButton}
+        disabled={isLoading}
+        style={{ opacity: isLoading ? 0.7 : 1, cursor: isLoading ? 'wait' : 'pointer' }}
+      >
+          {isLoading ? 'Đang Khắc Tên...' : 'Tạo Tài Khoản'}
       </button>
       
       <div style={{marginTop: '15px', fontSize: '0.9rem', color: '#aaa'}}>
