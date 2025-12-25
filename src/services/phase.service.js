@@ -164,7 +164,7 @@ const PhaseService = {
                     //
                     isRoleAlive = await PlayerRepository.isRoleAlive(room.code, [nextPhase?.role.key]);
                     if(!isRoleAlive) {
-                        data.time = 2 // TODO: Change
+                        data.time = 10 // TODO: Change
                     }
                     break;
                 }

@@ -8,7 +8,7 @@ const PHASE = {
 
     ALL_VIEW_ROLE: {
         key: 'ALL_VIEW_ROLE',
-        time: 3, // TODO: Change
+        time: 20, // TODO: Change
         message: 'Cả làng xem chức năng của mình đê',
     },
 
@@ -55,13 +55,13 @@ const PHASE = {
     DAY_DISCUSSION: {
         key: 'DAY_DISCUSSION',
         message: 'Cả làng thức dậy',
-        time: 10, // TODO: Change
+        time: 20, // TODO: Change
     },
 
     END: {
         key: 'END',
         message: 'Kết thúc phe thắng cuộc là: ',
-        time: 3, // TODO: Change
+        time: 20, // TODO: Change
     },
 };
 
@@ -70,59 +70,59 @@ const PHASE_FLOW = [
     {
         phase: PHASE.ALL_VIEW_ROLE,
         next: PHASE.NIGHT_ALL_SLEEP,
-        time: 3
+        time: 10
     },
     {
         phase: PHASE.NIGHT_ALL_SLEEP,
         next: PHASE.NIGHT_SEER,
-        time: 3,
+        time: 60,
         role: ROLES.SEER
     },
     {
         phase: PHASE.NIGHT_SEER,
         next: PHASE.NIGHT_GUARD,
-        time: 3,
+        time: 60,
         role: ROLES.BODYGUARD
     },
     {
         phase: PHASE.NIGHT_GUARD,
         next: PHASE.NIGHT_SILENCED,
-        time: 3,
+        time: 60,
         role: ROLES.SILENCED
     },
     {
         phase: PHASE.NIGHT_SILENCED,
         next: PHASE.NIGHT_WOLF,
-        time: 3,
+        time: 120,
         role: ROLES.WEREWOLF
     },
     {
         phase: PHASE.NIGHT_WOLF,
         next: PHASE.NIGHT_WITCH_SAVE,
-        time: 3,
+        time: 60,
         role: ROLES.WITCH
     },
     {
         phase: PHASE.NIGHT_WITCH_SAVE,
         next: PHASE.NIGHT_WITCH_KILL,
-        time: 3,
+        time: 60,
         role: ROLES.WITCH
     },
     {
         phase: PHASE.NIGHT_WITCH_KILL,
         next: PHASE.NIGHT_CURSED,
-        time: 3,
+        time: 60,
         role: ROLES.CURSED
     },
     {
         phase: PHASE.NIGHT_CURSED,
         next: PHASE.DAY_DISCUSSION,
-        time: 3
+        time: 1800000 // 30 mins
     },
     {
         phase: PHASE.END,
         next: PHASE.LOBBY,
-        time: 3
+        time: 20
     }
 ]
 
