@@ -94,3 +94,117 @@
     opacity: 1;
   }
 }
+/* --- SẢNH GAME (LOBBY) STYLES --- */
+
+.lobby-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #0f0e17; /* Màu nền tối */
+  color: #fffffe;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-image: radial-gradient(circle at center, #2e2f3e 0%, #0f0e17 70%);
+}
+
+.lobby-title {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #ff5470; /* Màu đỏ ma mị */
+  margin-bottom: 30px;
+  text-shadow: 0 0 15px rgba(255, 84, 112, 0.4);
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.lobby-box {
+  text-align: center;
+  background-color: rgba(255, 255, 255, 0.05); /* Hiệu ứng kính mờ */
+  padding: 40px;
+  border-radius: 16px;
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 90%;
+  max-width: 400px;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.lobby-welcome {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.lobby-desc {
+  color: #aaa;
+  margin-bottom: 30px;
+}
+
+/* --- BUTTON STYLES --- */
+.btn-group {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  width: 100%;
+}
+
+.btn {
+  width: 100%;
+  padding: 15px;
+  font-size: 1rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+/* Nút Đăng nhập */
+.btn-primary {
+  background-color: #ff5470;
+  color: white;
+}
+.btn-primary:hover {
+  background-color: #ff2a4d;
+  transform: translateY(-2px);
+}
+
+/* Nút Đăng ký */
+.btn-secondary {
+  background-color: transparent;
+  color: #ff5470;
+  border: 2px solid #ff5470;
+}
+.btn-secondary:hover {
+  background-color: rgba(255, 84, 112, 0.1);
+}
+
+/* Nút Chơi Ngay (Gradient) */
+.btn-play {
+  font-size: 1.2rem;
+  background: linear-gradient(45deg, #ff9f43, #ff5470);
+  color: white;
+  box-shadow: 0 4px 15px rgba(255, 84, 112, 0.3);
+}
+.btn-play:hover {
+  box-shadow: 0 6px 20px rgba(255, 84, 112, 0.5);
+  transform: scale(1.02);
+}
+
+/* Nút Đăng xuất */
+.btn-logout {
+  padding: 12px;
+  margin-top: 10px;
+  background-color: #2d3436;
+  color: #b2bec3;
+}
+.btn-logout:hover {
+  background-color: #636e72;
+  color: white;
+}
+
+/* Hiệu ứng hiện dần */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
