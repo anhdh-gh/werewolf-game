@@ -31,7 +31,7 @@ export default function Home() {
 
       // Có token -> Gọi Server để kiểm tra xem token còn hạn không & Lấy tên
       try {
-        const res = await fetch(`${API_BASE_URL}/users/get-info`, {
+        const res = await fetch(`${API_BASE_URL}/users/info`, {
           method: 'POST', // Hoặc GET (tùy API bên bạn quy định, thường lấy info là GET hoặc POST)
           headers: {
             'Content-Type': 'application/json',
@@ -84,7 +84,7 @@ export default function Home() {
       const token = localStorage.getItem("accessToken");
       
       try {
-        const res = await fetch(`${API_BASE_URL}/users/user-delete`, { // Sửa lại đúng endpoint theo ảnh bạn gửi (User delete)
+        const res = await fetch(`${API_BASE_URL}/users/delete`, { // Sửa lại đúng endpoint theo ảnh bạn gửi (User delete)
           method: 'POST', // Theo ảnh bạn gửi API delete là POST, kiểm tra lại nếu là DELETE
           headers: {
             'Authorization': `Bearer ${token}`, 

@@ -34,27 +34,25 @@ export default function LoginForm() {
       if (res.ok) {
         // --- THÀNH CÔNG ---
         
-        // 2. LOGIC LƯU TOKEN (Quan trọng nhất)
-        // Kiểm tra kỹ console log xem API trả về tên là 'access_token' hay 'accessToken'
-        console.log("Kết quả đăng nhập:", data); 
+        // 2. LOGIC LƯU TOKEN (ĐÃ SỬA)
+        // Vì token nằm trong object 'data' con, nên phải chui vào 1 lớp nữa
+        const loginData = data.data; 
 
-        // Lưu vào bộ nhớ trình duyệt (LocalStorage)
-        // Lưu ý: data.access_token hoặc data.accessToken tùy thuộc vào API của bạn trả về cái gì
-        if (data.access_token) {
-             localStorage.setItem('accessToken', data.access_token);
+        if (loginData && loginData.access_token) {
+             localStorage.setItem('accessToken', loginData.access_token);
         }
-        if (data.refresh_token) {
-             localStorage.setItem('refreshToken', data.refresh_token);
+        if (loginData && loginData.refresh_token) {
+             localStorage.setItem('refreshToken', loginData.refresh_token);
         }
         
-        // Lưu luôn tên người dùng để hiển thị ở Sảnh cho đẹp
+        // Lưu luôn tên người dùng
         localStorage.setItem('username', username);
         
         alert(`Chào mừng Sói ${username} đã về hang! 🐺`);
         
         // 3. CHUYỂN HƯỚNG VỀ SẢNH
         router.push('/'); 
-        router.refresh(); // Làm mới lại trang sảnh để nó cập nhật trạng thái đã đăng nhập
+        router.refresh(); 
       } else {
         // --- THẤT BẠI ---
         alert(data.message || 'Mật mã bí mật không đúng!');
