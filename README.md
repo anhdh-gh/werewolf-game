@@ -2,5 +2,5 @@
 - yarn
 - yarn dev
 
-# Domain: 
+# Domain:
     - https://werewolf.anhdh.net
