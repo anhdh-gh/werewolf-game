@@ -10,6 +10,7 @@ module.exports = {
     PLAYER_INFO: 'PLAYER_INFO',
 
     //
+    ROOM_PLAYERS: 'ROOM_PLAYERS',
     GAME_DATA_FLOW: 'GAME_DATA_FLOW',
     SOCKET_ERROR: 'SOCKET_ERROR',
     ERROR: 'error',
