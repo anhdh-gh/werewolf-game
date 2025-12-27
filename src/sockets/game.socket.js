@@ -32,7 +32,7 @@ module.exports = (io, socket) => {
                     socket.leave(roomCode)
                     GameService.getPlayerInfo(roomCode)
                         .then(players => {
-                            io.to(EVENTS.ROOM_PLAYERS).emit({ data: { players } })
+                            io.to(roomCode).emit(EVENTS.ROOM_PLAYERS, { data: { players } })
                         }).catch(console.error)
                 }
             }).catch(console.error)
@@ -43,7 +43,7 @@ module.exports = (io, socket) => {
     socket.on(EVENTS.CONNECT_ROOM, socketHandlerError(async (socket, payload, ack) => {
         try {
             await GameService.connectRoom(socket.user, payload.room.code)
-            io.to(EVENTS.ROOM_PLAYERS).emit({ data: { players: await GameService.getPlayerInfo(payload.room.code) } })
+            io.to(payload.room.code).emit(EVENTS.ROOM_PLAYERS, { data: { players: await GameService.getPlayerInfo(payload.room.code) } })
         } catch (err) {
             userSocketMap.delete(socket.user.id);
             return { disconnected: true }
@@ -54,7 +54,7 @@ module.exports = (io, socket) => {
     socket.on(EVENTS.LEAVE_ROOM, socketHandlerError(async (socket, payload, ack) => {
         try {
             await GameService.leaveRoom(socket.user.id, payload.room.code)
-            io.to(EVENTS.ROOM_PLAYERS).emit({ data: { players: await GameService.getPlayerInfo(payload.room.code) } })
+            io.to(payload.room.code).emit(EVENTS.ROOM_PLAYERS, { data: { players: await GameService.getPlayerInfo(payload.room.code) } })
         } catch (err) {}
         userSocketMap.delete(socket.user.id);
         return { disconnected: true }
@@ -63,7 +63,7 @@ module.exports = (io, socket) => {
     /**[ PLAYER_READY ]* */
     socket.on(EVENTS.PLAYER_READY, socketHandlerError(async (socket, payload, ack) => {
         const allReady = await GameService.playerReady(socket.user, payload.room.code);
-        io.to(EVENTS.ROOM_PLAYERS).emit({ data: { players: await GameService.getPlayerInfo(payload.room.code) } })
+        io.to(payload.room.code).emit(EVENTS.ROOM_PLAYERS, { data: { players: await GameService.getPlayerInfo(payload.room.code) } })
         if(allReady) {
             GameService.startGame(payload.room.code, (players) => {
                 if(!players || players.length < 1) {
