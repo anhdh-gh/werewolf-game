@@ -147,7 +147,7 @@ const PhaseService = {
                     data.time = nextPhase.time;
                     data.event = {
                         role: nextPhase?.role?.key || ROLES.ALL.key,
-                        action: ACTIONS.WAKEUP
+                        action: nextPhase.next.key.includes(ACTIONS.SLEEP) ? ACTIONS.SLEEP : ACTIONS.WAKEUP
                     }
 
                     //
@@ -181,7 +181,10 @@ const PhaseService = {
                         message: `${curPhase.role.label} ${PHASE.DAY_DISCUSSION.key === curPhase.phase.key ? 'thức dậy' : 'đi ngủ'}`,
                         event: {
                             role: curPhase.role.key,
-                            action: PHASE.DAY_DISCUSSION.key === curPhase.phase.key ? ACTIONS.WAKEUP : ACTIONS.SLEEP
+                            action: PHASE.DAY_DISCUSSION.key === curPhase.phase.key
+                                ? ACTIONS.WAKEUP
+                                : curPhase.phase.key.includes(ACTIONS.SLEEP) ? ACTIONS.SLEEP : ACTIONS.WAKEUP
+                                    ? ACTIONS.SLEEP : ACTIONS.WAKEUP
                         }
                     })
                 }
