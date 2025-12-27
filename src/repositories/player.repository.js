@@ -63,17 +63,22 @@ const PlayerRepository = {
     },
 
     async getPlayerInfo(roomCode, playerIds) {
-        //
-        if(!playerIds) {
-            return []
-        }
+        let sql = `
+            SELECT player_id, username, role, initial_role, is_alive, is_ready,
+               is_muted, is_connected, witch_heal, witch_poison, protected_until_day
+            FROM players
+            WHERE room_code = ?
+        `;
+
+        const params = [roomCode];
 
         //
-        const [result] = await pool.query(
-            `SELECT player_id, username, role, initial_role, is_alive, is_ready, is_muted, is_connected, witch_heal, witch_poison, protected_until_day FROM players
-             WHERE room_code = ? and player_id in (?)`,
-            [roomCode, playerIds]
-        );
+        if (playerIds && playerIds.length > 0) {
+            sql += ` AND player_id IN (?)`;
+            params.push(playerIds);
+        }
+
+        const [result] = await pool.query(sql, params);
         return result;
     },
 
