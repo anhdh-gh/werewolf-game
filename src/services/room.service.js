@@ -19,7 +19,7 @@ const RoomService = {
             next_step: {
                 action: EVENTS.CONNECT_ROOM,
                 description: "Connect to the websocket to start playing the game",
-                websocket: SERVERS.DEFAULT.ws
+                websocket: SERVERS.filter(S => process.env.SERVER_ID === S.id)[0].ws
             }
         };
     },
