@@ -93,16 +93,16 @@ const GameService = {
         //
         const room = await RoomRepository.getByCode(roomCode)
         if(!room) {
-            throw new AppError(ERROR_CODES.ROOM_NOT_FOUND)
+            return;
         }
         if(room?.current_phase !== PHASE.NIGHT_SEER.key) {
-            throw new AppError(ERROR_CODES.PHASE_IS_INVALID)
+            return;
         }
 
         //
         const curPhase = PHASE_FLOW.filter(p => p.next.key === PHASE.NIGHT_SEER.key)?.[0];
         if(!curPhase) {
-            throw new AppError(ERROR_CODES.PHASE_IS_INVALID)
+            return;
         }
 
         //
