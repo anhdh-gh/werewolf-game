@@ -65,7 +65,7 @@ const PlayerRepository = {
     async getPlayerInfo(roomCode, playerIds) {
         let sql = `
             SELECT player_id, username, role, initial_role, is_alive, is_ready,
-               is_muted, is_connected, witch_heal, witch_poison, protected_until_day
+               is_muted, is_connected, witch_heal, witch_poison, protected_until_day, is_protected
             FROM players
             WHERE room_code = ?
         `;
@@ -92,6 +92,16 @@ const PlayerRepository = {
         return result;
     },
 
+    async getRole(roomCode, playerId) {
+        const [result] = await pool.query(
+            `SELECT role
+             FROM players
+             WHERE room_code = ? and player_id = ?`,
+            [roomCode, playerId]
+        );
+        return result?.[0];
+    },
+
     async isRoleAlive(roomCode, roles) {
         const [rows] = await pool.query(
             `
@@ -102,7 +112,7 @@ const PlayerRepository = {
                   AND is_alive = TRUE
                   AND is_ready = TRUE
                   AND is_connected = TRUE
-                    LIMIT 1
+                LIMIT 1
             `,
             [roomCode, roles]
         );

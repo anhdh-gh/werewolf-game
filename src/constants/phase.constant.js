@@ -8,7 +8,7 @@ const PHASE = {
 
     ALL_VIEW_ROLE: {
         key: 'ALL_VIEW_ROLE',
-        time: 20, // TODO: Change
+        time: 10, // TODO: Change
         message: 'Cả làng xem chức năng của mình đê',
     },
 
@@ -55,7 +55,6 @@ const PHASE = {
     DAY_DISCUSSION: {
         key: 'DAY_DISCUSSION',
         message: 'Cả làng thức dậy',
-        time: 20, // TODO: Change
     },
 
     END: {

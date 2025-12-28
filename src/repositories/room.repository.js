@@ -51,6 +51,24 @@ const RoomRepository = {
         return result?.[0];
     },
 
+    async upsertVote({ roomCode, phase, voterId, targetId }) {
+        if (!roomCode || !phase || !voterId || !targetId) {
+            return;
+        }
+
+        const [result] = await pool.query(
+            `
+                INSERT INTO votes (room_code, phase, voter_id, target_id)
+                VALUES (?, ?, ?, ?)
+                ON DUPLICATE KEY UPDATE
+                    target_id = VALUES(target_id)
+            `,
+            [roomCode, phase, voterId, targetId]
+        );
+
+        return result;
+    },
+
     async clearVotes(roomCode) {
         if (!roomCode) return;
 

@@ -6,6 +6,11 @@ const { STATUS } = require('../constants/status.constant')
 const { PHASE, PHASE_FLOW} = require('../constants/phase.constant')
 const phaseBarrier = require('../model/PhaseBarrierManager')
 const PhaseService = require('../services/phase.service')
+const RoomService = require("./room.service");
+const {ROLES} = require("../constants/roles.constant");
+const ArrayUtil = require("../utils/array.util");
+
+const ROOM_TIMEOUT = 300000;
 
 const GameService = {
 
@@ -88,25 +93,35 @@ const GameService = {
         return await GameService.getPlayerInfo(roomCode, playerIds);
     },
 
-    /**[ SEER_DONE ]* */
-    async seerDone(roomCode) {
+    /**[ PLAYER_DONE ]* */
+    async playerDone(userId, roomCode, currentPhase) {
         //
-        const room = await RoomRepository.getByCode(roomCode)
-        if(!room) {
-            return;
-        }
-        if(room?.current_phase !== PHASE.NIGHT_SEER.key) {
-            return;
-        }
+        return await RoomService.runWithTimeout(
+            await RoomService.getRoomLock(roomCode),
+            async () => {
+                //
+                const room = await RoomRepository.getByCode(roomCode)
+                if(!room) {
+                    return;
+                }
 
-        //
-        const curPhase = PHASE_FLOW.filter(p => p.next.key === PHASE.NIGHT_SEER.key)?.[0];
-        if(!curPhase) {
-            return;
-        }
+                //
+                const player = await PlayerRepository.getRole(roomCode, userId)
+                if(!player) {
+                    return;
+                }
 
-        //
-        await PhaseService.decreasePhaseExpire(roomCode, curPhase.time)
+                //
+                const curPhase = PHASE_FLOW.filter(p => p?.next?.key === currentPhase && p?.role?.key === player?.role)?.[0];
+                if(!curPhase) {
+                    return;
+                }
+
+                //
+                await PhaseService.decreasePhaseExpire(roomCode, curPhase.time)
+            },
+            ROOM_TIMEOUT
+        );
     },
 
     async getPlayerInfo(roomCode, playerIds) {

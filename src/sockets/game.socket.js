@@ -79,6 +79,7 @@ module.exports = (io, socket) => {
                         role: player.role,
                         phase: PHASE.ALL_VIEW_ROLE.key,
                         message: PHASE.ALL_VIEW_ROLE.message,
+                        time: PHASE.ALL_VIEW_ROLE.time,
                         event: {
                             role: player.role,
                             action: ACTIONS.VIEW
@@ -94,9 +95,9 @@ module.exports = (io, socket) => {
         return { data: { players: await GameService.playerInfo(payload?.player?.ids, payload.room.code) } }
     }));
 
-    /**[ SEER_DONE ]* */
-    socket.on(EVENTS.SEER_DONE, socketHandlerError(async (socket, payload, ack) => {
-        return { data: { players: await GameService.seerDone(payload.room.code) } }
+    /**[ PLAYER_DONE ]* */
+    socket.on(EVENTS.PLAYER_DONE, socketHandlerError(async (socket, payload, ack) => {
+        return { data: { players: await GameService.playerDone(socket.user.id, payload.room.code, payload.current_phase) } }
     }));
 
     /**[ ERROR ]* */

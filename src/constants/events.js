@@ -10,7 +10,8 @@ module.exports = {
     PLAYER_INFO: 'PLAYER_INFO',
 
     //
-    SEER_DONE: 'SEER_DONE',
+    PLAYER_DONE: 'PLAYER_DONE',
+    PLAYER_VOTE: 'PLAYER_VOTE',
 
     //
     ROOM_PLAYERS: 'ROOM_PLAYERS',
