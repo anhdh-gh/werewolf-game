@@ -2,11 +2,8 @@ const AppError = require('../errors/AppError');
 const RoomRepository = require('../repositories/room.repository');
 const PlayerRepository = require('../repositories/player.repository');
 const ERROR_CODES = require('../constants/errorCode.constants');
-const ArrayUtil = require('../utils/array.util')
-const { ROLES } = require('../constants/roles.constant')
 const { STATUS } = require('../constants/status.constant')
-const { PHASE } = require('../constants/phase.constant')
-const EVENTS = require('../constants/events');
+const { PHASE, PHASE_FLOW} = require('../constants/phase.constant')
 const phaseBarrier = require('../model/PhaseBarrierManager')
 const PhaseService = require('../services/phase.service')
 
@@ -89,6 +86,27 @@ const GameService = {
         }
         //
         return await GameService.getPlayerInfo(roomCode, playerIds);
+    },
+
+    /**[ SEER_DONE ]* */
+    async seerDone(roomCode) {
+        //
+        const room = await RoomRepository.getByCode(roomCode)
+        if(!room) {
+            throw new AppError(ERROR_CODES.ROOM_NOT_FOUND)
+        }
+        if(room?.current_phase !== PHASE.NIGHT_SEER.key) {
+            throw new AppError(ERROR_CODES.PHASE_IS_INVALID)
+        }
+
+        //
+        const curPhase = PHASE_FLOW.filter(p => p.next.key === PHASE.NIGHT_SEER.key)?.[0];
+        if(!curPhase) {
+            throw new AppError(ERROR_CODES.PHASE_IS_INVALID)
+        }
+
+        //
+        await PhaseService.decreasePhaseExpire(roomCode, curPhase.time)
     },
 
     async getPlayerInfo(roomCode, playerIds) {

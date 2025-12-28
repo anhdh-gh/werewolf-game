@@ -30,8 +30,13 @@ module.exports = {
     },
 
     ROOM_PLAYING: {
-        code: 4043,
+        code: 4006,
         message: 'Room is playing'
+    },
+
+    PHASE_IS_INVALID: {
+        code: 4007,
+        message: 'Phase is invalid'
     },
 
     UNAUTHORIZED: {

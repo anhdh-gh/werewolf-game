@@ -234,14 +234,16 @@ const PhaseService = {
         }
 
         //
+        RoomRepository.clearVotes(roomCode).catch(err => console.error('ClearVotes failed', err));
         await RoomRepository.updateRooms([
             {
                 code: roomCode,
                 status: STATUS.ENDED,
                 current_phase: PHASE.END.key,
-                phase_expires_at: await RoomRepository.raw('TIMESTAMPADD(SECOND, ?, NOW())', [PHASE.END?.time])
+                phase_expires_at: await RoomRepository.raw('TIMESTAMPADD(SECOND, ?, NOW())', [PHASE.END?.time]),
+                ended_at: await RoomRepository.raw('NOW()'),
             }
-        ])
+        ]);
 
         //
         emit({
@@ -275,7 +277,28 @@ const PhaseService = {
 
         //
         return true
-    }
+    },
+
+    async decreasePhaseExpire(roomCode, seconds) {
+        return RoomRepository.updateRooms([
+            {
+                code: roomCode,
+                phase_expires_at: RoomRepository.raw(
+                    `
+                        IF(
+                            phase_expires_at IS NULL,
+                            NULL,
+                            GREATEST(
+                                TIMESTAMPADD(SECOND, -?, phase_expires_at),
+                                TIMESTAMPADD(SECOND, 5, NOW())
+                            )
+                        )
+                        `,
+                    [seconds]
+                )
+            }
+        ]);
+    },
 };
 
 module.exports = PhaseService;

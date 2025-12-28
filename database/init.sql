@@ -55,20 +55,6 @@ CREATE TABLE players
     UNIQUE (player_id, room_code)
 );
 
-# Cleanup DELETE FROM actions WHERE room_code = :room;
-# Action client gửi lên => Idempotence
-DROP TABLE IF EXISTS actions;
-CREATE TABLE actions
-(
-    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
-    room_code   VARCHAR(10),
-    current_day INT,
-    phase       VARCHAR(30),
-    actor_id    BIGINT,
-    target_id   BIGINT,
-    event_id    VARCHAR(50) UNIQUE
-);
-
 # Cleanup Vote chỉ tồn tại trong 1 phase => Resolve xong → clear luôn
 DROP TABLE IF EXISTS votes;
 CREATE TABLE votes
@@ -80,3 +66,6 @@ CREATE TABLE votes
     target_id BIGINT,
     UNIQUE (room_code, phase, voter_id)
 );
+
+# Clear
+DROP TABLE IF EXISTS actions;
