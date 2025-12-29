@@ -1,23 +1,39 @@
 "use client";
 
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import s from './signin.module.css';
 
 export default function LoginForm() {
+
+  // Tại bất kỳ file nào (SignIn.tsx, Profile.tsx...)
+useEffect(() => {
+  const savedServer = localStorage.getItem("selectedServer");
+  if (savedServer) {
+    
+    const serverObj = JSON.parse(savedServer);
+    setApiUrl(serverObj.api);
+    console.log("API URL cần dùng là:", serverObj.api);
+    // Bạn có thể set nó vào một state cục bộ ở đây để dùng trong component này
+  }
+}, []); 
+   
+  
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  
+  const [apiUrl , setApiUrl] = useState("");
   const router = useRouter();
-
+//test
+  console.log(apiUrl);
+  //test
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
       // 1. GỌI API ĐĂNG NHẬP
-      const res = await fetch('https://werewolf.anhdh.net/api/v1/auth/login', {
+      const res = await fetch(`${apiUrl}/api/v1/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -51,7 +67,7 @@ export default function LoginForm() {
         alert(`Chào mừng Sói ${username} đã về hang! 🐺`);
         
         // 3. CHUYỂN HƯỚNG VỀ SẢNH
-        router.push('/'); 
+        router.push('/lobby'); 
         router.refresh(); 
       } else {
         // --- THẤT BẠI ---

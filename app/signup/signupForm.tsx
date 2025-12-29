@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import s from './signup.module.css';
@@ -11,6 +11,17 @@ export default function SignupForm() {
     email: '',
     password: '',
     confirmPassword: ''
+  });
+
+  const [apiUrl,setApiUrl] = useState("");
+
+  useEffect(() => {
+    const savedServer = localStorage.getItem("selectedServer");
+    if(savedServer){
+      const servedObj = JSON.parse(savedServer);
+      setApiUrl(servedObj.api);
+
+    }
   });
 
   const [error, setError] = useState("");
@@ -41,7 +52,7 @@ export default function SignupForm() {
     setIsLoading(true);
 
     try {
-      const res = await fetch('https://werewolf.anhdh.net/api/v1/auth/register', {
+      const res = await fetch(`${apiUrl}/api/v1/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
