@@ -51,7 +51,7 @@ const RoomRepository = {
         return result?.[0];
     },
 
-    async upsertVote({ roomCode, phase, voterId, targetId }) {
+    async upsertVote(roomCode, phase, voterId, targetId) {
         if (!roomCode || !phase || !voterId || !targetId) {
             return;
         }

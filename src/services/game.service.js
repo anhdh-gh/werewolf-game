@@ -124,6 +124,37 @@ const GameService = {
         );
     },
 
+    /**[ PLAYER_VOTE ]* */
+    async playerVote(userId, roomCode, currentPhase, targetId) {
+        //
+        return await RoomService.runWithTimeout(
+            await RoomService.getRoomLock(roomCode),
+            async () => {
+                //
+                const room = await RoomRepository.getByCode(roomCode)
+                if(!room) {
+                    return;
+                }
+
+                //
+                const player = await PlayerRepository.getRole(roomCode, userId)
+                if(!player) {
+                    return;
+                }
+
+                //
+                const curPhase = PHASE_FLOW.filter(p => p?.next?.key === currentPhase && p?.role?.key === player?.role)?.[0];
+                if(!curPhase) {
+                    return;
+                }
+
+                //
+                await RoomRepository.upsertVote(roomCode, currentPhase, userId, targetId)
+            },
+            ROOM_TIMEOUT
+        );
+    },
+
     async getPlayerInfo(roomCode, playerIds) {
         return await PlayerRepository.getPlayerInfo(roomCode, playerIds);
     },
