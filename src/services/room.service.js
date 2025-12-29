@@ -6,6 +6,7 @@ const AppError = require('../errors/AppError');
 const ERROR_CODES = require('../constants/errorCode.constants');
 
 const roomLocks = new Map();
+const ROOM_TIMEOUT = 300000;
 
 const RoomService = {
 
@@ -31,7 +32,7 @@ const RoomService = {
         return roomLocks.get(roomCode);
     },
 
-    async runWithTimeout(lock, fn, timeoutMs = 20000) {
+    async runWithTimeout(lock, fn, timeoutMs = ROOM_TIMEOUT) {
         return Promise.race([
             lock.runExclusive(fn),
             new Promise((_, reject) =>
@@ -44,6 +45,18 @@ const RoomService = {
                 )
             )
         ]);
+    },
+
+    async withRoomLock(roomCode, handler) {
+        const lock = await RoomService.getRoomLock(roomCode);
+
+        return RoomService.runWithTimeout(
+            lock,
+            async () => {
+                return await handler();
+            },
+            ROOM_TIMEOUT
+        );
     }
 };
 

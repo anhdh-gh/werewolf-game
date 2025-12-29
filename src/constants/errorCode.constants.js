@@ -39,6 +39,11 @@ module.exports = {
         message: 'Phase is invalid'
     },
 
+    TARGET_ID_IS_INVALID: {
+        code: 4007,
+        message: 'Target id is invalid'
+    },
+
     UNAUTHORIZED: {
         code: 4011,
         message: 'Unauthorized'
@@ -57,6 +62,11 @@ module.exports = {
     ROOM_NOT_FOUND: {
         code: 4042,
         message: 'Room not found'
+    },
+
+    PLAYER_NOT_FOUND: {
+        code: 4043,
+        message: 'Player not found'
     },
 
     // 5xxx – System errors

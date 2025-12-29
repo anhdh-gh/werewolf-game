@@ -10,8 +10,6 @@ const RoomService = require("./room.service");
 const {ROLES} = require("../constants/roles.constant");
 const ArrayUtil = require("../utils/array.util");
 
-const ROOM_TIMEOUT = 300000;
-
 const GameService = {
 
     /**[ DISCONNECT ]* */
@@ -95,64 +93,42 @@ const GameService = {
 
     /**[ PLAYER_DONE ]* */
     async playerDone(userId, roomCode, currentPhase) {
-        //
-        return await RoomService.runWithTimeout(
-            await RoomService.getRoomLock(roomCode),
-            async () => {
-                //
-                const room = await RoomRepository.getByCode(roomCode)
-                if(!room) {
-                    return;
-                }
+        return RoomService.withRoomLock(roomCode, async () => {
+            const curPhase = await GameService.validateActions(
+                userId,
+                roomCode,
+                currentPhase
+            );
 
-                //
-                const player = await PlayerRepository.getRole(roomCode, userId)
-                if(!player) {
-                    return;
-                }
-
-                //
-                const curPhase = PHASE_FLOW.filter(p => p?.next?.key === currentPhase && p?.role?.key === player?.role)?.[0];
-                if(!curPhase) {
-                    return;
-                }
-
-                //
-                await PhaseService.decreasePhaseExpire(roomCode, curPhase.time)
-            },
-            ROOM_TIMEOUT
-        );
+            await PhaseService.decreasePhaseExpire(
+                roomCode,
+                curPhase.time
+            );
+        });
     },
 
     /**[ PLAYER_VOTE ]* */
     async playerVote(userId, roomCode, currentPhase, targetId) {
-        //
-        return await RoomService.runWithTimeout(
-            await RoomService.getRoomLock(roomCode),
-            async () => {
-                //
-                const room = await RoomRepository.getByCode(roomCode)
-                if(!room) {
-                    return;
-                }
+        return RoomService.withRoomLock(roomCode, async () => {
+            await GameService.validateActions(
+                userId,
+                roomCode,
+                currentPhase
+            );
 
-                //
-                const player = await PlayerRepository.getRole(roomCode, userId)
-                if(!player) {
-                    return;
-                }
+            //
+            if(PHASE.NIGHT_GUARD.key === currentPhase && await PlayerRepository.checkGuard(roomCode, targetId)) {
+                throw new AppError(ERROR_CODES.TARGET_ID_IS_INVALID, "Không được bảo vệ một người hai đêm liên tiếp")
+            }
 
-                //
-                const curPhase = PHASE_FLOW.filter(p => p?.next?.key === currentPhase && p?.role?.key === player?.role)?.[0];
-                if(!curPhase) {
-                    return;
-                }
-
-                //
-                await RoomRepository.upsertVote(roomCode, currentPhase, userId, targetId)
-            },
-            ROOM_TIMEOUT
-        );
+            //
+            await RoomRepository.upsertVote(
+                roomCode,
+                currentPhase,
+                userId,
+                targetId
+            );
+        });
     },
 
     async getPlayerInfo(roomCode, playerIds) {
@@ -169,6 +145,29 @@ const GameService = {
             // Finally
             phaseBarrier.clear(roomCode, PHASE.LOBBY.key)
         }
+    },
+
+    async validateActions(userId, roomCode, currentPhase) {
+        //
+        const room = await RoomRepository.getByCode(roomCode)
+        if(!room) {
+            throw new AppError(ERROR_CODES.ROOM_NOT_FOUND)
+        }
+
+        //
+        const player = await PlayerRepository.getRole(roomCode, userId)
+        if(!player) {
+            throw new AppError(ERROR_CODES.PLAYER_NOT_FOUND)
+        }
+
+        //
+        const curPhase = PHASE_FLOW.filter(p => p?.next?.key === currentPhase && p?.role?.key === player?.role)?.[0];
+        if(!curPhase) {
+            throw new AppError(ERROR_CODES.PHASE_IS_INVALID)
+        }
+
+        //
+        return curPhase;
     }
 };
 

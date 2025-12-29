@@ -51,8 +51,7 @@ CREATE TABLE players
     is_connected        BOOLEAN DEFAULT FALSE,
     is_protected        BOOLEAN DEFAULT FALSE,
     witch_heal          INT DEFAULT 1,
-    witch_poison        INT DEFAULT 1,
-    protected_until_day INT,
+    witch_poison        INT DEFAULT 1
     UNIQUE (player_id, room_code)
 );
 
