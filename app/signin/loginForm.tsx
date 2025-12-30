@@ -6,7 +6,16 @@ import s from './signin.module.css';
 
 export default function LoginForm() {
 
-  // Tại bất kỳ file nào (SignIn.tsx, Profile.tsx...)
+ 
+   
+  
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiUrl , setApiUrl] = useState("");
+  const router = useRouter();
+
+   // Tại bất kỳ file nào (SignIn.tsx, Profile.tsx...)
 useEffect(() => {
   const savedServer = localStorage.getItem("selectedServer");
   if (savedServer) {
@@ -17,13 +26,7 @@ useEffect(() => {
     // Bạn có thể set nó vào một state cục bộ ở đây để dùng trong component này
   }
 }, []); 
-   
-  
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [apiUrl , setApiUrl] = useState("");
-  const router = useRouter();
+
 //test
   console.log(apiUrl);
   //test
@@ -53,6 +56,9 @@ useEffect(() => {
         // 2. LOGIC LƯU TOKEN (ĐÃ SỬA)
         // Vì token nằm trong object 'data' con, nên phải chui vào 1 lớp nữa
         const loginData = data.data; 
+        //test
+        console.log(data.meta);
+        //test
 
         if (loginData && loginData.access_token) {
              localStorage.setItem('accessToken', loginData.access_token);

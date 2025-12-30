@@ -43,7 +43,7 @@ export default function Home() {
       const res = await fetch("/api/get-servers"); 
       if (!res.ok) throw new Error("API Error");
       const data = await res.json();
-      if (data?.data?.servers) {
+      if (data?.data?.servers) {// kiểm tra xem biến data có tồn tại không 
         setServerList(data.data.servers);
         // Mặc định chọn server đầu tiên
         if (data.data.servers.length > 0) {
@@ -67,24 +67,46 @@ export default function Home() {
   
 
   // ===> ĐÂY LÀ ĐOẠN QUAN TRỌNG BẠN CẦN SỬA <===
-  const handleConfirmServer = () => {
+ const handleConfirmServer = () => {
     if (!tempSelected) return;
 
-    // 1. Lưu thông tin server vào trình duyệt
+    // 1. Lấy thông tin cũ để so sánh
+    const savedServerJson = localStorage.getItem("selectedServer");
+    const previousServer = savedServerJson ? JSON.parse(savedServerJson) : null;
+    
+    // Lấy token hiện tại trong máy
+    const accessToken = localStorage.getItem("accessToken");
+
+    // 2. Lưu thông tin server mới chọn vào máy
     localStorage.setItem("selectedServer", JSON.stringify(tempSelected));
     
-    // 2. Xóa token cũ (để tránh xung đột tài khoản giữa các server)
-    localStorage.removeItem("accessToken");
-
-    // 3. CHUYỂN HƯỚNG SANG TRANG ĐĂNG NHẬP
-    router.push('/signin'); 
-  };
+    // 3. LOGIC ĐIỀU HƯỚNG THÔNG MINH
+    
+    // Trường hợp 1: Nếu đổi sang Server khác
+    if (previousServer && previousServer.id !== tempSelected.id) {
+        console.log("🔄 Đổi server -> Xóa sạch dữ liệu cũ và yêu cầu đăng nhập mới");
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("username");
+        router.push('/signin'); // Bắt buộc sang trang đăng nhập
+    } 
+    // Trường hợp 2: Vẫn là server cũ (hoặc lần đầu chọn) nhưng ĐÃ CÓ TOKEN
+    else if (accessToken) {
+        console.log("✅ Token hợp lệ -> Vào thẳng Lobby không cần đăng nhập lại");
+        router.push('/lobby'); // Cho vào thẳng sảnh
+    }
+    // Trường hợp 3: Chưa có token (lần đầu chơi hoặc đã logout)
+    else {
+        console.log("🔑 Chưa có token -> Đi tới trang đăng nhập");
+        router.push('/signin');
+    }
+};
 
   const resetSelection = () => {
     localStorage.removeItem("selectedServer");
     localStorage.removeItem("accessToken");
     window.location.reload();
-  };
+  } ;
 
   // --- 3. GIAO DIỆN ---
   if (isLoading) return <div className="lobby-container">Loading...</div>;
@@ -118,6 +140,7 @@ export default function Home() {
                 onClick={handleConfirmServer} 
                 className="btn btn-primary"
                 style={{width: '100%', padding: '14px', fontWeight: 'bold'}}
+                
             >
                 XÁC NHẬN & ĐĂNG NHẬP
             </button>
@@ -135,7 +158,7 @@ export default function Home() {
          <div style={{marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px'}}>
              <button 
                 className="btn btn-primary" 
-                onClick={() => router.push('/signin')}
+                onClick={() => router.push('/lobby')}
              >
                 ➡️ Vào Đăng Nhập
              </button>
