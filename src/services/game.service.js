@@ -108,7 +108,7 @@ const GameService = {
     },
 
     /**[ PLAYER_VOTE ]* */
-    async playerVote(userId, roomCode, currentPhase, targetId) {
+    async playerVote(userId, roomCode, currentPhase, target) {
         return RoomService.withRoomLock(roomCode, async () => {
             await GameService.validateActions(
                 userId,
@@ -117,7 +117,7 @@ const GameService = {
             );
 
             //
-            if(PHASE.NIGHT_GUARD.key === currentPhase && await PlayerRepository.checkGuard(roomCode, targetId)) {
+            if(PHASE.NIGHT_GUARD.key === currentPhase && await PlayerRepository.checkGuard(roomCode, target.id)) {
                 throw new AppError(ERROR_CODES.TARGET_ID_IS_INVALID, "Không được bảo vệ một người hai đêm liên tiếp")
             }
 
@@ -126,7 +126,7 @@ const GameService = {
                 roomCode,
                 currentPhase,
                 userId,
-                targetId
+                target
             );
         });
     },

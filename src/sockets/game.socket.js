@@ -102,7 +102,7 @@ module.exports = (io, socket) => {
 
     /**[ PLAYER_VOTE ]* */
     socket.on(EVENTS.PLAYER_VOTE, socketHandlerError(async (socket, payload, ack) => {
-        return { data: { players: await GameService.playerVote(socket.user.id, payload.room.code, payload.current_phase, payload.target_id) } }
+        return { data: { players: await GameService.playerVote(socket.user.id, payload.room.code, payload.current_phase, payload.target) } }
     }));
 
     /**[ ERROR ]* */

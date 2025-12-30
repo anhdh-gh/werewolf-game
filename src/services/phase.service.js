@@ -1,6 +1,7 @@
 const AppError = require('../errors/AppError');
 const RoomRepository = require('../repositories/room.repository');
 const PlayerRepository = require('../repositories/player.repository');
+const VoteRepository = require('../repositories/vote.repository');
 const ERROR_CODES = require('../constants/errorCode.constants');
 const ArrayUtil = require('../utils/array.util')
 const { ROLES } = require('../constants/roles.constant')
@@ -165,6 +166,10 @@ const PhaseService = {
                     isRoleAlive = await PlayerRepository.isRoleAlive(room.code, [nextPhase?.role.key]);
                     if(!isRoleAlive) {
                         data.time = 10 // TODO: Change
+                    } else {
+                        if(PHASE.NIGHT_WITCH_SAVE.key === data.phase) {
+                            data.data = { players: await VoteRepository.getVote(room.code, PHASE.NIGHT_WOLF.key) }
+                        }
                     }
                     break;
                 }
@@ -234,7 +239,7 @@ const PhaseService = {
         }
 
         //
-        RoomRepository.clearVotes(roomCode).catch(err => console.error('ClearVotes failed', err));
+        VoteRepository.clearVotes(roomCode).catch(err => console.error('ClearVotes failed', err));
         await RoomRepository.updateRooms([
             {
                 code: roomCode,
@@ -261,7 +266,8 @@ const PhaseService = {
     async handleNextNight(roomCode, roles, emit) {
         // TODO: Count số người chết và ai - ai là người bị câm, trả về data
 
-        // TODO: Remove data thừa
+        // Remove data thừa
+        await VoteRepository.clearVotes(roomCode);
 
         // TODO: Update result
 

@@ -51,7 +51,7 @@ CREATE TABLE players
     is_connected        BOOLEAN DEFAULT FALSE,
     is_protected        BOOLEAN DEFAULT FALSE,
     witch_heal          INT DEFAULT 1,
-    witch_poison        INT DEFAULT 1
+    witch_poison        INT DEFAULT 1,
     UNIQUE (player_id, room_code)
 );
 
@@ -64,8 +64,6 @@ CREATE TABLE votes
     phase     VARCHAR(30),
     voter_id  BIGINT,
     target_id BIGINT,
+    target_username      VARCHAR(50),
     UNIQUE (room_code, phase, voter_id)
 );
-
-# Clear
-DROP TABLE IF EXISTS actions;

@@ -51,37 +51,25 @@ const RoomRepository = {
         return result?.[0];
     },
 
-    async upsertVote(roomCode, phase, voterId, targetId) {
-        if (!roomCode || !phase || !voterId || !targetId) {
+    async upsertVote(roomCode, phase, voterId, target) {
+        if (!roomCode || !phase || !voterId || !target) {
             return;
         }
 
         const [result] = await pool.query(
             `
-                INSERT INTO votes (room_code, phase, voter_id, target_id)
-                VALUES (?, ?, ?, ?)
+                INSERT INTO votes (room_code, phase, voter_id, target_id, target_username)
+                VALUES (?, ?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE
-                    target_id = VALUES(target_id)
+                    target_id = VALUES(target_id),
+                    target_username = VALUES(target_username)
             `,
-            [roomCode, phase, voterId, targetId]
+            [roomCode, phase, voterId, target.id, target.username]
         );
 
         return result;
     },
 
-    async clearVotes(roomCode) {
-        if (!roomCode) return;
-
-        pool.getConnection()
-            .then(conn => {
-                return Promise.all([
-                    conn.query('DELETE FROM votes WHERE room_code = ?', [roomCode]),
-                ]).finally(() => conn.release());
-            })
-            .catch(err => {
-                console.error('clearVotes failed', err);
-            });
-    },
     async clearData(roomCode) {
         if (!roomCode) return;
 
