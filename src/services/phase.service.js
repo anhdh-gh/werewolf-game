@@ -122,15 +122,6 @@ const PhaseService = {
 
                 // Current handle
                 let curPhase = PHASE_FLOW.filter(p => p.next.key === currentPhaseTempt)?.[0];
-                if(curPhase && PHASE.DAY_DISCUSSION.key === curPhase?.next?.key) {
-                    // Check end
-                    if(await PhaseService.checkEnd(room.code, roles, emit)) {
-                        return true;
-                    }
-
-                    // Handle next night
-                    return await PhaseService.handleNextNight(room.code, roles, emit);
-                }
 
                 // Next handle
                 let nextPhase;
@@ -168,7 +159,7 @@ const PhaseService = {
                         data.time = 10 // TODO: Change
                     } else {
                         if(PHASE.NIGHT_WITCH_SAVE.key === data.phase) {
-                            data.data = { players: await VoteRepository.getVote(room.code, PHASE.NIGHT_WOLF.key) }
+                            data.data = { players: await PhaseService.handleNightWitchSave(room.code) }
                         }
                     }
                     break;
@@ -205,6 +196,21 @@ const PhaseService = {
                     }
                 ])
                 emit(data)
+
+                // Complete phase
+                if(data?.event.role === ROLES.ALL.key && data?.event?.action === ACTIONS.WAKEUP) {
+                    // Process vote
+                    await PhaseService.processPhaseDay(room.code, roles, emit)
+
+                    // Check end
+                    if(await PhaseService.checkEnd(room.code, roles, emit)) {
+                        return true;
+                    }
+
+                    // Handle next night
+                    return await PhaseService.handleNextNight(room.code);
+                }
+
                 return true
             },
             PHASE_TIMEOUT
@@ -237,9 +243,6 @@ const PhaseService = {
         if(!roleWin) {
             return false;
         }
-
-        //
-        VoteRepository.clearVotes(roomCode).catch(err => console.error('ClearVotes failed', err));
         await RoomRepository.updateRooms([
             {
                 code: roomCode,
@@ -263,14 +266,157 @@ const PhaseService = {
         return true
     },
 
-    async handleNextNight(roomCode, roles, emit) {
-        // TODO: Count số người chết và ai - ai là người bị câm, trả về data
+    async getMajorityTarget(votes = []) {
+        if (!votes.length) return null;
 
-        // Remove data thừa
+        const counter = {};
+        for (const v of votes) {
+            counter[v.target_id] = (counter[v.target_id] || 0) + 1;
+        }
+
+        let max = 0;
+        let targetId = null;
+
+        for (const [id, count] of Object.entries(counter)) {
+            if (count > max) {
+                max = count;
+                targetId = Number(id);
+            }
+        }
+
+        return targetId;
+    },
+
+    async resolveNightResult({ wolfTargetId, protectedId, healedId, poisonedId }) {
+        const dead = new Set();
+
+        if (wolfTargetId) dead.add(wolfTargetId);
+        if (protectedId) dead.delete(protectedId);
+        if (healedId) dead.delete(healedId);
+        if (poisonedId) dead.add(poisonedId);
+
+        return [...dead];
+    },
+
+    async buildPlayerInfoMap(votes = []) {
+        return votes.reduce((acc, v) => {
+            if (!acc[v.target_id]) {
+                acc[v.target_id] = {
+                    player_id: v.target_id,
+                    username: v.target_username
+                };
+            }
+            return acc;
+        }, {});
+    },
+
+    async handleNightWitchSave(roomCode) {
+        // 1. Lấy vote của sói (CHỈ phase này)
+        const wolfVotes = await VoteRepository.findByRoomAndPhase(
+            roomCode,
+            PHASE.NIGHT_WOLF.key
+        );
+
+        if (!wolfVotes || wolfVotes.length === 0) {
+            return [];
+        }
+
+        // 2. Tính target bị cắn nhiều nhất
+        const wolfTargetId = await PhaseService.getMajorityTarget(wolfVotes);
+        if (!wolfTargetId) {
+            return [];
+        }
+
+        // 3. Build map player_id -> username
+        const playerInfoMap = await PhaseService.buildPlayerInfoMap(wolfVotes);
+
+        // 4. Trả về players[]
+        return [
+            {
+                ...playerInfoMap[wolfTargetId]
+            }
+        ];
+    },
+
+    async processPhaseDay(roomCode, roles, emit) {
+
+        const phases = PHASE_FLOW
+            .filter(p => p?.role?.key && p?.next?.key && roles.includes(p.role.key))
+            .map(p => p.next.key);
+
+        const votes = await VoteRepository.findByRoomAndPhases(roomCode, phases);
+
+        if (!votes.length) {
+            emit({
+                phase: PHASE.DAY_DISCUSSION.key,
+                message: "Đêm nay không có ai chết",
+                event: { role: ROLES.ALL.key, action: ACTIONS.VIEW }
+            });
+            await VoteRepository.clearVotes(roomCode);
+            return;
+        }
+
+        const voteMap = votes.reduce((acc, v) => {
+            (acc[v.phase] ||= []).push(v);
+            return acc;
+        }, {});
+
+        const playerInfoMap = await PhaseService.buildPlayerInfoMap(votes);
+
+        const wolfTargetId = await PhaseService.getMajorityTarget(
+            voteMap[PHASE.NIGHT_WOLF.key] || []
+        );
+
+        const protectedId = voteMap[PHASE.NIGHT_GUARD.key]?.[0]?.target_id || null;
+        const healedId    = voteMap[PHASE.NIGHT_WITCH_SAVE.key]?.[0]?.target_id || null;
+        const poisonedId  = voteMap[PHASE.NIGHT_WITCH_KILL.key]?.[0]?.target_id || null;
+        const mutedId     = voteMap[PHASE.NIGHT_SILENCED.key]?.[0]?.target_id || null;
+
+        const deadIds = await PhaseService.resolveNightResult({
+            wolfTargetId,
+            protectedId,
+            healedId,
+            poisonedId
+        });
+
+        await VoteRepository.withTransaction(async (conn) => {
+            await VoteRepository.resetNight(roomCode, conn);
+
+            if (protectedId) await VoteRepository.setProtected(protectedId, roomCode, conn);
+            if (mutedId) await VoteRepository.setMuted(mutedId, roomCode, conn);
+            if (deadIds.length) await VoteRepository.killPlayers(deadIds, roomCode, conn);
+            if (healedId) await VoteRepository.consumeHeal(roomCode, conn);
+            if (poisonedId) await VoteRepository.consumePoison(roomCode, conn);
+        });
+
+        const players = [];
+        const messages = [];
+
+        if (deadIds.length) {
+            messages.push(`có ${deadIds.length} người chết`);
+            deadIds.forEach(id =>
+                players.push({ ...playerInfoMap[id], is_alive: false })
+            );
+        }
+
+        if (mutedId) {
+            messages.push(`có 1 người bị câm`);
+            players.push({ ...playerInfoMap[mutedId], is_muted: true });
+        }
+
+        emit({
+            phase: PHASE.DAY_DISCUSSION.key,
+            message: messages.length
+                ? `Đêm nay ${messages.join(', ')}`
+                : "Đêm nay không có ai chết",
+            event: { role: ROLES.ALL.key, action: ACTIONS.VIEW },
+            data: players.length ? { players } : undefined
+        });
+
         await VoteRepository.clearVotes(roomCode);
+    },
 
-        // TODO: Update result
-
+    async handleNextNight(roomCode) {
         // Next phase
         await RoomRepository.updateRooms([
             {

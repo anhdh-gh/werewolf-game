@@ -165,6 +165,9 @@ const GameService = {
         if(!curPhase) {
             throw new AppError(ERROR_CODES.PHASE_IS_INVALID)
         }
+        if(currentPhase !== room?.current_phase) {
+            throw new AppError(ERROR_CODES.PHASE_IS_INVALID)
+        }
 
         //
         return curPhase;
