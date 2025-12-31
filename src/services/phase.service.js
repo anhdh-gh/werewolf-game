@@ -280,16 +280,23 @@ const PhaseService = {
         for (const [id, count] of Object.entries(counter)) {
             if (count > max) {
                 max = count;
-                targetId = Number(id);
+                targetId = await PhaseService.toNumber(id);
             }
         }
 
         return targetId;
     },
 
+    async toNumber (v) {
+        return (v !== null && v !== undefined ? Number(v) : null);
+    },
+
     async resolveNightResult({ wolfTargetId, protectedId, healedId, poisonedId }) {
         const dead = new Set();
-
+        wolfTargetId = await PhaseService.toNumber(wolfTargetId);
+        protectedId  = await PhaseService.toNumber(protectedId);
+        healedId     = await PhaseService.toNumber(healedId);
+        poisonedId   = await PhaseService.toNumber(poisonedId);
         if (wolfTargetId) dead.add(wolfTargetId);
         if (protectedId) dead.delete(protectedId);
         if (healedId) dead.delete(healedId);
