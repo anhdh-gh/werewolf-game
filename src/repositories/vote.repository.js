@@ -109,6 +109,15 @@ const VoteRepository = {
              WHERE room_code = ? AND role = ?`,
             [roomCode, ROLES.WITCH.key]
         );
+    },
+
+    async changeRole(playerIds, newRole, roomCode, conn) {
+        return conn.query(
+            `UPDATE players 
+             SET role = ? 
+             WHERE room_code = ? AND player_id IN (?)`,
+            [newRole, roomCode, playerIds]
+        );
     }
 };
 

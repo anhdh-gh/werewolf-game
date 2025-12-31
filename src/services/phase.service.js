@@ -342,6 +342,25 @@ const PhaseService = {
         ];
     },
 
+    async splitDeadPlayers(roomCode, deadIds) {
+        const roles = await PlayerRepository.getCurRole(roomCode, deadIds);
+
+        const cursedTurnWolfIds = [];
+        const realDeadIds = [];
+
+        for (const id of deadIds) {
+            const role = roles.find(r => r.player_id === id);
+
+            if (role?.role === ROLES.CURSED.key) {
+                cursedTurnWolfIds.push(id);
+            } else {
+                realDeadIds.push(id);
+            }
+        }
+
+        return { cursedTurnWolfIds, realDeadIds };
+    },
+
     async processPhaseDay(roomCode, roles, emit) {
         const phases = PHASE_FLOW
             .filter(p => p?.role?.key && p?.next?.key && roles.some(r => r.initial_role === p.role.key))
@@ -382,12 +401,30 @@ const PhaseService = {
             poisonedId
         });
 
+        // CURSED logic
+        const { cursedTurnWolfIds, realDeadIds } = await PhaseService.splitDeadPlayers(roomCode, deadIds);
+
         await VoteRepository.withTransaction(async (conn) => {
             await VoteRepository.resetNight(roomCode, conn);
 
             if (protectedId) await VoteRepository.setProtected(protectedId, roomCode, conn);
             if (mutedId) await VoteRepository.setMuted(mutedId, roomCode, conn);
-            if (deadIds.length) await VoteRepository.killPlayers(deadIds, roomCode, conn);
+
+            // CURSED → WEREWOLF (KHÔNG CHẾT)
+            if (cursedTurnWolfIds.length) {
+                await VoteRepository.changeRole(
+                    cursedTurnWolfIds,
+                    ROLES.WEREWOLF.key,
+                    roomCode,
+                    conn
+                );
+            }
+
+            // Chết thật
+            if (realDeadIds.length) {
+                await VoteRepository.killPlayers(realDeadIds, roomCode, conn);
+            }
+
             if (healedId) await VoteRepository.consumeHeal(roomCode, conn);
             if (poisonedId) await VoteRepository.consumePoison(roomCode, conn);
         });
@@ -395,9 +432,9 @@ const PhaseService = {
         const players = [];
         const messages = [];
 
-        if (deadIds.length) {
-            messages.push(`có ${deadIds.length} người chết`);
-            deadIds.forEach(id =>
+        if (realDeadIds.length) {
+            messages.push(`có ${realDeadIds.length} người chết`);
+            realDeadIds.forEach(id =>
                 players.push({ ...playerInfoMap[id], is_alive: false })
             );
         }

@@ -93,6 +93,19 @@ const PlayerRepository = {
         return result;
     },
 
+    async getCurRole(roomCode, playerIds) {
+        const [result] = await pool.query(`
+            SELECT player_id, role
+            FROM players
+            WHERE room_code = ?
+              AND player_id = IN (?)
+              AND is_alive = TRUE
+              AND is_ready = TRUE
+              AND is_connected = TRUE
+        `, [roomCode, playerIds]);
+        return result;
+    },
+
     async getRoles(roomCode) {
         const [result] = await pool.query(
             `SELECT DISTINCT initial_role
@@ -107,7 +120,11 @@ const PlayerRepository = {
         const [result] = await pool.query(
             `SELECT role
              FROM players
-             WHERE room_code = ? and player_id = ?`,
+             WHERE room_code = ?
+               AND player_id = ?
+               AND is_alive = TRUE
+               AND is_ready = TRUE
+               AND is_connected = TRUE`,
             [roomCode, playerId]
         );
         return result?.[0];

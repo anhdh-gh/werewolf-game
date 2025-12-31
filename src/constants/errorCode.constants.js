@@ -44,6 +44,11 @@ module.exports = {
         message: 'Target id is invalid'
     },
 
+    PLAYER_IS_INVALID: {
+        code: 4008,
+        message: 'Player is invalid'
+    },
+
     UNAUTHORIZED: {
         code: 4011,
         message: 'Unauthorized'

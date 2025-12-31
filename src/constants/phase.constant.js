@@ -1,5 +1,7 @@
 const { ROLES } = require('../constants/roles.constant')
 
+const PHASE_TIME_MAX = 1800000 // 30 mins
+
 const PHASE = {
     LOBBY: {
         key: 'LOBBY',
@@ -116,11 +118,12 @@ const PHASE_FLOW = [
     {
         phase: PHASE.NIGHT_CURSED,
         next: PHASE.DAY_DISCUSSION,
-        time: 1800000 // 30 mins
+        time: PHASE_TIME_MAX
     }
 ]
 
 module.exports = {
     PHASE,
-    PHASE_FLOW
+    PHASE_FLOW,
+    PHASE_TIME_MAX
 };

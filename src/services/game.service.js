@@ -3,7 +3,7 @@ const RoomRepository = require('../repositories/room.repository');
 const PlayerRepository = require('../repositories/player.repository');
 const ERROR_CODES = require('../constants/errorCode.constants');
 const { STATUS } = require('../constants/status.constant')
-const { PHASE, PHASE_FLOW} = require('../constants/phase.constant')
+const { PHASE, PHASE_TIME_MAX } = require('../constants/phase.constant')
 const phaseBarrier = require('../model/PhaseBarrierManager')
 const PhaseService = require('../services/phase.service')
 const RoomService = require("./room.service");
@@ -94,7 +94,7 @@ const GameService = {
     /**[ PLAYER_DONE ]* */
     async playerDone(userId, roomCode, currentPhase) {
         return RoomService.withRoomLock(roomCode, async () => {
-            const { curPhase, player } = await GameService.validateActions(
+            const player = await GameService.validateActions(
                 userId,
                 roomCode,
                 currentPhase
@@ -126,7 +126,7 @@ const GameService = {
                 }
 
                 //
-                await PhaseService.decreasePhaseExpire(roomCode, curPhase.time);
+                await PhaseService.decreasePhaseExpire(roomCode, PHASE_TIME_MAX);
             }
 
             //
@@ -136,7 +136,7 @@ const GameService = {
 
     /**[ PLAYER_VOTE ]* */
     async playerVote(userId, roomCode, currentPhase, target) {
-        return RoomService.withRoomLock(roomCode, async () => {
+        // return RoomService.withRoomLock(roomCode, async () => {
             await GameService.validateActions(
                 userId,
                 roomCode,
@@ -155,7 +155,7 @@ const GameService = {
                 userId,
                 target
             );
-        });
+        // });
     },
 
     async getPlayerInfo(roomCode, playerIds) {
@@ -176,28 +176,19 @@ const GameService = {
 
     async validateActions(userId, roomCode, currentPhase) {
         //
-        const room = await RoomRepository.getByCode(roomCode)
+        const room = await RoomRepository.getByCodeAndPhase(roomCode, currentPhase)
         if(!room) {
-            throw new AppError(ERROR_CODES.ROOM_NOT_FOUND)
+            throw new AppError(ERROR_CODES.PHASE_IS_INVALID)
         }
 
         //
         const player = await PlayerRepository.getRole(roomCode, userId)
         if(!player) {
-            throw new AppError(ERROR_CODES.PLAYER_NOT_FOUND)
+            throw new AppError(ERROR_CODES.PLAYER_IS_INVALID)
         }
 
         //
-        const curPhase = PHASE_FLOW.filter(p => p?.next?.key === currentPhase && p?.role?.key === player?.role)?.[0];
-        if(!curPhase) {
-            throw new AppError(ERROR_CODES.PHASE_IS_INVALID)
-        }
-        if(currentPhase !== room?.current_phase) {
-            throw new AppError(ERROR_CODES.PHASE_IS_INVALID)
-        }
-
-        //
-        return {curPhase, player};
+        return player;
     }
 };
 

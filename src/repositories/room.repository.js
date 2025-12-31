@@ -51,6 +51,20 @@ const RoomRepository = {
         return result?.[0];
     },
 
+    async getByCodeAndPhase(roomCode, phase) {
+        if(!roomCode || !phase) {
+            return
+        }
+
+        const [result] = await pool.query(
+            `SELECT status, max_players FROM rooms
+             WHERE code = ? AND current_phase = ?`,
+            [roomCode, phase]
+        );
+
+        return result?.[0];
+    },
+
     async upsertVote(roomCode, phase, voterId, target) {
         if (!roomCode || !phase || !voterId || !target) {
             return;
