@@ -300,15 +300,18 @@ const PhaseService = {
     },
 
     async buildPlayerInfoMap(votes = []) {
-        return votes.reduce((acc, v) => {
-            if (!acc[v.target_id]) {
-                acc[v.target_id] = {
+        const map = new Map();
+
+        for (const v of votes) {
+            if (!map.has(v.target_id)) {
+                map.set(v.target_id, {
                     player_id: v.target_id,
                     username: v.target_username
-                };
+                });
             }
-            return acc;
-        }, {});
+        }
+
+        return map;
     },
 
     async handleNightWitchSave(roomCode) {
