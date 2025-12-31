@@ -8,7 +8,6 @@ CREATE TABLE users
     refresh_token TEXT
 );
 
-# Cleanup ended_at < NOW() - INTERVAL 1 DAY and status = 'ENDED'
 DROP TABLE IF EXISTS rooms;
 CREATE TABLE rooms
 (
@@ -31,8 +30,7 @@ CREATE TABLE rooms
         )                                               NOT NULL,
     max_players INT NOT NULL,
     phase_expires_at DATETIME,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    ended_at   DATETIME NULL
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 # Cleanup DELETE FROM players WHERE room_code = :room
@@ -66,4 +64,17 @@ CREATE TABLE votes
     target_id BIGINT,
     target_username      VARCHAR(50),
     UNIQUE (room_code, phase, voter_id)
+);
+
+# Cleanup DELETE FROM actions WHERE room_code = :room;
+# Action client gửi lên => Idempotence
+DROP TABLE IF EXISTS actions;
+CREATE TABLE actions
+(
+    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+    room_code   VARCHAR(10),
+    phase       VARCHAR(30),
+    actor_id    BIGINT,
+    event_code    VARCHAR(50),
+    UNIQUE (room_code, phase, actor_id, event_code)
 );

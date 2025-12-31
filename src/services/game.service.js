@@ -7,8 +7,8 @@ const { PHASE, PHASE_FLOW} = require('../constants/phase.constant')
 const phaseBarrier = require('../model/PhaseBarrierManager')
 const PhaseService = require('../services/phase.service')
 const RoomService = require("./room.service");
-const {ROLES} = require("../constants/roles.constant");
-const ArrayUtil = require("../utils/array.util");
+const ActionsRepository = require('../repositories/action.repository');
+const EVENTS = require('../constants/events');
 
 const GameService = {
 
@@ -94,16 +94,43 @@ const GameService = {
     /**[ PLAYER_DONE ]* */
     async playerDone(userId, roomCode, currentPhase) {
         return RoomService.withRoomLock(roomCode, async () => {
-            const curPhase = await GameService.validateActions(
+            const { curPhase, player } = await GameService.validateActions(
                 userId,
                 roomCode,
                 currentPhase
             );
 
-            await PhaseService.decreasePhaseExpire(
-                roomCode,
-                curPhase.time
-            );
+            //
+            await ActionsRepository.upsertAction(roomCode, currentPhase, userId, EVENTS.PLAYER_DONE)
+
+            //
+            if(PHASE.DAY_DISCUSSION.key === currentPhase) {
+                //
+                if(!await ActionsRepository.isPhaseCompleted(roomCode, currentPhase, null)) {
+                    return
+                }
+
+                //
+                await RoomRepository.updateRooms([
+                    {
+                        code: roomCode,
+                        status: STATUS.PLAYING,
+                        current_phase: PHASE.ALL_VIEW_ROLE.key,
+                        phase_expires_at: await RoomRepository.raw('TIMESTAMPADD(SECOND, ?, NOW())', [PHASE.ALL_VIEW_ROLE?.time])
+                    }
+                ])
+            } else {
+                //
+                if(!await ActionsRepository.isPhaseCompleted(roomCode, currentPhase, player.role)) {
+                    return
+                }
+
+                //
+                await PhaseService.decreasePhaseExpire(roomCode, curPhase.time);
+            }
+
+            //
+            await ActionsRepository.clearActions(roomCode)
         });
     },
 
@@ -170,7 +197,7 @@ const GameService = {
         }
 
         //
-        return curPhase;
+        return {curPhase, player};
     }
 };
 

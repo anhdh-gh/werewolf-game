@@ -5,10 +5,17 @@ const VoteRepository = {
 
     async clearVotes(roomCode) {
         if (!roomCode) return;
-        await pool.query(
-            'DELETE FROM votes WHERE room_code = ?',
-            [roomCode]
-        );
+
+        pool.getConnection()
+            .then(conn => {
+                return Promise.all([
+                    conn.query('DELETE FROM votes WHERE room_code = ?', [roomCode]),
+                    conn.query('DELETE FROM actions WHERE room_code = ?', [roomCode])
+                ]).finally(() => conn.release());
+            })
+            .catch(err => {
+                console.error('clearVotes failed', err);
+            });
     },
 
     async findByRoomAndPhase(roomCode, phase) {

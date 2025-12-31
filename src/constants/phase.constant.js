@@ -117,11 +117,6 @@ const PHASE_FLOW = [
         phase: PHASE.NIGHT_CURSED,
         next: PHASE.DAY_DISCUSSION,
         time: 1800000 // 30 mins
-    },
-    {
-        phase: PHASE.END,
-        next: PHASE.LOBBY,
-        time: 20
     }
 ]
 

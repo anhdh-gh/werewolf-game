@@ -13,6 +13,17 @@ const PlayerRepository = {
         return result.affectedRows;
     },
 
+    async resetGame(roomCode) {
+        const [result] = await pool.query(
+            `UPDATE players 
+             SET is_connected = FALSE, is_alive = FALSE, is_ready = FALSE, is_muted = FALSE, is_protected = FALSE, witch_heal = 1, witch_poison = 1, role = null, initial_role = null
+             WHERE room_code = ?`,
+            [roomCode]
+        );
+
+        return result.affectedRows;
+    },
+
     async leaveRoom(playerId, roomCode) {
         await pool.query(
             `DELETE FROM players

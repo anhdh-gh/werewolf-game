@@ -77,6 +77,7 @@ const RoomRepository = {
             .then(conn => {
                 return Promise.all([
                     conn.query('DELETE FROM votes WHERE room_code = ?', [roomCode]),
+                    conn.query('DELETE FROM actions WHERE room_code = ?', [roomCode]),
                     conn.query('DELETE FROM players WHERE room_code = ?', [roomCode]),
                     conn.query('DELETE FROM rooms WHERE code = ?', [roomCode]),
                 ]).finally(() => conn.release());

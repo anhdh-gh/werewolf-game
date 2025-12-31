@@ -206,9 +206,6 @@ const PhaseService = {
                     if(await PhaseService.checkEnd(room.code, roles, emit)) {
                         return true;
                     }
-
-                    // Handle next night
-                    return await PhaseService.handleNextNight(room.code);
                 }
 
                 return true
@@ -246,12 +243,15 @@ const PhaseService = {
         await RoomRepository.updateRooms([
             {
                 code: roomCode,
-                status: STATUS.ENDED,
-                current_phase: PHASE.END.key,
-                phase_expires_at: await RoomRepository.raw('TIMESTAMPADD(SECOND, ?, NOW())', [PHASE.END?.time]),
-                ended_at: await RoomRepository.raw('NOW()'),
+                current_day: 0,
+                status: STATUS.WAITING,
+                current_phase: PHASE.LOBBY.key,
+                phase_expires_at: null
             }
         ]);
+
+        // Reset players
+        await PlayerRepository.resetGame(roomCode)
 
         //
         emit({
@@ -339,9 +339,8 @@ const PhaseService = {
     },
 
     async processPhaseDay(roomCode, roles, emit) {
-
         const phases = PHASE_FLOW
-            .filter(p => p?.role?.key && p?.next?.key && roles.includes(p.role.key))
+            .filter(p => p?.role?.key && p?.next?.key && roles.some(r => r.initial_role === p.role.key))
             .map(p => p.next.key);
 
         const votes = await VoteRepository.findByRoomAndPhases(roomCode, phases);
@@ -414,21 +413,6 @@ const PhaseService = {
         });
 
         await VoteRepository.clearVotes(roomCode);
-    },
-
-    async handleNextNight(roomCode) {
-        // Next phase
-        await RoomRepository.updateRooms([
-            {
-                code: roomCode,
-                status: STATUS.PLAYING,
-                current_phase: PHASE.ALL_VIEW_ROLE.key,
-                phase_expires_at: await RoomRepository.raw('TIMESTAMPADD(SECOND, ?, NOW())', [PHASE.ALL_VIEW_ROLE?.time])
-            }
-        ])
-
-        //
-        return true
     },
 
     async decreasePhaseExpire(roomCode, seconds) {
