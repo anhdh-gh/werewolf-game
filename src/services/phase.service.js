@@ -352,7 +352,7 @@ const PhaseService = {
         if (!votes.length) {
             emit({
                 phase: PHASE.DAY_DISCUSSION.key,
-                message: "Đêm nay không có ai chết",
+                message: "Đêm qua không có ai chết",
                 event: { role: ROLES.ALL.key, action: ACTIONS.VIEW }
             });
             await VoteRepository.clearVotes(roomCode);
@@ -410,8 +410,8 @@ const PhaseService = {
         emit({
             phase: PHASE.DAY_DISCUSSION.key,
             message: messages.length
-                ? `Đêm nay ${messages.join(', ')}`
-                : "Đêm nay không có ai chết",
+                ? `Đêm qua ${messages.join(', ')}`
+                : "Đêm qua không có ai chết",
             event: { role: ROLES.ALL.key, action: ACTIONS.VIEW },
             data: players.length ? { players } : undefined
         });
