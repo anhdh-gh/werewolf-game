@@ -267,15 +267,19 @@ const PhaseService = {
     async getMajorityTarget(votes = []) {
         if (!votes.length) return null;
 
-        const counter = {};
+        const counter = new Map();
+
         for (const v of votes) {
-            counter[v.target_id] = (counter[v.target_id] || 0) + 1;
+            counter.set(
+                v.target_id,
+                (counter.get(v.target_id) || 0) + 1
+            );
         }
 
         let max = 0;
         let targetId = null;
 
-        for (const [id, count] of Object.entries(counter)) {
+        for (const [id, count] of counter.entries()) {
             if (count > max) {
                 max = count;
                 targetId = id;
@@ -284,7 +288,6 @@ const PhaseService = {
 
         return targetId;
     },
-
 
     async resolveNightResult({ wolfTargetId, protectedId, healedId, poisonedId }) {
         const dead = new Set();
