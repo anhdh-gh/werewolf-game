@@ -98,7 +98,7 @@ const PlayerRepository = {
             SELECT player_id, role
             FROM players
             WHERE room_code = ?
-              AND player_id = IN (?)
+              AND player_id IN (?)
               AND is_alive = TRUE
               AND is_ready = TRUE
               AND is_connected = TRUE

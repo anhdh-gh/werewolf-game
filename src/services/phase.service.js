@@ -335,7 +335,13 @@ const PhaseService = {
         return [{...playerInfoMap[targetId]}];
     },
 
-    async splitDeadPlayers(roomCode, deadIds) {
+    async splitDeadPlayers(roomCode, allRoles, deadIds) {
+        //
+        if(!allRoles.some(r => r.initial_role === ROLES.CURSED.key)) {
+            return { cursedTurnWolfIds: [], realDeadIds: deadIds }
+        }
+
+        //
         const roles = await PlayerRepository.getCurRole(roomCode, deadIds);
 
         const cursedTurnWolfIds = [];
@@ -395,7 +401,7 @@ const PhaseService = {
         });
 
         // CURSED logic
-        const { cursedTurnWolfIds, realDeadIds } = await PhaseService.splitDeadPlayers(roomCode, deadIds);
+        const { cursedTurnWolfIds, realDeadIds } = await PhaseService.splitDeadPlayers(roomCode, roles, deadIds);
 
         await VoteRepository.withTransaction(async (conn) => {
             await VoteRepository.resetNight(roomCode, conn);
