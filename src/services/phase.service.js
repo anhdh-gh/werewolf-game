@@ -191,7 +191,6 @@ const PhaseService = {
                         code: room.code,
                         status: STATUS.PLAYING,
                         current_phase: data?.phase,
-                        current_day: await RoomRepository.raw(`current_day + ${data?.phase === PHASE.NIGHT_ALL_SLEEP ? 1 : 0}`),
                         phase_expires_at: await RoomRepository.raw('TIMESTAMPADD(SECOND, ?, NOW())', [data?.time])
                     }
                 ])
@@ -243,7 +242,6 @@ const PhaseService = {
         await RoomRepository.updateRooms([
             {
                 code: roomCode,
-                current_day: 0,
                 status: STATUS.WAITING,
                 current_phase: PHASE.LOBBY.key,
                 phase_expires_at: null
@@ -280,23 +278,16 @@ const PhaseService = {
         for (const [id, count] of Object.entries(counter)) {
             if (count > max) {
                 max = count;
-                targetId = await PhaseService.toNumber(id);
+                targetId = id;
             }
         }
 
         return targetId;
     },
 
-    async toNumber (v) {
-        return (v !== null && v !== undefined ? Number(v) : null);
-    },
 
     async resolveNightResult({ wolfTargetId, protectedId, healedId, poisonedId }) {
         const dead = new Set();
-        wolfTargetId = await PhaseService.toNumber(wolfTargetId);
-        protectedId  = await PhaseService.toNumber(protectedId);
-        healedId     = await PhaseService.toNumber(healedId);
-        poisonedId   = await PhaseService.toNumber(poisonedId);
         if (wolfTargetId) dead.add(wolfTargetId);
         if (protectedId) dead.delete(protectedId);
         if (healedId) dead.delete(healedId);
