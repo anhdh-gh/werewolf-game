@@ -9,6 +9,9 @@ const PhaseService = require('../services/phase.service')
 const RoomService = require("./room.service");
 const ActionsRepository = require('../repositories/action.repository');
 const EVENTS = require('../constants/events');
+const VoteRepository = require("../repositories/vote.repository");
+const {ROLES} = require("../constants/roles.constant");
+const {ACTIONS} = require("../constants/action.constant");
 
 const GameService = {
 
@@ -92,7 +95,7 @@ const GameService = {
     },
 
     /**[ PLAYER_DONE ]* */
-    async playerDone(userId, roomCode, currentPhase) {
+    async playerDone(userId, roomCode, currentPhase, emit) {
         return RoomService.withRoomLock(roomCode, async () => {
             const player = await GameService.validateActions(
                 userId,
@@ -108,6 +111,18 @@ const GameService = {
                 //
                 if(!await ActionsRepository.isPhaseCompleted(roomCode, currentPhase, null)) {
                     return
+                }
+
+                //
+                const players = await PhaseService.getVoteMax(roomCode, PHASE.DAY_DISCUSSION.key);
+                if(players) {
+                    await VoteRepository.killPlayerList(roomCode, players.map(p => p.player_id));
+                    emit({
+                        phase: PHASE.DAY_DISCUSSION.key,
+                        message: `Có ${players.length} bị vote chết`,
+                        event: { role: ROLES.ALL.key, action: ACTIONS.VIEW },
+                        data: players.length ? { players } : undefined
+                    });
                 }
 
                 //

@@ -159,7 +159,7 @@ const PhaseService = {
                         data.time = 10 // TODO: Change
                     } else {
                         if(PHASE.NIGHT_WITCH_SAVE.key === data.phase) {
-                            data.data = { players: await PhaseService.handleNightWitchSave(room.code) }
+                            data.data = { players: await PhaseService.getVoteMax(room.code, PHASE.NIGHT_WOLF.key) }
                         }
                     }
                     break;
@@ -314,32 +314,25 @@ const PhaseService = {
         return map;
     },
 
-    async handleNightWitchSave(roomCode) {
+    async getVoteMax(roomCode, phase) {
         // 1. Lấy vote của sói (CHỈ phase này)
-        const wolfVotes = await VoteRepository.findByRoomAndPhase(
-            roomCode,
-            PHASE.NIGHT_WOLF.key
-        );
+        const votes = await VoteRepository.findByRoomAndPhase(roomCode, phase);
 
-        if (!wolfVotes || wolfVotes.length === 0) {
+        if (!votes || votes.length === 0) {
             return [];
         }
 
-        // 2. Tính target bị cắn nhiều nhất
-        const wolfTargetId = await PhaseService.getMajorityTarget(wolfVotes);
-        if (!wolfTargetId) {
+        // 2. Tính target bị vote nhiều nhất
+        const targetId = await PhaseService.getMajorityTarget(votes);
+        if (!targetId) {
             return [];
         }
 
         // 3. Build map player_id -> username
-        const playerInfoMap = await PhaseService.buildPlayerInfoMap(wolfVotes);
+        const playerInfoMap = await PhaseService.buildPlayerInfoMap(votes);
 
         // 4. Trả về players[]
-        return [
-            {
-                ...playerInfoMap[wolfTargetId]
-            }
-        ];
+        return [{...playerInfoMap[targetId]}];
     },
 
     async splitDeadPlayers(roomCode, deadIds) {

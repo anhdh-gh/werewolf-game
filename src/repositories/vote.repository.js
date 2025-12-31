@@ -93,6 +93,15 @@ const VoteRepository = {
         );
     },
 
+    async killPlayerList(roomCode, playerIds) {
+        await pool.query(
+            `UPDATE players
+             SET is_alive = false
+             WHERE room_code = ? AND player_id IN (?)`,
+            [roomCode, playerIds]
+        );
+    },
+
     async consumeHeal(roomCode, conn) {
         await conn.query(
             `UPDATE players
