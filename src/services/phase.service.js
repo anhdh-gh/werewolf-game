@@ -300,14 +300,14 @@ const PhaseService = {
     },
 
     async buildPlayerInfoMap(votes = []) {
-        const map = new Map();
+        const map = {};
 
         for (const v of votes) {
-            if (!map.has(v.target_id)) {
-                map.set(v.target_id, {
+            if (!map[v.target_id]) {
+                map[v.target_id] = {
                     player_id: v.target_id,
                     username: v.target_username
-                });
+                };
             }
         }
 
