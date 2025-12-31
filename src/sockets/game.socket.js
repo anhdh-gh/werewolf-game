@@ -97,7 +97,7 @@ module.exports = (io, socket) => {
 
     /**[ PLAYER_DONE ]* */
     socket.on(EVENTS.PLAYER_DONE, socketHandlerError(async (socket, payload, ack) => {
-        return { data: { players: await GameService.playerDone(socket.user.id, payload.room.code, payload.current_phase, data => io.to(room.code).emit(EVENTS.GAME_DATA_FLOW, data)) } }
+        return { data: { players: await GameService.playerDone(socket.user.id, payload.room.code, payload.current_phase, data => io.to(payload.room.code).emit(EVENTS.GAME_DATA_FLOW, data)) } }
     }));
 
     /**[ PLAYER_VOTE ]* */
