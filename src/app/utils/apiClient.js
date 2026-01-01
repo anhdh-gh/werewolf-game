@@ -1,15 +1,18 @@
 import { PATHS } from "@/constants/paths";
 import { API_PATHS } from "@/constants/paths.api";
 import { KEYS } from "@/constants/keys";
+import { CODES } from "@/constants/codes";
 
 // Helper: show alert from server meta
 function showServerAlert(data) {
-  let alertText = `Code: ${data?.meta?.code || "N/A"}\nMessage: ${data?.meta?.message || "No message"}`;
-  if (data?.meta?.errors && data.meta.errors.length > 0) {
-    const errorsText = data.meta.errors.map(e => `- ${e.field}: ${e.message}`).join("\n");
-    alertText += `\nErrors:\n${errorsText}`;
+  if(CODES.SUCCESS !== data.meta.code) {
+    let alertText = `Code: ${data?.meta?.code || "N/A"}\nMessage: ${data?.meta?.message || "No message"}`;
+    if (data?.meta?.errors && data.meta.errors.length > 0) {
+      const errorsText = data.meta.errors.map(e => `- ${e.field}: ${e.message}`).join("\n");
+      alertText += `\nErrors:\n${errorsText}`;
+    }
+    alert(alertText);
   }
-  alert(alertText);
 }
 
 // Core API fetch wrapper

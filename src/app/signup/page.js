@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { KEYS } from "@/constants/keys";
 import { PATHS } from "@/constants/paths";
 import { API_PATHS } from "@/constants/paths.api";
+import { apiFetch } from "@/utils/apiClient"; // wrapper fetch with auto refresh
 
 export default function SignupPage() {
   const router = useRouter();
@@ -38,26 +39,11 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(server.api + API_PATHS.SIGN_UP, {
+      await apiFetch(API_PATHS.SIGN_UP, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),
       });
-
-      const data = await res.json();
-
-      // Build alert message
-      let alertText = `Code: ${data?.meta?.code || "N/A"}\nMessage: ${data?.meta?.message || "No message"}`;
-      if (data?.meta?.errors && data.meta.errors.length > 0) {
-        const errorsText = data.meta.errors.map(e => `- ${e.field}: ${e.message}`).join("\n");
-        alertText += `\nErrors:\n${errorsText}`;
-      }
-
-      alert(alertText);
-
-      if (res.ok) {
-        router.push(PATHS.SIGN_IN);
-      }
+      router.push(PATHS.SIGN_IN);
     } catch (err) {
       console.error(err);
       alert("Network error, please try again.");

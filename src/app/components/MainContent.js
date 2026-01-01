@@ -15,7 +15,7 @@ export default function MainContent() {
       </h1>
 
       <div className="flex flex-col gap-4 w-full max-w-xs">
-        <button onClick={() => router.push("/game")} className="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold">Chơi game</button>
+        <button onClick={() => router.push(PATHS.ROOM)} className="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold">Tạo phòng</button>
         <button onClick={() => router.push(PATHS.SERVER)} className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold">Chọn lại server</button>
         <button onClick={() => router.push(PATHS.SIGN_UP)} className="w-full py-3 rounded-xl bg-green-500 hover:bg-green-600 text-white font-semibold">Đăng ký</button>
         <button onClick={() => router.push(PATHS.SIGN_IN)} className="w-full py-3 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-semibold">Đăng nhập</button>

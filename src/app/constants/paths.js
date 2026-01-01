@@ -6,5 +6,7 @@ export const PATHS = {
 
     SIGN_UP: '/signup',
 
-    SERVER: '/server'
+    SERVER: '/server',
+
+    ROOM: '/room'
 };
