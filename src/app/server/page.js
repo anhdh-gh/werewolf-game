@@ -14,7 +14,7 @@ export default function ServerPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      // Clear previously selected server so user always chooses a new one
+      // Clear previous server & tokens to force new selection
       localStorage.removeItem(KEYS.SERVER_SELECTED);
       localStorage.removeItem(KEYS.ACCESS_TOKEN);
       localStorage.removeItem(KEYS.REFRESH_TOKEN);
@@ -22,7 +22,7 @@ export default function ServerPage() {
       localStorage.removeItem(KEYS.USERNAME);
     }
 
-    // Fetch servers from API
+    // Fetch server list from API
     const fetchServers = async () => {
       try {
         const res = await fetch(API_PATHS.SERVER_LIST);
@@ -38,19 +38,21 @@ export default function ServerPage() {
     fetchServers();
   }, []);
 
+  // Handle server selection
   const handleSelect = (server) => {
-    // Save selected server
+    // Save selected server to localStorage
     localStorage.setItem(KEYS.SERVER_SELECTED, JSON.stringify(server));
-    setSelectedServer(server); // immediately show action buttons
+    setSelectedServer(server);
+
+    // Vibrate lightly on mobile
+    if (typeof navigator !== "undefined" && navigator.vibrate) {
+      navigator.vibrate(50);
+    }
   };
 
-  const handleBackToSignIn = () => {
-    router.push(PATHS.SIGN_IN);
-  };
-
-  const handleGoToSignup = () => {
-    router.push(PATHS.SIGN_UP);
-  };
+  // Action buttons
+  const handleBackToSignIn = () => router.push(PATHS.SIGN_IN);
+  const handleGoToSignup = () => router.push(PATHS.SIGN_UP);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0b0b12] via-[#0f0f1a] to-black text-white px-5 flex items-center justify-center">
@@ -77,34 +79,48 @@ export default function ServerPage() {
                   className="h-24 rounded-2xl bg-white/5 animate-pulse"
                 />
               ))
-            : servers.map((sv) => (
-                <button
-                  key={sv.id}
-                  onClick={() => handleSelect(sv)}
-                  className="
-                    relative w-full rounded-2xl p-5
-                    bg-white/5 backdrop-blur
-                    border border-white/10
-                    hover:border-red-500/50
-                    active:scale-[0.97]
-                    transition-all duration-200
-                    flex items-center justify-between
-                  "
-                >
-                  <div className="flex flex-col items-start gap-1">
-                    <span className="text-lg font-bold">🐺 {sv.name}</span>
-                    <span className="text-xs text-slate-400">Làng #{sv.id}</span>
-                  </div>
+            : servers.map((sv) => {
+                const isSelected = selectedServer?.id === sv.id;
 
-                  <span className="relative flex h-3 w-3">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-70 animate-ping" />
-                    <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500" />
-                  </span>
-                </button>
-              ))}
+                return (
+                  <button
+                    key={sv.id}
+                    onClick={() => handleSelect(sv)}
+                    className={`
+                      relative w-full rounded-2xl p-5
+                      ${isSelected ? "bg-red-600 border-red-500" : "bg-white/5 border-white/10"}
+                      backdrop-blur
+                      hover:border-red-500/50
+                      active:scale-[0.97]
+                      transition-all duration-200
+                      flex items-center justify-between
+                    `}
+                  >
+                    <div className="flex flex-col items-start gap-1">
+                      <span className="text-lg font-bold">
+                        {isSelected ? "🌕 " : "🐺 "} {sv.name}
+                      </span>
+                      <span className="text-xs text-slate-400">Làng #{sv.id}</span>
+                    </div>
+
+                    <span className="relative flex h-3 w-3">
+                      <span
+                        className={`absolute inline-flex h-full w-full rounded-full ${
+                          isSelected ? "bg-red-400" : "bg-emerald-400"
+                        } opacity-70 animate-ping`}
+                      />
+                      <span
+                        className={`relative inline-flex h-3 w-3 rounded-full ${
+                          isSelected ? "bg-red-500" : "bg-emerald-500"
+                        }`}
+                      />
+                    </span>
+                  </button>
+                );
+              })}
         </div>
 
-        {/* Action Buttons: show if a server is selected */}
+        {/* Action Buttons: show only when a server is selected */}
         {selectedServer && (
           <div className="w-full flex flex-col gap-4 mt-4">
             <button
