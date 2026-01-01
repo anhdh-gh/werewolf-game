@@ -31,16 +31,18 @@ export default function ServerPage() {
 
   const handleSelect = (server) => {
     if (navigator.vibrate) navigator.vibrate(40);
+
     localStorage.setItem(KEYS.SERVER_SELECTED, JSON.stringify(server));
+
+    // 🔥 FIX Ở ĐÂY
+    setHasSelectedBefore(true);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0b0b12] via-[#0f0f1a] to-black text-white px-5 flex items-center justify-center">
-
-      {/* 🔲 Khối trung tâm */}
       <div className="w-full max-w-md flex flex-col items-center gap-8">
 
-        {/* 🌕 Header */}
+        {/* Header */}
         <div className="text-center">
           <div className="text-xs tracking-widest text-purple-400 mb-2">
             ĐÊM TRĂNG ĐÃ LÊN
@@ -53,7 +55,7 @@ export default function ServerPage() {
           </p>
         </div>
 
-        {/* 🐺 Danh sách server */}
+        {/* Server list */}
         <div className="w-full flex flex-col gap-4">
           {loading ? (
             [1, 2].map((i) => (
@@ -64,35 +66,23 @@ export default function ServerPage() {
               <button
                 key={sv.id}
                 onClick={() => handleSelect(sv)}
-                className="
-                  relative w-full rounded-2xl p-5
-                  bg-white/5 backdrop-blur
-                  border border-white/10
-                  hover:border-red-500/50
-                  active:scale-[0.97]
-                  transition-all duration-200
-                  flex items-center justify-between
-                "
+                className="relative w-full rounded-2xl p-5 bg-white/5 border border-white/10 hover:border-red-500/50 transition flex items-center justify-between"
               >
-                <div className="flex flex-col items-start gap-1">
-                  <span className="text-lg font-bold">🐺 {sv.name}</span>
-                  <span className="text-xs text-slate-400">Làng #{sv.id}</span>
+                <div>
+                  <div className="font-bold">🐺 {sv.name}</div>
+                  <div className="text-xs text-slate-400">Làng #{sv.id}</div>
                 </div>
-
-                <span className="relative flex h-3 w-3">
-                  <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-70 animate-ping" />
-                  <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500" />
-                </span>
+                <span className="h-3 w-3 rounded-full bg-emerald-500 animate-ping" />
               </button>
             ))
           )}
         </div>
 
-        {/* 🔙 Quay về */}
+        {/* Back */}
         {hasSelectedBefore && (
           <button
             onClick={() => router.push(PATHS.SIGN_IN)}
-            className="text-sm font-semibold text-slate-400 hover:text-white transition"
+            className="text-sm font-semibold text-slate-400 hover:text-white"
           >
             ← Quay về đăng nhập
           </button>
