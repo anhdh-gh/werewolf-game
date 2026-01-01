@@ -192,6 +192,9 @@ export default function Home() {
     }
   };
 
+
+
+
   if (isLoading) return <div className="lobby-container"><h2>🚀 Đang kết nối...</h2></div>;
 
   return (
