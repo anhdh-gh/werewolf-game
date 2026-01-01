@@ -117,12 +117,27 @@ const GameService = {
                 const players = await PhaseService.getVoteMax(roomCode, PHASE.DAY_DISCUSSION.key);
                 if(players) {
                     await VoteRepository.killPlayerList(roomCode, players.map(p => p.player_id));
+
+                    //
                     emit({
                         phase: PHASE.DAY_DISCUSSION.key,
-                        message: `Có ${players.length} bị vote chết`,
+                        message: `Có ${players.length} người bị vote chết`,
                         event: { role: ROLES.ALL.key, action: ACTIONS.VIEW },
                         data: players.length ? { players } : undefined
                     });
+
+                    //
+                    const roles = await PlayerRepository.getRoles(roomCode)
+                    if(!roles || roles?.length < 1) {
+                        RoomRepository.clearData(roomCode)
+                        return;
+                    }
+
+                    //
+                    if(await PhaseService.checkEnd(roomCode, roles, emit)) {
+                        await ActionsRepository.clearActions(roomCode)
+                        return;
+                    }
                 }
 
                 //
