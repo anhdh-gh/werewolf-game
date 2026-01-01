@@ -148,6 +148,8 @@ export default function Home() {
     } catch (e) { console.error(e); }
   };
 
+  
+
   // --- 4. GIAO DIỆN ---
   if (isLoading) return <div className="lobby-container"><h2>🚀 Đang kết nối...</h2></div>;
 
@@ -169,6 +171,9 @@ export default function Home() {
           <p className="lobby-desc">Sẵn sàng đi săn chưa?</p>
           <div className="btn-group">
             <button className="btn btn-play" onClick={() => alert("Sắp ra mắt!")}>🎮Tạo Phòng</button>
+            <button className="btn btn-join" style={{ backgroundColor: '#2ecc71', color: 'white' }}>
+                🔑 Join Phòng
+            </button>
             <button onClick={() => handleLogout(true)} className="btn btn-logout">🚪 Đăng xuất</button>
             <button onClick={handleDeleteAccount} className="btn btn-delete" style={{marginTop:'15px', color:'#ff4d4d', border:'1px solid #ff4d4d', background:'transparent'}}>
                 ⚠️ Xóa Tài Khoản

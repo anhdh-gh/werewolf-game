@@ -153,7 +153,8 @@ export default function Home() {
   return (
     <div className="lobby-container">
       <div className="lobby-box">
-         <h3>Đang ở server: <span style={{color: '#2ecc71'}}>{selectedServer.name}</span></h3>
+        
+<h3>Đang ở server: <span style={{color: '#2ecc71'}}>{selectedServer?.name || "Đang tải..."}</span></h3>
          
          <div style={{marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px'}}>
              <button 
