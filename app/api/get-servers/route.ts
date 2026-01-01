@@ -5,8 +5,8 @@ export async function GET() {
     console.log("🚀 Đang gọi API Server thật (Method: POST)...");
 
     // --- THAY ĐỔI QUAN TRỌNG Ở ĐÂY ---
-    const res = await fetch("https://werewolf.anhdh.net/api/v1/servers/info", { 
-      method: 'POST', // <--- SỬA THÀNH POST
+    const res = await fetch("https://werewolf.anhdh.net/api/v1/servers", { 
+      method: 'GET', // <--- SỬA THÀNH POST
       cache: 'no-store',
       headers: {
         'Content-Type': 'application/json',

@@ -3,60 +3,56 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
- import 'app/global.css'; // Mở lại nếu bạn đã sửa đường dẫn file CSS
+import 'app/global.css'; // Sửa lại đường dẫn import cho chuẩn
+import { appRouterContext } from 'next/dist/server/route-modules/app-route/shared-modules';
 
 export default function Home() {
   const router = useRouter();
   
   // --- STATE ---
   const [apiUrl, setApiUrl] = useState("");
+  // SỬA: Đổi tên từ API_BASE thành apiBase (viết thường) để tránh trùng tên với biến cục bộ và dùng const thay vì var
+  const [apiBase, setApiBase] = useState(""); 
   const [isLoggedIn, setIsLoggedIn] = useState(false); 
   const [userInfo, setUserInfo] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [Players, setPlayers] = useState(10); 
+  const [isCreating, setIsCreating] = useState(false); 
 
-   const handleLocalLogout = () => {
+   const handleLocalLogout = useCallback(() => { // Thêm useCallback để tránh loop trong useEffect
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("username");
     setIsLoggedIn(false);
     setUserInfo(null);
-  }
+  }, []);
 
-  // --- 1. HÀM CHECK LOGIN (LOGIC MỚI: CHỈ GỌI REFRESH) ---
+  // --- 1. HÀM CHECK LOGIN ---
   const checkLoginStatus = useCallback(async (currentApiUrl: string) => {
     if (!currentApiUrl) {
         setIsLoading(false);
         return;
     }
 
-    const API_BASE = currentApiUrl.endsWith('/api/v1') ? currentApiUrl : `${currentApiUrl}/api/v1`;
+    const API_BASE_LOCAL = currentApiUrl.endsWith('/api/v1') ? currentApiUrl : `${currentApiUrl}/api/v1`;
 
-    // Lấy token từ LocalStorage
     const accessToken = localStorage.getItem("accessToken");
     const refreshToken = localStorage.getItem("refreshToken");
 
-    // --- BƯỚC 1: KIỂM TRA NHANH ---
-    // Nếu có accessToken, cho phép vào Lobby ngay lập tức (trải nghiệm mượt)
     if (accessToken) {
-        console.log("✅ Tìm thấy accessToken, cho phép vào Sảnh...");
         setIsLoggedIn(true);
-        // Chúng ta KHÔNG return ở đây, mà chạy tiếp xuống dưới để làm mới token ngầm
     }
 
-    // Nếu không có cả 2 token thì chắc chắn là chưa đăng nhập
     if (!accessToken && !refreshToken) {
-        console.log("❌ Không có token nào.");
         setIsLoggedIn(false);
         setIsLoading(false);
         return;
     }
 
-    // --- BƯỚC 2: REFRESH NGẦM (BACKGROUND REFRESH) ---
     try {
         if (!refreshToken) throw new Error("No refresh token");
 
-        console.log(`🔄 Đang âm thầm gia hạn phiên đăng nhập...`);
-        const refreshRes = await fetch(`${API_BASE}/auth/refresh`, { 
+        const refreshRes = await fetch(`${API_BASE_LOCAL}/auth/refresh`, { 
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ refresh_token: refreshToken })
@@ -68,21 +64,17 @@ export default function Home() {
             const newRefreshToken = refreshData.data?.refresh_token || refreshData.refresh_token;
             
             if (newAccessToken) {
-                console.log("✅ Gia hạn thành công.");
                 localStorage.setItem("accessToken", newAccessToken);
                 if (newRefreshToken) localStorage.setItem("refreshToken", newRefreshToken);
                 setIsLoggedIn(true); 
             }
         } else {
-            // Chỉ logout nếu cả accessToken cũng không có VÀ refresh thất bại
-            console.log("❌ Phiên đăng nhập hết hạn hoàn toàn.");
             if (!accessToken) {
                 handleLocalLogout();
             }
         }
     } catch (error) {
-        console.error("❌ Lỗi mạng khi kiểm tra phiên:", error);
-        // Nếu lỗi mạng nhưng đã có accessToken từ trước thì cứ giữ trạng thái đăng nhập
+        console.error("❌ Lỗi mạng:", error);
         if (accessToken) {
             setIsLoggedIn(true);
         } else {
@@ -91,9 +83,9 @@ export default function Home() {
     } finally {
         setIsLoading(false);
     }
-}, [handleLocalLogout]); // Thêm handleLocalLogout vào dependency
+  }, [handleLocalLogout]);
 
-  // --- 2. KHỞI TẠO (GIỮ NGUYÊN) ---
+  // --- 2. KHỞI TẠO ---
   useEffect(() => {
     const initData = async () => {
       const savedServer = localStorage.getItem("selectedServer");
@@ -103,7 +95,9 @@ export default function Home() {
           const serverObj = JSON.parse(savedServer);
           const url = serverObj.api;
           setApiUrl(url);
-          // Gọi hàm check ngay
+          // SỬA: Gọi hàm setApiBase(...) thay vì dùng dấu bằng =
+          setApiBase(url.endsWith('/api/v1') ? url : `${url}/api/v1`);
+         
           await checkLoginStatus(url);
         } catch (e) {
           console.error("Lỗi parse server:", e);
@@ -116,15 +110,6 @@ export default function Home() {
     initData();
   }, [checkLoginStatus]); 
 
-  // --- 3. CÁC HÀM SỰ KIỆN ---
-  // const handleLocalLogout = () => {
-  //   localStorage.removeItem("accessToken");
-  //   localStorage.removeItem("refreshToken");
-  //   localStorage.removeItem("username");
-  //   setIsLoggedIn(false);
-  //   setUserInfo(null);
-  // }
-
   const handleLogout = (askConfirm = true) => {
     if (askConfirm && !window.confirm("Bạn chắc chắn muốn đăng xuất?")) return;
     handleLocalLogout();
@@ -133,12 +118,18 @@ export default function Home() {
 
   const handleDeleteAccount = async () => {
     if (!window.confirm("CẢNH BÁO: Xóa tài khoản vĩnh viễn?")) return;
-    const token = localStorage.getItem("accessToken");
-    const API_BASE = apiUrl.endsWith('/api/v1') ? apiUrl : `${apiUrl}/api/v1`;
+    
+    // SỬA: Khai báo lại biến accessToken lấy từ localStorage để hàm fetch bên dưới có dữ liệu dùng
+    const tokenToDelete = localStorage.getItem("accessToken");
+   
     try {
-      const res = await fetch(`${API_BASE}/users/user-delete`, { 
+      // SỬA: Dùng biến state apiBase (đã sửa tên ở trên) và biến token vừa lấy
+      const res = await fetch(`${apiBase}/users/user-delete`, { 
         method: 'POST', 
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        headers: { 
+          'Authorization': `Bearer ${tokenToDelete}`, 
+          'Content-Type': 'application/json' 
+        },
       });
       if (res.ok) {
         alert("Đã xóa tài khoản.");
@@ -148,9 +139,59 @@ export default function Home() {
     } catch (e) { console.error(e); }
   };
 
-  
+  const handleCreateRoom = async() =>{
+   let players = window.prompt("Nhập số lượng người chơi :","10");
+   
+   if(!players){
+    return;
+   }
+    let numPlayers = parseInt(players);
+    if(isNaN(numPlayers) || numPlayers < 4 || numPlayers > 15){
+      alert("số lượng người chơi không họp lệ");
+      return;
+    }
 
-  // --- 4. GIAO DIỆN ---
+    setIsCreating(true);
+    const token = localStorage.getItem("accessToken");
+    if(token){
+      console.log("không còn access_token");
+    }
+
+    try{
+      const res = await fetch(`${apiBase}/rooms/create`,{
+        method : 'POST',
+        headers :{
+          'Authorization' : `Bearer ${token}`,
+          'Content-Type' : 'application/json'
+        },
+        body: JSON.stringify({
+           room:{
+            max_players : numPlayers
+          }
+      })
+      });
+
+      const data = await res.json();
+      if(res.ok){
+        let urlWebSoket = data.data.next_step.websocket;
+        localStorage.setItem("current_ws_url",urlWebSoket);
+        console.log("phòng đã tạo: " + data);
+        var roomCode = data.data.room.code;
+        alert(`Tạo phòng thành công! Mã phòng : ${ roomCode|| '...'}`)
+        router.push(`/room/${roomCode}`)
+      }
+      else{
+        alert("Lỗi tạo phòng ");
+      }
+
+    }catch(error){
+      console.error("lỗi kêt lối:" + error);
+      alert("khong thể kết nối máy chủ");
+    } finally{
+      setIsCreating(false);
+    }
+  };
+
   if (isLoading) return <div className="lobby-container"><h2>🚀 Đang kết nối...</h2></div>;
 
   return (
@@ -165,12 +206,13 @@ export default function Home() {
       {isLoggedIn ? (
         <div className="lobby-box">
           <h3 className="lobby-welcome">
-            {/* Vì không gọi API Info nên ta ưu tiên lấy username từ LocalStorage */}
             Chào, <span style={{color: '#ff9f43'}}>{localStorage.getItem('username') || "Thợ Săn"}</span>!
           </h3>
           <p className="lobby-desc">Sẵn sàng đi săn chưa?</p>
           <div className="btn-group">
-            <button className="btn btn-play" onClick={() => alert("Sắp ra mắt!")}>🎮Tạo Phòng</button>
+            <button className="btn btn-play" onClick={handleCreateRoom} disabled={isCreating}>
+              {isCreating ? "⌛ Đang tạo..." : "🎮 Tạo Phòng"}
+            </button>
             <button className="btn btn-join" style={{ backgroundColor: '#2ecc71', color: 'white' }}>
                 🔑 Join Phòng
             </button>
