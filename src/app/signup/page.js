@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { KEYS } from "@/constants/keys";
 import { PATHS } from "@/constants/paths";
+import { API_PATHS } from "@/constants/paths.api";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -13,6 +14,10 @@ export default function SignupPage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      localStorage.removeItem(KEYS.ACCESS_TOKEN);
+      localStorage.removeItem(KEYS.REFRESH_TOKEN);
+      localStorage.removeItem(KEYS.USER_ID);
+      localStorage.removeItem(KEYS.USERNAME);
       const selected = localStorage.getItem(KEYS.SERVER_SELECTED);
       if (!selected) {
         router.replace(PATHS.SERVER); // redirect if no server selected
@@ -33,7 +38,7 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      const res = await fetch(`${server.api}/api/v1/auth/register`, {
+      const res = await fetch(server.api + API_PATHS.SIGN_UP, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

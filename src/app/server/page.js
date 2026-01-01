@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { KEYS } from "@/constants/keys";
 import { PATHS } from "@/constants/paths";
+import { API_PATHS } from "@/constants/paths.api";
 
 export default function ServerPage() {
   const router = useRouter();
@@ -15,12 +16,16 @@ export default function ServerPage() {
     if (typeof window !== "undefined") {
       // Clear previously selected server so user always chooses a new one
       localStorage.removeItem(KEYS.SERVER_SELECTED);
+      localStorage.removeItem(KEYS.ACCESS_TOKEN);
+      localStorage.removeItem(KEYS.REFRESH_TOKEN);
+      localStorage.removeItem(KEYS.USER_ID);
+      localStorage.removeItem(KEYS.USERNAME);
     }
 
     // Fetch servers from API
     const fetchServers = async () => {
       try {
-        const res = await fetch("/api/v1/servers");
+        const res = await fetch(API_PATHS.SERVER_LIST);
         const data = await res.json();
         setServers(data?.data?.servers || []);
       } catch (err) {
