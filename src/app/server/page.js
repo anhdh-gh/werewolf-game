@@ -9,18 +9,22 @@ export default function ServerPage() {
   const router = useRouter();
   const [servers, setServers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [hasSelectedBefore, setHasSelectedBefore] = useState(false);
+  const [selectedServer, setSelectedServer] = useState(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setHasSelectedBefore(!!localStorage.getItem(KEYS.SERVER_SELECTED));
+      // Clear previously selected server so user always chooses a new one
+      localStorage.removeItem(KEYS.SERVER_SELECTED);
     }
 
+    // Fetch servers from API
     const fetchServers = async () => {
       try {
         const res = await fetch("/api/v1/servers");
         const data = await res.json();
         setServers(data?.data?.servers || []);
+      } catch (err) {
+        console.error("Failed to fetch servers:", err);
       } finally {
         setLoading(false);
       }
@@ -30,18 +34,22 @@ export default function ServerPage() {
   }, []);
 
   const handleSelect = (server) => {
-    if (navigator.vibrate) navigator.vibrate(40);
-
+    // Save selected server
     localStorage.setItem(KEYS.SERVER_SELECTED, JSON.stringify(server));
+    setSelectedServer(server); // immediately show action buttons
+  };
 
-    // 🔥 FIX Ở ĐÂY
-    setHasSelectedBefore(true);
+  const handleBackToSignIn = () => {
+    router.push(PATHS.SIGN_IN);
+  };
+
+  const handleGoToSignup = () => {
+    router.push(PATHS.SIGN_UP);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0b0b12] via-[#0f0f1a] to-black text-white px-5 flex items-center justify-center">
       <div className="w-full max-w-md flex flex-col items-center gap-8">
-
         {/* Header */}
         <div className="text-center">
           <div className="text-xs tracking-widest text-purple-400 mb-2">
@@ -55,37 +63,59 @@ export default function ServerPage() {
           </p>
         </div>
 
-        {/* Server list */}
+        {/* Server List */}
         <div className="w-full flex flex-col gap-4">
-          {loading ? (
-            [1, 2].map((i) => (
-              <div key={i} className="h-24 rounded-2xl bg-white/5 animate-pulse" />
-            ))
-          ) : (
-            servers.map((sv) => (
-              <button
-                key={sv.id}
-                onClick={() => handleSelect(sv)}
-                className="relative w-full rounded-2xl p-5 bg-white/5 border border-white/10 hover:border-red-500/50 transition flex items-center justify-between"
-              >
-                <div>
-                  <div className="font-bold">🐺 {sv.name}</div>
-                  <div className="text-xs text-slate-400">Làng #{sv.id}</div>
-                </div>
-                <span className="h-3 w-3 rounded-full bg-emerald-500 animate-ping" />
-              </button>
-            ))
-          )}
+          {loading
+            ? [1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="h-24 rounded-2xl bg-white/5 animate-pulse"
+                />
+              ))
+            : servers.map((sv) => (
+                <button
+                  key={sv.id}
+                  onClick={() => handleSelect(sv)}
+                  className="
+                    relative w-full rounded-2xl p-5
+                    bg-white/5 backdrop-blur
+                    border border-white/10
+                    hover:border-red-500/50
+                    active:scale-[0.97]
+                    transition-all duration-200
+                    flex items-center justify-between
+                  "
+                >
+                  <div className="flex flex-col items-start gap-1">
+                    <span className="text-lg font-bold">🐺 {sv.name}</span>
+                    <span className="text-xs text-slate-400">Làng #{sv.id}</span>
+                  </div>
+
+                  <span className="relative flex h-3 w-3">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-70 animate-ping" />
+                    <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500" />
+                  </span>
+                </button>
+              ))}
         </div>
 
-        {/* Back */}
-        {hasSelectedBefore && (
-          <button
-            onClick={() => router.push(PATHS.SIGN_IN)}
-            className="text-sm font-semibold text-slate-400 hover:text-white"
-          >
-            ← Quay về đăng nhập
-          </button>
+        {/* Action Buttons: show if a server is selected */}
+        {selectedServer && (
+          <div className="w-full flex flex-col gap-4 mt-4">
+            <button
+              onClick={handleBackToSignIn}
+              className="w-full py-3 rounded-xl border border-white/20 text-white hover:bg-white/5 transition font-semibold"
+            >
+              ← Quay về đăng nhập
+            </button>
+
+            <button
+              onClick={handleGoToSignup}
+              className="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 transition text-white font-semibold"
+            >
+              Đăng ký ngay
+            </button>
+          </div>
         )}
       </div>
     </div>
