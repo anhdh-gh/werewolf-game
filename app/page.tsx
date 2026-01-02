@@ -1,4 +1,4 @@
-import Main from './Main'
+import Main from './selectServer'
 
 export default async function Page() {
 

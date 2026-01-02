@@ -139,6 +139,8 @@ export default function Home() {
     } catch (e) { console.error(e); }
   };
 
+
+
   const handleCreateRoom = async() =>{
    let players = window.prompt("Nhập số lượng người chơi :","10");
    
@@ -194,6 +196,52 @@ export default function Home() {
 
 
 
+  const handleJoinRoom = async () => {
+    const roomCode = window.prompt("Nhập mã phòng (Room Code):");
+    
+    if (!roomCode || roomCode.trim() === "") return;
+
+    setIsLoading(true); // Tận dụng state loading có sẵn hoặc tạo state mới nếu muốn
+    const token = localStorage.getItem("accessToken");
+
+    try {
+      const res = await fetch(`${apiBase}/rooms/join`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          room: {
+            code: roomCode.trim().toUpperCase() // Thường mã phòng nên viết hoa
+          }
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // Lưu URL WebSocket để sử dụng ở trang phòng chơi
+        const urlWebSocket = data.data?.next_step?.websocket;
+        if (urlWebSocket) {
+          localStorage.setItem("current_ws_url", urlWebSocket);
+        }
+        
+        // Chuyển hướng vào phòng
+        router.push(`/room/${roomCode.trim().toUpperCase()}`);
+      } else {
+        alert(data.message || "Không thể tham gia phòng. Mã phòng có thể sai hoặc đã đầy.");
+      }
+    } catch (error) {
+      console.error("Lỗi kết nối:", error);
+      alert("Không thể kết nối tới máy chủ.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+
+
 
   if (isLoading) return <div className="lobby-container"><h2>🚀 Đang kết nối...</h2></div>;
 
@@ -216,7 +264,7 @@ export default function Home() {
             <button className="btn btn-play" onClick={handleCreateRoom} disabled={isCreating}>
               {isCreating ? "⌛ Đang tạo..." : "🎮 Tạo Phòng"}
             </button>
-            <button className="btn btn-join" style={{ backgroundColor: '#2ecc71', color: 'white' }}>
+            <button className="btn btn-join" onClick ={handleJoinRoom} style={{ backgroundColor: '#2ecc71', color: 'white' }}>
                 🔑 Join Phòng
             </button>
             <button onClick={() => handleLogout(true)} className="btn btn-logout">🚪 Đăng xuất</button>

@@ -12,8 +12,9 @@ export default function GameRoom() {
   const [isReady, setIsReady] = useState(false);
   const [currentUser, setCurrentUser] = useState<string | null>(null);
 
-  // --- SỬA: Thêm state lưu số lượng người chơi tối đa ---
-  const [maxPlayers, setMaxPlayers] = useState(10); 
+  // --- SỬA 1: Khởi tạo null hoặc 0 để tránh hiển thị sai 10 ô trước khi có dữ liệu ---
+  // Nếu muốn mặc định 10 khi mất kết nối thì để 10, còn muốn chuẩn thì để 0
+  const [maxPlayers, setMaxPlayers] = useState(4); 
 
   useEffect(() => {
     const wsUrl = localStorage.getItem("current_ws_url");
@@ -22,7 +23,7 @@ export default function GameRoom() {
     
     if (!wsUrl) {
       alert("Không tìm thấy cấu hình kết nối!");
-      router.push('/');
+      router.push('../lobby');
       return;
     }
 
@@ -41,12 +42,18 @@ export default function GameRoom() {
       const data = JSON.parse(event.data);
       console.log("📩 Tin nhắn:", data);
 
-      if (data.type === "ROOM_UPDATE") {
-        setPlayers(data.players);
+      // --- SỬA 2: Bắt sự kiện cập nhật phòng và lấy max_players chuẩn ---
+      if (data.type === "ROOM_UPDATE" || data.type === "JOIN_SUCCESS") {
+        if (data.players) {
+            setPlayers(data.players);
+        }
         
-        // --- SỬA: Cập nhật maxPlayers từ Server nếu có gửi kèm ---
-        if (data.max_players) {
-          setMaxPlayers(data.max_players);
+        // Kiểm tra kỹ xem server trả về max_players ở cấp ngoài hay trong object room
+        // Ví dụ: data.max_players hoặc data.room.max_players
+        const roomLimit = data.max_players || data.room?.max_players;
+        
+        if (roomLimit) {
+          setMaxPlayers(roomLimit);
         }
       }
     };
@@ -72,21 +79,26 @@ export default function GameRoom() {
     }
   };
 
-  const isAllReady = players.length >= 6 && players.every(p => p.isReady);
+  const isAllReady = players.length >= Math.max(4, players.length) && players.every(p => p.isReady);
   const isHost = players.find(p => p.username === currentUser)?.isHost;
 
   return (
     <div className={styles.roomContainer}>
       <div className={styles.roomHeader}>
         <h2>Phòng: <span className={styles.highlight}>{params.id}</span></h2>
-        <button className={styles.btnLeave} onClick={() => router.push('/')}>Thoát</button>
+        {/* Hiển thị số lượng người chơi hiện tại / tối đa để dễ debug */}
+        <p style={{fontSize: '0.8rem', opacity: 0.7}}>
+            ({players.length} / {maxPlayers > 0 ? maxPlayers : '...'})
+        </p>
+        <button className={styles.btnLeave} onClick={() => router.push('../lobby')}>Thoát phòng</button>
       </div>
 
       <div className={styles.gameArea}>
         <div className={styles.playerGrid}>
+          {/* 1. Render người chơi đã có */}
           {players.map((player) => (
             <div 
-              key={player.id} 
+              key={player.id || player.username} 
               className={`${styles.playerCard} ${player.isHost ? styles.hostCard : ''}`}
             >
               <div className={styles.avatarWrapper}>
@@ -104,8 +116,10 @@ export default function GameRoom() {
             </div>
           ))}
 
-          {/* --- SỬA: Thay số 10 cố định bằng biến maxPlayers linh hoạt --- */}
-          {Array.from({ length: Math.max(0, maxPlayers - players.length) }).map((_, i) => (
+          {/* 2. Render các ô trống còn lại */}
+          {/* Logic: Số ô trống = Tổng giới hạn (maxPlayers) - Số người đang có (players.length) */}
+          {/* Nếu maxPlayers chưa load kịp (vẫn là 0) thì không render ô trống nào (tránh lỗi giao diện) */}
+          {maxPlayers > 0 && Array.from({ length: Math.max(0, maxPlayers - players.length) }).map((_, i) => (
             <div key={`empty-${i}`} className={`${styles.playerCard} ${styles.emptySlot}`}>
               <div className={styles.idAvatarEmpty}>?</div>
               <p className={styles.emptyText}>Chờ...</p>
@@ -126,7 +140,7 @@ export default function GameRoom() {
           <button 
             className={styles.btnStart} 
             disabled={!isAllReady}
-            title={!isAllReady ? "Cần tối thiểu 6 người và tất cả phải sẵn sàng" : ""}
+            title={!isAllReady ? "Cần tối thiểu người chơi và tất cả phải sẵn sàng" : ""}
           >
             BẮT ĐẦU VÀO ĐÊM
           </button>
