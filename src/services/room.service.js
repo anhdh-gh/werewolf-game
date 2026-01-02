@@ -15,6 +15,12 @@ const RoomService = {
     },
 
     async joinRoom(userId, roomCode) {
+        const room = await RoomRepository.getByCode(roomCode)
+        if(!room) {
+            throw new AppError(ERROR_CODES.ROOM_NOT_FOUND)
+        }
+
+        //
         return {
             room: { code: roomCode },
             next_step: {
