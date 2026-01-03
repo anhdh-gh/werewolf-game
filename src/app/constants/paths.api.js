@@ -7,4 +7,8 @@ export const API_PATHS = {
     SIGN_UP: '/api/v1/auth/register',
 
     TOKEN_REFRESH: '/api/v1/auth/refresh',
+
+    ROOM_CREATE: "/api/v1/rooms/create",
+
+    ROOM_JOIN: "/api/v1/rooms/join",
 };
