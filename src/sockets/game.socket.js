@@ -45,6 +45,24 @@ module.exports = (io, socket) => {
             await GameService.connectRoom(socket.user, payload.room.code)
             io.to(payload.room.code).emit(EVENTS.ROOM_PLAYERS, { data: { players: await GameService.getPlayerInfo(payload.room.code) } })
         } catch (err) {
+            //
+            if (err instanceof AppError) {
+                if (typeof ack === 'function') {
+                    ack({
+                        code: err.code,
+                        message: err.message,
+                        errors: err.errors ?? null
+                    });
+                } else {
+                    socket.emit(EVENTS.SOCKET_ERROR, {
+                        code: err.code,
+                        message: err.message,
+                        errors: err.errors ?? null
+                    });
+                }
+            }
+
+            //
             userSocketMap.delete(socket.user.id);
             return { disconnected: true }
         }
