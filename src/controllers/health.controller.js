@@ -1,6 +1,7 @@
 const { success } = require('../utils/response');
 const { error } = require('../utils/response');
 const ERROR_CODES = require('../constants/errorCode.constants');
+const AppError = require('../errors/AppError');
 
 exports.health = async (req, res, next) => {
     try {

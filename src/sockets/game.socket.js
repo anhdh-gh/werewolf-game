@@ -4,6 +4,7 @@ const GameService = require('../services/game.service');
 const { socketHandlerError } = require('../utils/socketError.wrapper');
 const {PHASE} = require("../constants/phase.constant");
 const { ACTIONS } = require('../constants/action.constant')
+const AppError = require('../errors/AppError');
 
 // key: userId, value: socket.id
 const userSocketMap = new Map();
