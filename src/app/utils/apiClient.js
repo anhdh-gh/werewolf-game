@@ -1,26 +1,28 @@
-import { PATHS } from "@/constants/paths";
 import { API_PATHS } from "@/constants/paths.api";
 import { KEYS } from "@/constants/keys";
 import { CODES } from "@/constants/codes";
 
-// Helper: show alert from server meta
+// ===== Helper: show alert from server meta =====
 function showServerAlert(data) {
-  if(CODES.SUCCESS !== data.meta.code) {
+  if (data?.meta?.code !== CODES.SUCCESS) {
     let alertText = `Code: ${data?.meta?.code || "N/A"}\nMessage: ${data?.meta?.message || "No message"}`;
-    if (data?.meta?.errors && data.meta.errors.length > 0) {
-      const errorsText = data.meta.errors.map(e => `- ${e.field}: ${e.message}`).join("\n");
+
+    if (data?.meta?.errors?.length) {
+      const errorsText = data.meta.errors
+        .map(e => `- ${e.field}: ${e.message}`)
+        .join("\n");
       alertText += `\nErrors:\n${errorsText}`;
     }
+
     alert(alertText);
   }
 }
 
-// Core API fetch wrapper
+// ===== Core fetch =====
 export async function apiFetch(endpoint, options = {}) {
   const serverRaw = localStorage.getItem(KEYS.SERVER_SELECTED);
   if (!serverRaw) {
-    window.location.href = PATHS.SERVER;
-    return;
+    throw { type: "NO_SERVER" };
   }
 
   const server = JSON.parse(serverRaw);
@@ -36,40 +38,37 @@ export async function apiFetch(endpoint, options = {}) {
   });
 
   const data = await res.json();
-
-  // Show alert for meta
   showServerAlert(data);
 
+  // ===== 401 handling =====
   if (res.status === 401) {
-    // try refresh token
     const refreshed = await refreshToken(server);
-    if (refreshed) {
-      // retry original request
-      accessToken = localStorage.getItem(KEYS.ACCESS_TOKEN);
-      const retryRes = await fetch(`${server.api}${endpoint}`, {
-        ...options,
-        headers: {
-          "Content-Type": "application/json",
-          ...(options.headers || {}),
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-      const retryData = await retryRes.json();
-      showServerAlert(retryData);
-      return retryData;
-    } else {
-      // refresh failed → redirect to signin
+    if (!refreshed) {
       localStorage.removeItem(KEYS.ACCESS_TOKEN);
       localStorage.removeItem(KEYS.REFRESH_TOKEN);
-      window.location.href = PATHS.SIGN_IN;
-      return;
+      throw { type: "UNAUTHORIZED" };
     }
+
+    // retry once
+    accessToken = localStorage.getItem(KEYS.ACCESS_TOKEN);
+    const retryRes = await fetch(`${server.api}${endpoint}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(options.headers || {}),
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    const retryData = await retryRes.json();
+    showServerAlert(retryData);
+    return retryData;
   }
 
   return data;
 }
 
-// Refresh token logic
+// ===== Refresh token =====
 async function refreshToken(server) {
   const refreshToken = localStorage.getItem(KEYS.REFRESH_TOKEN);
   if (!refreshToken) return false;
@@ -89,10 +88,8 @@ async function refreshToken(server) {
       localStorage.setItem(KEYS.REFRESH_TOKEN, data.data.refresh_token);
       return true;
     }
-
     return false;
-  } catch (err) {
-    console.error(err);
+  } catch {
     return false;
   }
 }

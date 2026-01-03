@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { KEYS } from "@/constants/keys";
 import { PATHS } from "@/constants/paths";
 import { API_PATHS } from "@/constants/paths.api";
-import { apiFetch } from "@/utils/apiClient";
+import { useApiFetch } from "@/hooks/useApiFetch";
 
 export default function MainContent() {
   const router = useRouter();
@@ -14,6 +14,7 @@ export default function MainContent() {
   const [maxPlayers, setMaxPlayers] = useState(4);
   const [loadingCreate, setLoadingCreate] = useState(false);
   const [loadingJoin, setLoadingJoin] = useState(false);
+  const apiFetch = useApiFetch();
 
   /* ================= MAX PLAYERS VALIDATION ================= */
   const handleMaxPlayersChange = (e) => {

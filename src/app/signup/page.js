@@ -5,13 +5,15 @@ import { useRouter } from "next/navigation";
 import { KEYS } from "@/constants/keys";
 import { PATHS } from "@/constants/paths";
 import { API_PATHS } from "@/constants/paths.api";
-import { apiFetch } from "@/utils/apiClient"; // wrapper fetch with auto refresh
+import { useApiFetch } from "@/hooks/useApiFetch";
+import { CODES } from "@/constants/codes";
 
 export default function SignupPage() {
   const router = useRouter();
   const [server, setServer] = useState(null);
   const [form, setForm] = useState({ email: "", username: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const apiFetch = useApiFetch();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -39,11 +41,13 @@ export default function SignupPage() {
     setLoading(true);
 
     try {
-      await apiFetch(API_PATHS.SIGN_UP, {
+      const res = await apiFetch(API_PATHS.SIGN_UP, {
         method: "POST",
         body: JSON.stringify(form),
       });
-      router.push(PATHS.SIGN_IN);
+      if(res.meta.code === CODES.SUCCESS) {
+        router.push(PATHS.SIGN_IN);
+      }
     } catch (err) {
       console.error(err);
       alert("Network error, please try again.");

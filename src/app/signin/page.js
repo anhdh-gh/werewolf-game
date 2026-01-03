@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { KEYS } from "@/constants/keys";
-import { apiFetch } from "@/utils/apiClient"; // wrapper fetch with auto refresh
 import { PATHS } from "@/constants/paths";
 import { API_PATHS } from "@/constants/paths.api";
+import { useApiFetch } from "@/hooks/useApiFetch";
 
 function parseJwt(token) {
   try {
@@ -28,6 +28,7 @@ export default function SigninPage() {
   const [server, setServer] = useState(null);
   const [form, setForm] = useState({ username: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const apiFetch = useApiFetch();
 
   // Load selected server or redirect to server selection
   useEffect(() => {
