@@ -1,3 +1,5 @@
+"use client";
+
 import AuthLayout from "@/layouts/AuthLayout";
 import MainContent from "@/components/MainContent";
 

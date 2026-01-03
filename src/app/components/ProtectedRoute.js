@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { KEYS } from "@/constants/keys";
 import { PATHS } from "@/constants/paths";
+import Loading from "@/components/Loading"
 
 export default function ProtectedRoute({ children }) {
   const router = useRouter();
@@ -25,6 +26,6 @@ export default function ProtectedRoute({ children }) {
     }
   }, []);
 
-  if (!allowed) return null; // or loading spinner
+  if (!allowed) <Loading />
   return children;
 }
