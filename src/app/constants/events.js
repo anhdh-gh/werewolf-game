@@ -1,6 +1,6 @@
 export const EVENTS = {
     //
-    CONNECTION: 'connection',
+    CONNECT: 'connect',
     DISCONNECT: 'disconnect',
 
     //
@@ -19,4 +19,5 @@ export const EVENTS = {
     GAME_DATA_FLOW: 'GAME_DATA_FLOW',
     SOCKET_ERROR: 'SOCKET_ERROR',
     ERROR: 'error',
+    CONNECT_ERROR: 'connect_error'
 };
