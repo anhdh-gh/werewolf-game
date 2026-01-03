@@ -8,6 +8,7 @@ module.exports = {
     LEAVE_ROOM: 'LEAVE_ROOM',
     PLAYER_READY: 'PLAYER_READY',
     PLAYER_INFO: 'PLAYER_INFO',
+    ROOM_INFO: 'ROOM_INFO',
 
     //
     PLAYER_DONE: 'PLAYER_DONE',

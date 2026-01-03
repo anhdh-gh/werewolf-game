@@ -50,6 +50,11 @@ module.exports = (io, socket) => {
         }
     }));
 
+    /**[ ROOM_INFO ]* */
+    socket.on(EVENTS.ROOM_INFO, socketHandlerError(async (socket, payload, ack) => {
+        return { data: { room: await GameService.roomInfo(socket.user, payload.room.code) } }
+    }));
+
     /**[ LEAVE_ROOM ]* */
     socket.on(EVENTS.LEAVE_ROOM, socketHandlerError(async (socket, payload, ack) => {
         try {

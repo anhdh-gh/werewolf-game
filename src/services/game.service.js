@@ -45,6 +45,18 @@ const GameService = {
         await PlayerRepository.connectRoom(player, roomCode)
     },
 
+    /**[ ROOM_INFO ]* */
+    async roomInfo(player, roomCode) {
+        //
+        const room = await RoomRepository.getByCode(roomCode)
+        if(!room) {
+            throw new AppError(ERROR_CODES.ROOM_NOT_FOUND)
+        }
+
+        //
+        return room;
+    },
+
     /**[ LEAVE_ROOM ]* */
     async leaveRoom(playerId, roomCode) {
         const room = await RoomRepository.getByCode(roomCode)
