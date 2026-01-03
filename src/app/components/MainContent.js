@@ -35,7 +35,7 @@ export default function MainContent() {
 
   /* ================= CREATE ROOM ================= */
   const handleCreateRoom = async () => {
-    if (!maxPlayers || maxPlayers < 5 || maxPlayers >= 100) {
+    if (!maxPlayers || maxPlayers < 4 || maxPlayers >= 100) {
       return alert("Số người chơi phải > 4 và < 100");
     }
 
