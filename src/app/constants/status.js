@@ -1,0 +1,12 @@
+export const STATUS = {
+    DEAD: 'DEAD',
+    DEAD_WOLF: 'DEAD_WOLF',
+    DEAD_WITCH: 'DEAD_WITCH',
+    PROTECTED: 'PROTECTED',
+    SILENCED: 'SILENCED',
+    ALIVE: 'ALIVE',
+    JOINED: 'JOINED',
+    WAITING: 'WAITING',
+    ENDED: 'ENDED',
+    PLAYING: 'PLAYING'
+};

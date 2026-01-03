@@ -9,14 +9,19 @@ export default function ProtectedRoute({ children }) {
   const [allowed, setAllowed] = useState(false);
 
   useEffect(() => {
-    const accessToken = localStorage.getItem(KEYS.ACCESS_TOKEN);
-    const refreshToken = localStorage.getItem(KEYS.REFRESH_TOKEN);
-
-    if (!accessToken || !refreshToken) {
-      // no token → redirect
-      router.replace(PATHS.SIGN_IN);
+    const selected = localStorage.getItem(KEYS.SERVER_SELECTED);
+    if (!selected) {
+      router.replace(PATHS.SERVER); // no server → redirect
     } else {
-      setAllowed(true);
+      //
+      const accessToken = localStorage.getItem(KEYS.ACCESS_TOKEN);
+      const refreshToken = localStorage.getItem(KEYS.REFRESH_TOKEN);
+      if (!accessToken || !refreshToken) {
+        // no token → redirect
+        router.replace(PATHS.SIGN_IN);
+      } else {
+        setAllowed(true);
+      }
     }
   }, []);
 

@@ -28,7 +28,6 @@ export default function MainContent() {
     }
 
     value = Number(value);
-    if (value < 4) value = 4;
     if (value > 99) value = 99;
 
     setMaxPlayers(value);
