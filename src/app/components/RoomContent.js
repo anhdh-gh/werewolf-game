@@ -14,6 +14,7 @@ import { ERRORS } from "@/constants/errors";
 import Loading from "@/components/Loading";
 import LobbyRoom from "@/components/LobbyRoom";
 import AllViewRolePhase from "@/components/AllViewRolePhase";
+import NightAllSleepPhase from "@/components/NightAllSleepPhase";
 import { useRoom } from "@/contexts/RoomContext";
 
 export default function RoomContent() {
@@ -132,6 +133,11 @@ export default function RoomContent() {
   /* ===== ALL_VIEW_ROLE ===== */
   if (connected && gameFlow?.phase === PHASES.ALL_VIEW_ROLE) {
     return <AllViewRolePhase roomCode={room_code} flow={gameFlow} />;
+  }
+
+  /* ===== ALL_VIEW_ROLE ===== */
+  if (connected && gameFlow?.phase === PHASES.NIGHT_ALL_SLEEP) {
+    return <NightAllSleepPhase roomCode={room_code} flow={gameFlow} />;
   }
 
   /* ===== LOADING ===== */
