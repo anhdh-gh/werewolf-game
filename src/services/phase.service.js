@@ -11,6 +11,7 @@ const { ACTIONS } = require('../constants/action.constant')
 const RoomService = require('../services/room.service')
 
 const PHASE_TIMEOUT = 300000;
+const EMIT_DELAY = 4000;
 
 const PhaseService = {
 
@@ -156,7 +157,7 @@ const PhaseService = {
                     //
                     isRoleAlive = await PlayerRepository.isRoleAlive(room.code, [nextPhase?.role.key]);
                     if(!isRoleAlive) {
-                        data.time = 10 // TODO: Change
+                        data.time = 15 // TODO: Change
                     } else {
                         if(PHASE.NIGHT_WITCH_SAVE.key === data.phase) {
                             data.data = { players: await PhaseService.getVoteMax(room.code, PHASE.NIGHT_WOLF.key) }
@@ -194,7 +195,7 @@ const PhaseService = {
                                     ? ACTIONS.SLEEP : ACTIONS.WAKEUP
                         }
                     })
-                    setTimeout(() => emit(data), 4000)
+                    setTimeout(() => emit(data), EMIT_DELAY)
                 } else {
                     emit(data)
                 }
@@ -255,14 +256,16 @@ const PhaseService = {
         await PlayerRepository.resetGame(roomCode)
 
         //
-        emit({
-            phase: PHASE.END.key,
-            message: PHASE.END.message + roleWin,
-            event: {
-                role: ROLES.ALL.key,
-                action: ACTIONS.VIEW
-            }
-        })
+        setTimeout(() => {
+            emit({
+                phase: PHASE.END.key,
+                message: PHASE.END.message + roleWin,
+                event: {
+                    role: ROLES.ALL.key,
+                    action: ACTIONS.VIEW
+                }
+            })
+        }, EMIT_DELAY)
 
         return true
     },
@@ -371,11 +374,13 @@ const PhaseService = {
         const votes = await VoteRepository.findByRoomAndPhases(roomCode, phases);
 
         if (!votes.length) {
-            emit({
-                phase: PHASE.DAY_DISCUSSION.key,
-                message: "Đêm qua không có ai chết",
-                event: { role: ROLES.ALL.key, action: ACTIONS.VIEW }
-            });
+            setTimeout(() => {
+                emit({
+                    phase: PHASE.DAY_DISCUSSION.key,
+                    message: "Đêm qua không có ai chết",
+                    event: { role: ROLES.ALL.key, action: ACTIONS.VIEW }
+                });
+            }, EMIT_DELAY)
             await VoteRepository.clearVotes(roomCode);
             return;
         }
@@ -446,15 +451,16 @@ const PhaseService = {
             players.push({ ...playerInfoMap[mutedId], is_muted: true });
         }
 
-        emit({
-            phase: PHASE.DAY_DISCUSSION.key,
-            message: messages.length
-                ? `Đêm qua ${messages.join(', ')}`
-                : "Đêm qua không có ai chết",
-            event: { role: ROLES.ALL.key, action: ACTIONS.VIEW },
-            data: players.length ? { players } : undefined
-        });
-
+        setTimeout(() => {
+            emit({
+                phase: PHASE.DAY_DISCUSSION.key,
+                message: messages.length
+                    ? `Đêm qua ${messages.join(', ')}`
+                    : "Đêm qua không có ai chết",
+                event: { role: ROLES.ALL.key, action: ACTIONS.VIEW },
+                data: players.length ? { players } : undefined
+            });
+        }, EMIT_DELAY)
         await VoteRepository.clearVotes(roomCode);
     },
 
