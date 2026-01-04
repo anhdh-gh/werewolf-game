@@ -11,7 +11,7 @@ const PHASE = {
     ALL_VIEW_ROLE: {
         key: 'ALL_VIEW_ROLE',
         time: 20, // TODO: Change
-        message: 'Cả làng xem chức năng của mình đê',
+        message: 'Cả làng xem chức năng của mình đi',
     },
 
     NIGHT_ALL_SLEEP: {
@@ -21,17 +21,17 @@ const PHASE = {
 
     NIGHT_SEER: {
         key: 'NIGHT_SEER',
-        message: 'Tiên tri thức dậy, đêm nay tiên tri bạn muốn soi ai?'
+        message: 'Tiên tri thức dậy, đêm nay bạn muốn soi ai?'
     },
 
     NIGHT_GUARD: {
         key: 'NIGHT_GUARD',
-        message: 'Bảo vệ thức dậy, đêm nay bảo vệ muốn bảo vệ ai?'
+        message: 'Bảo vệ thức dậy, đêm nay bạn muốn bảo vệ ai?'
     },
 
     NIGHT_SILENCED: {
         key: 'NIGHT_SILENCED',
-        message: 'Bị câm thức dậy, đêm nay bị câm muốn cho ai câm?'
+        message: 'Bị câm thức dậy, đêm nay bạn muốn cho ai câm?'
     },
 
     NIGHT_WOLF: {
@@ -41,7 +41,7 @@ const PHASE = {
 
     NIGHT_WITCH_SAVE: {
         key: 'NIGHT_WITCH_SAVE',
-        message: 'Phù thủy thức dậy, đêm nay người này bị chết, phù thủy có muốn cứu không?'
+        message: 'Phù thủy thức dậy, đêm nay bạn có muốn cứu người chết này không?'
     },
 
     NIGHT_WITCH_KILL: {
@@ -51,7 +51,7 @@ const PHASE = {
 
     NIGHT_CURSED: {
         key: 'NIGHT_CURSED',
-        message: 'Bị nguyền thức dậy, chức năng của bị nguyền là:'
+        message: 'Bị nguyền thức dậy, chức năng của bạn là:'
     },
 
     DAY_DISCUSSION: {
