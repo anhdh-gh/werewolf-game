@@ -9,9 +9,11 @@ import {
 } from "@/socket/gameSocket";
 import { EVENTS } from "@/constants/events";
 import { PATHS } from "@/constants/paths";
+import { PHASES } from "@/constants/phases";
 import { ERRORS } from "@/constants/errors";
 import Loading from "@/components/Loading";
 import LobbyRoom from "@/components/LobbyRoom";
+import AllViewRolePhase from "@/components/AllViewRolePhase";
 import { useRoom } from "@/contexts/RoomContext";
 
 export default function RoomContent() {
@@ -69,6 +71,9 @@ export default function RoomContent() {
 
     socket.on(EVENTS.GAME_DATA_FLOW, (payload) => {
       console.log("🎮 GAME_DATA_FLOW:", payload);
+      if(payload?.data?.players) {
+        setPlayers(payload?.data?.players || []);
+      }
       setGameFlow(payload);
     });
 
@@ -122,6 +127,11 @@ export default function RoomContent() {
   /* ===== LOBBY ===== */
   if (connected && !gameFlow) {
     return <LobbyRoom roomCode={room_code} />;
+  }
+
+  /* ===== ALL_VIEW_ROLE ===== */
+  if (connected && gameFlow?.phase === PHASES.ALL_VIEW_ROLE) {
+    return <AllViewRolePhase roomCode={room_code} flow={gameFlow} />;
   }
 
   /* ===== LOADING ===== */

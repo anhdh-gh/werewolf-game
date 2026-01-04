@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { getGameSocket } from "@/socket/gameSocket";
 import { EVENTS } from "@/constants/events";
-import { STATUS } from "@/constants/status";
 import { useRoom } from "@/contexts/RoomContext";
 import CopyableText from "@/components/CopyableText";
 import Loading from "@/components/Loading"
