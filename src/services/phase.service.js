@@ -171,6 +171,16 @@ const PhaseService = {
                     return;
                 }
 
+                // Next phase
+                await RoomRepository.updateRooms([
+                    {
+                        code: room.code,
+                        status: STATUS.PLAYING,
+                        current_phase: data?.phase,
+                        phase_expires_at: await RoomRepository.raw('TIMESTAMPADD(SECOND, ?, NOW())', [data?.time])
+                    }
+                ])
+
                 //
                 if(curPhase && curPhase?.role && curPhase?.role.key !== data.event.role) {
                     emit({
@@ -184,18 +194,10 @@ const PhaseService = {
                                     ? ACTIONS.SLEEP : ACTIONS.WAKEUP
                         }
                     })
+                    setTimeout(() => emit(data), 4000)
+                } else {
+                    emit(data)
                 }
-
-                // Next phase
-                await RoomRepository.updateRooms([
-                    {
-                        code: room.code,
-                        status: STATUS.PLAYING,
-                        current_phase: data?.phase,
-                        phase_expires_at: await RoomRepository.raw('TIMESTAMPADD(SECOND, ?, NOW())', [data?.time])
-                    }
-                ])
-                emit(data)
 
                 // Complete phase
                 if(data?.event.role === ROLES.ALL.key && data?.event?.action === ACTIONS.WAKEUP) {
