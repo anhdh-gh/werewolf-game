@@ -11,12 +11,15 @@ import { EVENTS } from "@/constants/events";
 import { PATHS } from "@/constants/paths";
 import { ERRORS } from "@/constants/errors";
 import Loading from "@/components/Loading";
+import LobbyRoom from "@/components/LobbyRoom";
+import { useRoom } from "@/contexts/RoomContext";
 
 export default function RoomContent() {
   const { room_code } = useParams();
   const router = useRouter();
 
   const [connected, setConnected] = useState(false);
+  const { gameFlow, setPlayers, setGameFlow } = useRoom();
 
   useEffect(() => {
     /* ===== CONNECT SOCKET ===== */
@@ -44,24 +47,8 @@ export default function RoomContent() {
 
           console.log("✅ CONNECT_ROOM OK");
 
-          /* ===== STEP 2: GET ROOM INFO ===== */
-          socket.emit(
-            EVENTS.ROOM_INFO,
-            { room: { code: room_code } },
-            (res) => {
-              if (!res || res.code !== 200) {
-                console.error("❌ ROOM_INFO FAIL:", res);
-                alert(JSON.stringify(res));
-                router.push(PATHS.HOME);
-                return;
-              }
-
-              console.log("✅ ROOM_INFO OK:", res.data.room);
-
-              /* ===== ALL DONE ===== */
-              setConnected(true);
-            }
-          );
+          /* ===== ALL DONE ===== */
+          setConnected(true);
         }
       );
     };
@@ -82,10 +69,12 @@ export default function RoomContent() {
 
     socket.on(EVENTS.GAME_DATA_FLOW, (payload) => {
       console.log("🎮 GAME_DATA_FLOW:", payload);
+      setGameFlow(payload);
     });
 
     socket.on(EVENTS.ROOM_PLAYERS, (payload) => {
       console.log("👥 ROOM_PLAYERS:", payload);
+      setPlayers(payload?.data?.players || []);
     });
 
     socket.on(EVENTS.CONNECT_ERROR, (err) => {
@@ -130,16 +119,11 @@ export default function RoomContent() {
     };
   }, [room_code, router]);
 
-  /* ===== LOADING ===== */
-  if (!connected) {
-    return <Loading textMsg={`Đang kết nối tới phòng ${room_code}`} />;
+  /* ===== LOBBY ===== */
+  if (connected && !gameFlow) {
+    return <LobbyRoom roomCode={room_code} />;
   }
 
-  return (
-    <main className="min-h-screen bg-black text-white p-4">
-      <p className="text-green-400 text-center">
-        ✅ Đã kết nối socket, join room & lấy room info (xem console)
-      </p>
-    </main>
-  );
+  /* ===== LOADING ===== */
+  return <Loading textMsg={`Đang kết nối tới phòng ${room_code}`} />;
 }

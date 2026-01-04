@@ -74,19 +74,19 @@ export default function ServerPage() {
         <div className="w-full flex flex-col gap-4">
           {loading
             ? [1, 2].map((i) => (
-                <div
-                  key={i}
-                  className="h-24 rounded-2xl bg-white/5 animate-pulse"
-                />
-              ))
+              <div
+                key={i}
+                className="h-24 rounded-2xl bg-white/5 animate-pulse"
+              />
+            ))
             : servers.map((sv) => {
-                const isSelected = selectedServer?.id === sv.id;
+              const isSelected = selectedServer?.id === sv.id;
 
-                return (
-                  <button
-                    key={sv.id}
-                    onClick={() => handleSelect(sv)}
-                    className={`
+              return (
+                <button
+                  key={sv.id}
+                  onClick={() => handleSelect(sv)}
+                  className={`
                       relative w-full rounded-2xl p-5
                       ${isSelected ? "bg-red-600 border-red-500" : "bg-white/5 border-white/10"}
                       backdrop-blur
@@ -95,46 +95,45 @@ export default function ServerPage() {
                       transition-all duration-200
                       flex items-center justify-between
                     `}
-                  >
-                    <div className="flex flex-col items-start gap-1">
-                      <span className="text-lg font-bold">
-                        {isSelected ? "🌕 " : "🐺 "} {sv.name}
-                      </span>
-                      <span className="text-xs text-slate-400">Làng #{sv.id}</span>
-                    </div>
-
-                    <span className="relative flex h-3 w-3">
-                      <span
-                        className={`absolute inline-flex h-full w-full rounded-full ${
-                          isSelected ? "bg-red-400" : "bg-emerald-400"
-                        } opacity-70 animate-ping`}
-                      />
-                      <span
-                        className={`relative inline-flex h-3 w-3 rounded-full ${
-                          isSelected ? "bg-red-500" : "bg-emerald-500"
-                        }`}
-                      />
+                >
+                  <div className="flex flex-col items-start gap-1">
+                    <span className="text-lg font-bold">
+                      {isSelected ? "🌕 " : "🐺 "} {sv.name}
                     </span>
-                  </button>
-                );
-              })}
+                    <span className="text-xs text-slate-400">Làng #{sv.id}</span>
+                  </div>
+
+                  <span className="relative flex h-3 w-3">
+                    <span
+                      className={`absolute inline-flex h-full w-full rounded-full ${isSelected ? "bg-red-400" : "bg-emerald-400"
+                        } opacity-70 animate-ping`}
+                    />
+                    <span
+                      className={`relative inline-flex h-3 w-3 rounded-full ${isSelected ? "bg-red-500" : "bg-emerald-500"
+                        }`}
+                    />
+                  </span>
+                </button>
+              );
+            })}
         </div>
 
         {/* Action Buttons: show only when a server is selected */}
         {selectedServer && (
           <div className="w-full flex flex-col gap-4 mt-4">
+
             <button
               onClick={handleBackToSignIn}
-              className="w-full py-3 rounded-xl border border-white/20 text-white hover:bg-white/5 transition font-semibold"
+              className="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 transition text-white font-semibold"
             >
-              ← Quay về đăng nhập
+              Đăng nhập
             </button>
 
             <button
               onClick={handleGoToSignup}
-              className="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 transition text-white font-semibold"
+              className="w-full py-3 rounded-xl border border-white/20 text-white hover:bg-white/5 transition font-semibold"
             >
-              Đăng ký ngay
+              📝 Đăng ký
             </button>
           </div>
         )}

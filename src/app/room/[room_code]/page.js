@@ -2,11 +2,14 @@
 
 import AuthLayout from "@/layouts/AuthLayout";
 import RoomContent from "@/components/RoomContent";
+import { RoomProvider } from "@/contexts/RoomContext";
 
 export default function HomePage() {
   return (
     <AuthLayout>
-      <RoomContent />
+      <RoomProvider>
+        <RoomContent />
+      </RoomProvider>
     </AuthLayout>
   );
 }

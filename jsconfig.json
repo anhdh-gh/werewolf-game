@@ -8,6 +8,7 @@
       "@/components/*": ["./src/app/components/*"],
       "@/hooks/*": ["./src/app/hooks/*"],
       "@/socket/*": ["./src/app/socket/*"],
+      "@/contexts/*": ["./src/app/contexts/*"],
       "@/layouts/*": ["./src/app/layouts/*"]
     }
   }

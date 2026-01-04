@@ -48,6 +48,7 @@ export default function SignupPage() {
       if(res.meta.code === CODES.SUCCESS) {
         router.push(PATHS.SIGN_IN);
       }
+      alert("Đăng ký thành công");
     } catch (err) {
       console.error(err);
       alert("Network error, please try again.");
