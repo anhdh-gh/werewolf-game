@@ -11,7 +11,8 @@ const { ACTIONS } = require('../constants/action.constant')
 const RoomService = require('../services/room.service')
 
 const PHASE_TIMEOUT = 300000;
-const EMIT_DELAY = 4000;
+const EMIT_DELAY = 4500;
+const EMIT_DELAY_PER_PHASE = 3500;
 
 const PhaseService = {
 
@@ -195,7 +196,7 @@ const PhaseService = {
                                     ? ACTIONS.SLEEP : ACTIONS.WAKEUP
                         }
                     })
-                    setTimeout(() => emit(data), EMIT_DELAY)
+                    setTimeout(() => emit(data), EMIT_DELAY_PER_PHASE)
                 } else {
                     emit(data)
                 }
