@@ -18,6 +18,8 @@ import NightAllSleepPhase from "@/components/NightAllSleepPhase";
 import { useRoom } from "@/contexts/RoomContext";
 import NightSeerPhase from "@/components/NightSeerPhase";
 import NightWolfPhase from "@/components/NightWolfPhase";
+import NightWitchSave from "@/components/NightWitchSave";
+import NightWitchKill from "@/components/NightWitchKill";
 
 export default function RoomContent() {
   const { room_code } = useParams();
@@ -150,6 +152,16 @@ export default function RoomContent() {
   /* ===== NIGHT_WOLF ===== */
   if (connected && gameFlow?.phase === PHASES.NIGHT_WOLF) {
     return <NightWolfPhase roomCode={room_code} flow={gameFlow} />;
+  }
+
+  /* ===== NIGHT_WITCH_SAVE ===== */
+  if (connected && gameFlow?.phase === PHASES.NIGHT_WITCH_SAVE) {
+    return <NightWitchSave roomCode={room_code} flow={gameFlow} />;
+  }
+
+  /* ===== NIGHT_WITCH_KILL ===== */
+  if (connected && gameFlow?.phase === PHASES.NIGHT_WITCH_KILL) {
+    return <NightWitchKill roomCode={room_code} flow={gameFlow} />;
   }
 
   /* ===== LOADING ===== */

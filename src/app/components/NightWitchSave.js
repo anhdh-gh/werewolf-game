@@ -11,12 +11,11 @@ import { ACTIONS } from "@/constants/actions";
 import { ROLES } from "@/constants/roles";
 import { useRouter } from "next/navigation";
 
-export default function NightWolfPhase({ roomCode, flow }) {
+export default function NightWitchSave({ roomCode, flow }) {
   const router = useRouter();
   const socket = getGameSocket();
 
   const [player, setPlayer] = useState(null);
-  const [playersList, setPlayersList] = useState([]);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
 
   const audioRef = useRef(null);
@@ -31,7 +30,6 @@ export default function NightWolfPhase({ roomCode, flow }) {
       return;
     }
 
-    // Lấy thông tin chính mình
     socket.emit(
       EVENTS.PLAYER_INFO,
       { room: { code: roomCode }, player: { ids: [playerId] } },
@@ -40,14 +38,6 @@ export default function NightWolfPhase({ roomCode, flow }) {
         setPlayer(res.data.players[0]);
       }
     );
-
-    // Lấy danh sách người chơi còn sống
-    socket.emit(EVENTS.PLAYER_INFO, { room: { code: roomCode } }, (res) => {
-      if (!res?.data?.players?.length) return;
-      setPlayersList(
-        res.data.players.filter((p) => p.is_alive && p.is_connected && p.is_ready)
-      );
-    });
   }, [roomCode, socket, router]);
 
   /* ===== TTS ===== */
@@ -83,8 +73,8 @@ export default function NightWolfPhase({ roomCode, flow }) {
     setSelectedPlayer(null);
   };
 
-  /* ===== VOTE ===== */
-  const handleVote = (p) => {
+  /* ===== SAVE (VOTE) ===== */
+  const handleSave = (p) => {
     if (!socket) return;
 
     setSelectedPlayer(p);
@@ -104,14 +94,14 @@ export default function NightWolfPhase({ roomCode, flow }) {
   }
 
   /**
-   * ⭐ Wolf chỉ tương tác khi WAKEUP
+   * ⭐ Witch chỉ tương tác khi WAKEUP
    */
-  const isWolfWakeup =
-    player.role === ROLES.WEREWOLF &&
+  const isWitchWakeup =
+    player.role === ROLES.WITCH &&
     flow?.event?.action === ACTIONS.WAKEUP;
 
   /* ===== PASSIVE VIEW ===== */
-  if (!isWolfWakeup) {
+  if (!isWitchWakeup) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-black text-white">
         <p className="text-lg text-gray-300 text-center max-w-md animate-pulse">
@@ -121,7 +111,9 @@ export default function NightWolfPhase({ roomCode, flow }) {
     );
   }
 
-  /* ===== WOLF WAKEUP VIEW ===== */
+  const candidates = flow?.data?.players || [];
+
+  /* ===== WITCH SAVE VIEW ===== */
   return (
     <div className="relative h-screen flex flex-col bg-black text-white overflow-hidden">
       
@@ -133,36 +125,44 @@ export default function NightWolfPhase({ roomCode, flow }) {
 
       {/* BODY */}
       <main className="flex-1 overflow-y-auto p-4">
-        <h3 className="text-md mb-3">🐺 Chọn người để cắn</h3>
+        <p className="text-sm text-gray-400 mb-3">
+          👉 Click vào người bạn muốn <span className="text-green-400 font-semibold">cứu</span>
+        </p>
 
-        <div className="space-y-3 pb-4">
-          {playersList.map((p) => {
-            const isSelected = selectedPlayer?.player_id === p.player_id;
+        {candidates.length === 0 ? (
+          <p className="text-gray-500 italic">
+            Không có ai để cứu trong đêm nay.
+          </p>
+        ) : (
+          <div className="space-y-3 pb-4">
+            {candidates.map((p) => {
+              const isSelected = selectedPlayer?.player_id === p.player_id;
 
-            return (
-              <div
-                key={p.player_id}
-                onClick={() => handleVote(p)}
-                className={`w-full flex items-center justify-between rounded-xl px-4 py-3 cursor-pointer transition
-                  ${
-                    isSelected
-                      ? "bg-red-700 border border-red-500"
-                      : "bg-zinc-800 hover:bg-zinc-700"
-                  }
-                `}
-              >
-                <div className="flex flex-col gap-1">
-                  <CopyableText label="ID" value={p.player_id} />
-                  <CopyableText label="Name" value={p.username} />
+              return (
+                <div
+                  key={p.player_id}
+                  onClick={() => handleSave(p)}
+                  className={`w-full flex items-center justify-between rounded-xl px-4 py-3 cursor-pointer transition
+                    ${
+                      isSelected
+                        ? "bg-green-700 border border-green-500"
+                        : "bg-zinc-800 hover:bg-zinc-700"
+                    }
+                  `}
+                >
+                  <div className="flex flex-col gap-1">
+                    <CopyableText label="ID" value={p.player_id} />
+                    <CopyableText label="Name" value={p.username} />
+                  </div>
+
+                  <span className="text-green-400 font-bold">
+                    ❤️ Cứu
+                  </span>
                 </div>
-
-                <span className="text-gray-400 text-sm">
-                  {p.is_connected ? "🟢 Online" : "🔴 Offline"}
-                </span>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </main>
 
       {/* FOOTER */}
@@ -176,7 +176,7 @@ export default function NightWolfPhase({ roomCode, flow }) {
 
         <button
           onClick={handleDone}
-          className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-500 font-bold transition"
+          className="flex-1 py-3 rounded-xl bg-green-600 hover:bg-green-500 font-bold transition"
         >
           Đã xong
         </button>
