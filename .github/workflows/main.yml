@@ -2,7 +2,7 @@ name: Auto Deploy
 
 on:
   push:
-    branches: [ main ]
+    branches: [ backend ]
 
 jobs:
   deploy:
@@ -15,8 +15,9 @@ jobs:
           username: root
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd /var/www/werewolf-game
+            cd /werewolf-game
             git pull
+            npm install --production
             pm2 restart all
 
       - name: Deploy to VPS 2
@@ -26,6 +27,7 @@ jobs:
           username: root
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd /var/www/werewolf-game
+            cd /werewolf-game
             git pull
+            npm install --production
             pm2 restart all
