@@ -7,13 +7,15 @@ const {
     startRoomPhaseJob,
     startClearRoomJob,
     startClearRoomDisconnectJob,
-    startClearRoomNotPlayerJob
+    startClearRoomNotPlayerJob,
+    startGameJob
 } = require('./jobs/phase.job');
 
 const server = http.createServer(app);
 
 initSocket(server);       // 👈 init trước
 startRoomPhaseJob();      // 👈 job sau
+startGameJob();
 startClearRoomJob();
 startClearRoomDisconnectJob();
 startClearRoomNotPlayerJob();

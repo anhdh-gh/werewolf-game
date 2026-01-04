@@ -2,6 +2,9 @@ const PhaseService = require('../services/phase.service');
 const RoomRepository = require('../repositories/room.repository');
 const EVENTS = require('../constants/events');
 const { getIO } = require('../config/socket');
+const { PHASE } = require('../constants/phase.constant')
+const { ROLES } = require('../constants/roles.constant')
+const {ACTIONS} = require("../constants/action.constant");
 
 const CHECK_INTERVAL_MS = 1000;
 
@@ -30,6 +33,40 @@ async function runRoomPhaseJob() {
     }
 }
 
+async function startGame() {
+    try {
+        const io = getIO();
+
+        const rooms = await RoomRepository.findStartGame();
+        if (!rooms.length) return;
+
+        //
+        await Promise.all(
+            rooms.map(room =>
+                PhaseService.allViewRole(room.code)
+                .then(players => {
+                    if(players && players.length > 3) {
+                        io.to(room.code).emit(EVENTS.GAME_DATA_FLOW, {
+                            phase: PHASE.ALL_VIEW_ROLE.key,
+                            message: PHASE.ALL_VIEW_ROLE.message,
+                            time: PHASE.ALL_VIEW_ROLE.time,
+                            event: {
+                                role: ROLES.ALL.key,
+                                action: ACTIONS.VIEW
+                            },
+                            data: { players }
+                        })
+                    }
+                }).catch(err => {
+                    console.error('[StartGame]', err);
+                })
+            )
+        );
+    } catch (err) {
+        console.error('[StartGame]', err);
+    }
+}
+
 async function clearRoom(rooms) {
     try {
         if (!rooms.length) return;
@@ -48,6 +85,15 @@ async function clearRoom(rooms) {
 function startRoomPhaseJob() {
     async function loop() {
         await runRoomPhaseJob();
+        setTimeout(loop, CHECK_INTERVAL_MS);
+    }
+
+    loop(); // start once
+}
+
+function startGameJob() {
+    async function loop() {
+        await startGame();
         setTimeout(loop, CHECK_INTERVAL_MS);
     }
 
@@ -81,4 +127,10 @@ function startClearRoomNotPlayerJob() {
     loop(); // start once
 }
 
-module.exports = { startRoomPhaseJob, startClearRoomJob, startClearRoomDisconnectJob, startClearRoomNotPlayerJob };
+module.exports = {
+    startRoomPhaseJob,
+    startClearRoomJob,
+    startClearRoomDisconnectJob,
+    startClearRoomNotPlayerJob,
+    startGameJob
+};

@@ -86,32 +86,8 @@ module.exports = (io, socket) => {
 
     /**[ PLAYER_READY ]* */
     socket.on(EVENTS.PLAYER_READY, socketHandlerError(async (socket, payload, ack) => {
-        const allReady = await GameService.playerReady(socket.user, payload.room.code);
+        await GameService.playerReady(socket.user, payload.room.code);
         io.to(payload.room.code).emit(EVENTS.ROOM_PLAYERS, { data: { players: await GameService.getPlayerInfo(payload.room.code) } })
-        if(allReady) {
-            GameService.startGame(payload.room.code, (players) => {
-                if(!players || players.length < 1) {
-                    return;
-                }
-
-                //
-                players.forEach(player => {
-                    const socketId = userSocketMap.get(player.player_id)
-                    if (!socketId) return
-
-                    io.to(socketId).emit(EVENTS.GAME_DATA_FLOW, {
-                        role: player.role,
-                        phase: PHASE.ALL_VIEW_ROLE.key,
-                        message: PHASE.ALL_VIEW_ROLE.message,
-                        time: PHASE.ALL_VIEW_ROLE.time,
-                        event: {
-                            role: player.role,
-                            action: ACTIONS.VIEW
-                        }
-                    })
-                })
-            }).catch(err => console.log(err))
-        }
     }));
 
     /**[ PLAYER_INFO ]* */

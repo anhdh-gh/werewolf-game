@@ -4,7 +4,6 @@ const PlayerRepository = require('../repositories/player.repository');
 const ERROR_CODES = require('../constants/errorCode.constants');
 const { STATUS } = require('../constants/status.constant')
 const { PHASE, PHASE_TIME_MAX } = require('../constants/phase.constant')
-const phaseBarrier = require('../model/PhaseBarrierManager')
 const PhaseService = require('../services/phase.service')
 const RoomService = require("./room.service");
 const ActionsRepository = require('../repositories/action.repository');
@@ -91,9 +90,6 @@ const GameService = {
 
         //
         await PlayerRepository.playerReady(player, roomCode);
-
-        //
-        return phaseBarrier.register(roomCode, PHASE.LOBBY.key, room.max_players, player.id)
     },
 
     /**[ PLAYER_INFO ]* */
@@ -202,18 +198,6 @@ const GameService = {
 
     async getPlayerInfo(roomCode, playerIds) {
         return await PlayerRepository.getPlayerInfo(roomCode, playerIds);
-    },
-
-    async startGame(roomCode, handler) {
-        //
-        const players = await PhaseService.allViewRole(roomCode)
-        if(players) {
-            //
-            handler(players)
-
-            // Finally
-            phaseBarrier.clear(roomCode, PHASE.LOBBY.key)
-        }
     },
 
     async validateActions(userId, roomCode, currentPhase) {

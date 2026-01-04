@@ -190,6 +190,31 @@ const RoomRepository = {
         }
     },
 
+    async findStartGame() {
+        const conn = await pool.getConnection();
+        try {
+            const [rows] = await conn.query(
+                `
+                    SELECT r.code as code
+                    FROM rooms r
+                    JOIN players p ON p.room_code = r.code
+                    WHERE r.status = 'WAITING'
+                      AND r.current_phase = 'LOBBY'
+                      AND r.max_players >= 4
+                      AND p.is_ready = TRUE
+                      AND p.is_connected = TRUE
+                    GROUP BY r.code, r.max_players
+                    HAVING COUNT(*) = r.max_players
+                    LIMIT 20;
+                `
+            );
+
+            return rows;
+        } finally {
+            conn.release();
+        }
+    },
+
     async findRoomsCreatedOverHours(hours) {
         const conn = await pool.getConnection();
         try {
