@@ -5,9 +5,11 @@ import { EVENTS } from "@/constants/events";
 import { getGameSocket } from "@/socket/gameSocket";
 import { KEYS } from "@/constants/keys";
 import Loading from "@/components/Loading";
+import { useRouter } from "next/navigation";
 
 export default function AllViewRolePhase({ roomCode, flow }) {
-  const [player, setPlayer] = useState(null);
+  const router = useRouter();
+  const [ player, setPlayer ] = useState();
   const [revealed, setRevealed] = useState(false);
   
   // Dùng Ref để quản lý Audio instance duy nhất
@@ -18,7 +20,9 @@ export default function AllViewRolePhase({ roomCode, flow }) {
     const socket = getGameSocket();
     if (!socket) return;
     const playerId = Number(localStorage.getItem(KEYS.USER_ID));
-    if (!playerId) return;
+    if (!playerId) {
+      router.push(PATHS.SIGN_IN);
+    };
 
     socket.emit(EVENTS.PLAYER_INFO, { room: { code: roomCode }, player: { ids: [playerId] } }, (res) => {
       if (!res?.data?.players?.length) return;
@@ -101,7 +105,7 @@ export default function AllViewRolePhase({ roomCode, flow }) {
           </div>
           <div className="absolute inset-0 flex flex-col items-center justify-center rounded-xl bg-red-700 rotate-y-180 backface-hidden">
             <span className="text-sm opacity-80">Vai trò của bạn</span>
-            <span className="mt-2 text-2xl font-bold">{player.role}</span>
+            <span className="mt-2 text-2xl font-bold">{player.initial_role}</span>
           </div>
         </div>
       </div>

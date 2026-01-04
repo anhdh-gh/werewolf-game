@@ -3,4 +3,6 @@ export const PHASES = {
     ALL_VIEW_ROLE: 'ALL_VIEW_ROLE',
 
     NIGHT_ALL_SLEEP: 'NIGHT_ALL_SLEEP',
+
+    NIGHT_SEER: 'NIGHT_SEER',
 };

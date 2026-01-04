@@ -16,6 +16,7 @@ import LobbyRoom from "@/components/LobbyRoom";
 import AllViewRolePhase from "@/components/AllViewRolePhase";
 import NightAllSleepPhase from "@/components/NightAllSleepPhase";
 import { useRoom } from "@/contexts/RoomContext";
+import NightSeerPhase from "@/components/NightSeerPhase";
 
 export default function RoomContent() {
   const { room_code } = useParams();
@@ -135,9 +136,14 @@ export default function RoomContent() {
     return <AllViewRolePhase roomCode={room_code} flow={gameFlow} />;
   }
 
-  /* ===== ALL_VIEW_ROLE ===== */
+  /* ===== NIGHT_ALL_SLEEP ===== */
   if (connected && gameFlow?.phase === PHASES.NIGHT_ALL_SLEEP) {
     return <NightAllSleepPhase roomCode={room_code} flow={gameFlow} />;
+  }
+
+    /* ===== NIGHT_SEER ===== */
+  if (connected && gameFlow?.phase === PHASES.NIGHT_SEER) {
+    return <NightSeerPhase roomCode={room_code} flow={gameFlow} />;
   }
 
   /* ===== LOADING ===== */
