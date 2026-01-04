@@ -10,7 +10,7 @@ const PHASE = {
 
     ALL_VIEW_ROLE: {
         key: 'ALL_VIEW_ROLE',
-        time: 10, // TODO: Change
+        time: 30, // TODO: Change
         message: 'Cả làng xem chức năng của mình đê',
     },
 
@@ -62,7 +62,7 @@ const PHASE = {
     END: {
         key: 'END',
         message: 'Kết thúc phe thắng cuộc là: ',
-        time: 20, // TODO: Change
+        time: 30, // TODO: Change
     },
 };
 
