@@ -1,6 +1,6 @@
 const { ROLES } = require('../constants/roles.constant')
 
-const PHASE_TIME_MAX = 1800000 // 30 mins
+const PHASE_TIME_MAX = 1800 // 30 mins
 
 const PHASE = {
     LOBBY: {
