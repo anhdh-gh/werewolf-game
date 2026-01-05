@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
 import Loading from "@/components/Loading";
 import { PATHS } from "@/constants/paths";
+import { useRoom } from "@/contexts/RoomContext";
 
 export default function EndPhase({ roomCode, flow }) {
-  const router = useRouter();
   const audioRef = useRef(null);
   const timerRef = useRef(null);
+  const { setPlayers, setGameFlow } = useRoom();
 
   /* ===== TTS + AUTO REDIRECT ===== */
   useEffect(() => {
@@ -38,7 +38,8 @@ export default function EndPhase({ roomCode, flow }) {
 
     // ===== AUTO BACK TO LOBBY (10s) =====
     timerRef.current = setTimeout(() => {
-      router.push(`${PATHS.LOBBY}/${roomCode}`);
+      setPlayers([]);
+      setGameFlow(null)
     }, 10_000);
 
     // ===== CLEANUP =====

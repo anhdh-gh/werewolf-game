@@ -21,6 +21,7 @@ import NightWolfPhase from "@/components/NightWolfPhase";
 import NightWitchSave from "@/components/NightWitchSave";
 import NightWitchKill from "@/components/NightWitchKill";
 import DayDiscussionPhase from "@/components/DayDiscussionPhase";
+import EndPhase from "@/components/EndPhase";
 
 export default function RoomContent() {
   const { room_code } = useParams();
@@ -168,6 +169,11 @@ export default function RoomContent() {
   /* ===== DAY_DISCUSSION ===== */
   if (connected && gameFlow?.phase === PHASES.DAY_DISCUSSION) {
     return <DayDiscussionPhase roomCode={room_code} flow={gameFlow} />;
+  }
+
+  /* ===== END ===== */
+  if (connected && gameFlow?.phase === PHASES.END) {
+    return <EndPhase roomCode={room_code} flow={gameFlow} />;
   }
 
   /* ===== LOADING ===== */
