@@ -19,7 +19,6 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [isVoting, setIsVoting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [viewVotedDead, setViewVotedDead] = useState(false);
 
   const audioRef = useRef(null);
 
@@ -47,17 +46,13 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
   useEffect(() => {
     if (!flow?.event?.action) return;
 
-    // 👉 Kết quả vote (chỉ xem)
     if (flow.event.action === ACTIONS.VIEW) {
-      setViewVotedDead(true);
       setIsVoting(false);
       setIsLoading(false);
-      return;
+      setSelectedPlayer(null);
     }
 
-    // 👉 Cho phép vote
     if (flow.event.action === ACTIONS.VOTE) {
-      setViewVotedDead(false);
       setIsVoting(false);
       setIsLoading(false);
       setSelectedPlayer(null);
@@ -96,8 +91,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
     player.is_alive &&
     player.is_connected &&
     player.is_ready &&
-    flow?.event?.action === ACTIONS.VOTE &&
-    !viewVotedDead;
+    flow?.event?.action === ACTIONS.VOTE;
 
   /* ===== LOAD PLAYERS FOR VOTE ===== */
   const loadPlayersForVote = () => {
@@ -143,7 +137,9 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
     });
   };
 
-  const votedDeadPlayers = flow?.data?.players || [];
+  const deadPlayers = Array.isArray(flow?.data?.players)
+    ? flow.data.players
+    : [];
 
   /* ===== UI ===== */
   return (
@@ -156,15 +152,17 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
 
       {/* BODY */}
       <main className="flex-1 overflow-y-auto p-4">
-        {/* ===== VIEW RESULT ===== */}
-        {flow.event?.action === ACTIONS.VIEW && votedDeadPlayers.length > 0 && (
-          <div>
+        {/* ===== DEAD PLAYERS ===== */}
+        {deadPlayers.length > 0 && (
+          <div className="mb-6">
             <h3 className="font-semibold mb-3 text-red-400">
-              ☠️ Người bị vote chết
+              {flow.event?.action === ACTIONS.VIEW
+                ? "☠️ Người bị vote chết"
+                : "🌙 Người chết trong đêm"}
             </h3>
 
             <div className="space-y-2">
-              {votedDeadPlayers.map((p) => (
+              {deadPlayers.map((p) => (
                 <div
                   key={p.player_id}
                   className="bg-zinc-800 rounded-xl p-3"
@@ -177,15 +175,13 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
           </div>
         )}
 
-        {/* ===== VOTING ===== */}
-        {flow.event?.action === ACTIONS.VOTE && isVoting && (
+        {/* ===== VOTING LIST ===== */}
+        {isVoting && (
           <div>
             <h3 className="text-md mb-3">🗳️ Chọn người để treo cổ</h3>
-
             <div className="space-y-3 pb-4">
               {playersList.map((p) => {
-                const isSelected =
-                  selectedPlayer?.player_id === p.player_id;
+                const isSelected = selectedPlayer?.player_id === p.player_id;
 
                 return (
                   <div

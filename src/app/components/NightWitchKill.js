@@ -18,7 +18,7 @@ export default function NightWitchKill({ roomCode, flow }) {
   const [player, setPlayer] = useState(null);
   const [playersList, setPlayersList] = useState([]);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
-  const [isLoading, setIsLoading] = useState(false); // ⭐ loading
+  const [isLoading, setIsLoading] = useState(false);
 
   const audioRef = useRef(null);
 
@@ -32,6 +32,7 @@ export default function NightWitchKill({ roomCode, flow }) {
       return;
     }
 
+    // self
     socket.emit(
       EVENTS.PLAYER_INFO,
       { room: { code: roomCode }, player: { ids: [playerId] } },
@@ -41,8 +42,10 @@ export default function NightWitchKill({ roomCode, flow }) {
       }
     );
 
+    // all players
     socket.emit(EVENTS.PLAYER_INFO, { room: { code: roomCode } }, (res) => {
       if (!res?.data?.players?.length) return;
+
       setPlayersList(
         res.data.players.filter(
           (p) => p.is_alive && p.is_connected && p.is_ready
@@ -76,7 +79,7 @@ export default function NightWitchKill({ roomCode, flow }) {
   const handleDone = () => {
     if (!socket || isLoading) return;
 
-    setIsLoading(true); // ⭐ show loading
+    setIsLoading(true);
 
     socket.emit(EVENTS.PLAYER_DONE, {
       room: { code: roomCode },
@@ -88,7 +91,7 @@ export default function NightWitchKill({ roomCode, flow }) {
 
   /* ===== KILL (VOTE) ===== */
   const handleVote = (p) => {
-    if (!socket || isLoading) return;
+    if (!socket || isLoading || !canPoison) return;
 
     setSelectedPlayer(p);
 
@@ -128,6 +131,9 @@ export default function NightWitchKill({ roomCode, flow }) {
     );
   }
 
+  /* ===== LOGIC POISON ===== */
+  const canPoison = Number(player.witch_poison) > 0;
+
   /* ===== WITCH KILL VIEW ===== */
   return (
     <div className="relative h-screen flex flex-col bg-black text-white overflow-hidden">
@@ -139,20 +145,34 @@ export default function NightWitchKill({ roomCode, flow }) {
 
       {/* BODY */}
       <main className="flex-1 overflow-y-auto p-4">
-        <p className="text-sm text-gray-400 mb-3">
-          👉 Click vào người bạn muốn{" "}
-          <span className="text-red-400 font-semibold">giết</span>
-        </p>
+        {!canPoison && (
+          <p className="text-yellow-400 mb-3 italic">
+            ⚠️ Bạn đã dùng hết bình độc.
+          </p>
+        )}
+
+        {canPoison && (
+          <p className="text-sm text-gray-400 mb-3">
+            👉 Click vào người bạn muốn{" "}
+            <span className="text-red-400 font-semibold">giết</span>
+          </p>
+        )}
 
         <div className="space-y-3 pb-4">
           {playersList.map((p) => {
-            const isSelected = selectedPlayer?.player_id === p.player_id;
+            const isSelected =
+              selectedPlayer?.player_id === p.player_id;
 
             return (
               <div
                 key={p.player_id}
                 onClick={() => handleVote(p)}
-                className={`w-full flex items-center justify-between rounded-xl px-4 py-3 cursor-pointer transition
+                className={`w-full flex items-center justify-between rounded-xl px-4 py-3 transition
+                  ${
+                    canPoison
+                      ? "cursor-pointer"
+                      : "cursor-not-allowed opacity-50"
+                  }
                   ${
                     isSelected
                       ? "bg-red-700 border border-red-500"
@@ -175,32 +195,28 @@ export default function NightWitchKill({ roomCode, flow }) {
 
       {/* FOOTER */}
       <footer className="shrink-0 bg-zinc-900 border-t border-zinc-800 p-4 z-10 flex gap-3">
+        {/* BỎ QUA – LUÔN CÓ */}
         <button
           disabled={isLoading}
           onClick={handleDone}
-          className={`flex-1 py-3 rounded-xl font-bold transition ${
-            isLoading
-              ? "bg-gray-600 cursor-not-allowed"
-              : "bg-zinc-700 hover:bg-zinc-600"
-          }`}
+          className="flex-1 py-3 rounded-xl font-bold bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50"
         >
           Bỏ qua
         </button>
 
-        <button
-          disabled={isLoading}
-          onClick={handleDone}
-          className={`flex-1 py-3 rounded-xl font-bold transition ${
-            isLoading
-              ? "bg-gray-600 cursor-not-allowed"
-              : "bg-red-600 hover:bg-red-500"
-          }`}
-        >
-          Đã xong
-        </button>
+        {/* ĐÃ XONG – CHỈ KHI CÒN POISON */}
+        {canPoison && (
+          <button
+            disabled={isLoading}
+            onClick={handleDone}
+            className="flex-1 py-3 rounded-xl font-bold bg-red-600 hover:bg-red-500 disabled:opacity-50"
+          >
+            Đã xong
+          </button>
+        )}
       </footer>
 
-      {/* GLOBAL LOADING OVERLAY */}
+      {/* GLOBAL LOADING */}
       {isLoading && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80">
           <Loading textMsg="Đang xử lý..." />
