@@ -76,17 +76,6 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
     player.is_connected &&
     player.is_ready;
 
-  /* ===== PASSIVE VIEW (CHỈ XEM) ===== */
-  if (!canInteract) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-black text-white px-4">
-        <p className="text-lg text-gray-300 text-center max-w-md animate-pulse">
-          {flow.message}
-        </p>
-      </div>
-    );
-  }
-
   /* ===== DATA ANALYSIS ===== */
   const deadPlayers =
     flow?.data?.players?.filter((p) => p.is_alive === false) || [];
@@ -228,7 +217,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
       </main>
 
       {/* FOOTER */}
-      <footer className="shrink-0 bg-zinc-900 border-t border-zinc-800 p-4 z-10 flex gap-3">
+      {canInteract && <footer className="shrink-0 bg-zinc-900 border-t border-zinc-800 p-4 z-10 flex gap-3">
         {!isVoting ? (
           <button
             onClick={loadPlayersForVote}
@@ -253,7 +242,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
             </button>
           </>
         )}
-      </footer>
+      </footer>}
     </div>
   );
 }
