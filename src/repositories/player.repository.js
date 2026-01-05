@@ -16,7 +16,7 @@ const PlayerRepository = {
     async resetGame(roomCode) {
         const [result] = await pool.query(
             `UPDATE players 
-             SET is_connected = FALSE, is_alive = FALSE, is_ready = FALSE, is_muted = FALSE, is_protected = FALSE, witch_heal = 1, witch_poison = 1, role = null, initial_role = null
+             SET is_alive = FALSE, is_ready = FALSE, is_muted = FALSE, is_protected = FALSE, witch_heal = 1, witch_poison = 1, role = null, initial_role = null
              WHERE room_code = ?`,
             [roomCode]
         );
