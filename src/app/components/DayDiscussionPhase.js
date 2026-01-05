@@ -189,12 +189,6 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
                 </div>
               </div>
             )}
-
-            {deadPlayers.length === 0 && mutedPlayers.length === 0 && (
-              <p className="text-gray-400 italic">
-                🌙 Đêm qua không có gì xảy ra
-              </p>
-            )}
           </div>
         )}
 
