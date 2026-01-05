@@ -158,7 +158,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
             <h3 className="font-semibold mb-3 text-red-400">
               {flow.event?.action === ACTIONS.VIEW
                 ? "☠️ Người bị vote chết"
-                : "🌙 Người chết trong đêm"}
+                : "🌙 Người chết/câm trong đêm"}
             </h3>
 
             <div className="space-y-2">
