@@ -114,7 +114,7 @@ export default function NightSilencedPhase({ roomCode, flow }) {
    * ⭐ Silencer chỉ tương tác khi WAKEUP
    */
   const isSilencerWakeup =
-    player.role === ROLES.SILENCER &&
+    player.role === ROLES.SILENCED &&
     player.is_alive &&
     player.is_connected &&
     player.is_ready &&

@@ -81,7 +81,7 @@ export default function NightCursedPhase({ roomCode, flow }) {
    * ⭐ Chỉ người bị nguyền mới thấy chi tiết
    */
   const isCursedWakeup =
-    player.role === ROLES.CURSED &&
+    player.initial_role === ROLES.CURSED &&
     player.is_alive &&
     player.is_connected &&
     player.is_ready &&
