@@ -88,13 +88,13 @@ export default function NightSeerPhase({ roomCode, flow }) {
    * ⭐ Seer chỉ tương tác khi WAKEUP
    */
   const isSeerWakeup =
-    player.role === ROLES.SEER &&
+    player.role === ROLES.SEER && player?.is_alive && player?.is_connected && player?.is_ready &&
     flow?.event?.action === ACTIONS.WAKEUP;
 
   /* ===== PASSIVE VIEW ===== */
   if (!isSeerWakeup) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-black text-white">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-black text-white px-4">
         <p className="text-lg text-gray-300 text-center max-w-md animate-pulse">
           {flow.message}
         </p>

@@ -107,13 +107,13 @@ export default function NightWolfPhase({ roomCode, flow }) {
    * ⭐ Wolf chỉ tương tác khi WAKEUP
    */
   const isWolfWakeup =
-    player.role === ROLES.WEREWOLF &&
+    player.role === ROLES.WEREWOLF && player?.is_alive && player?.is_connected && player?.is_ready &&
     flow?.event?.action === ACTIONS.WAKEUP;
 
   /* ===== PASSIVE VIEW ===== */
   if (!isWolfWakeup) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-black text-white">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-black text-white px-4">
         <p className="text-lg text-gray-300 text-center max-w-md animate-pulse">
           {flow.message}
         </p>

@@ -107,13 +107,13 @@ export default function NightWitchKill({ roomCode, flow }) {
    * ⭐ Witch chỉ tương tác khi WAKEUP
    */
   const isWitchWakeup =
-    player.role === ROLES.WITCH &&
+    player.role === ROLES.WITCH && player?.is_alive && player?.is_connected && player?.is_ready && 
     flow?.event?.action === ACTIONS.WAKEUP;
 
   /* ===== PASSIVE VIEW ===== */
   if (!isWitchWakeup) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-black text-white">
+      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-black text-white px-4">
         <p className="text-lg text-gray-300 text-center max-w-md animate-pulse">
           {flow.message}
         </p>

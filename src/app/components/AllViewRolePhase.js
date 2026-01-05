@@ -88,7 +88,7 @@ export default function AllViewRolePhase({ roomCode, flow }) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-black text-white">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-black text-white px-4">
       {/* MESSAGE */}
       <p className="text-lg text-gray-300 text-center max-w-md animate-pulse">
         {flow.message}
