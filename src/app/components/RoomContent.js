@@ -22,6 +22,9 @@ import NightWitchSave from "@/components/NightWitchSave";
 import NightWitchKill from "@/components/NightWitchKill";
 import DayDiscussionPhase from "@/components/DayDiscussionPhase";
 import EndPhase from "@/components/EndPhase";
+import NightGuardPhase from "@/components/NightGuardPhase";
+import NightSilencedPhase from "@/components/NightSilencedPhase";
+import NightCursedPhase from "@/components/NightCursedPhase";
 
 export default function RoomContent() {
   const { room_code } = useParams();
@@ -164,6 +167,21 @@ export default function RoomContent() {
   /* ===== NIGHT_WITCH_KILL ===== */
   if (connected && gameFlow?.phase === PHASES.NIGHT_WITCH_KILL) {
     return <NightWitchKill roomCode={room_code} flow={gameFlow} />;
+  }
+
+  /* ===== NIGHT_GUARD ===== */
+  if (connected && gameFlow?.phase === PHASES.NIGHT_GUARD) {
+    return <NightGuardPhase roomCode={room_code} flow={gameFlow} />;
+  }
+
+  /* ===== NIGHT_SILENCED ===== */
+  if (connected && gameFlow?.phase === PHASES.NIGHT_SILENCED) {
+    return <NightSilencedPhase roomCode={room_code} flow={gameFlow} />;
+  }
+
+  /* ===== NIGHT_CURSED ===== */
+  if (connected && gameFlow?.phase === PHASES.NIGHT_CURSED) {
+    return <NightCursedPhase roomCode={room_code} flow={gameFlow} />;
   }
 
   /* ===== DAY_DISCUSSION ===== */
