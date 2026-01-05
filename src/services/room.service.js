@@ -19,6 +19,9 @@ const RoomService = {
         if(!room) {
             throw new AppError(ERROR_CODES.ROOM_NOT_FOUND)
         }
+        if(await RoomRepository.isFull(roomCode, room?.max_players)) {
+            throw new AppError(ERROR_CODES.ROOM_IS_FULL)
+        }
 
         //
         return {

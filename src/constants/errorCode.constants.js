@@ -40,13 +40,18 @@ module.exports = {
     },
 
     TARGET_ID_IS_INVALID: {
-        code: 4007,
+        code: 4008,
         message: 'Target id is invalid'
     },
 
     PLAYER_IS_INVALID: {
-        code: 4008,
+        code: 4009,
         message: 'Player is invalid'
+    },
+
+    ROOM_IS_FULL: {
+        code: 4010,
+        message: 'Room is full'
     },
 
     UNAUTHORIZED: {
