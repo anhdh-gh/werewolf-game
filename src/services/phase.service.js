@@ -11,8 +11,8 @@ const { ACTIONS } = require('../constants/action.constant')
 const RoomService = require('../services/room.service')
 
 const PHASE_TIMEOUT = 300000;
-const EMIT_DELAY = 4500;
-const EMIT_DELAY_PER_PHASE = 3500;
+const EMIT_DELAY = 5000;
+const EMIT_DELAY_PER_PHASE = 3000;
 
 const PhaseService = {
 
