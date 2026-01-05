@@ -349,6 +349,11 @@ const PhaseService = {
         }
 
         //
+        if(!deadIds || deadIds?.length < 1) {
+            return { cursedTurnWolfIds: [], realDeadIds: [] }
+        }
+
+        //
         const roles = await PlayerRepository.getCurRole(roomCode, deadIds);
 
         const cursedTurnWolfIds = [];
