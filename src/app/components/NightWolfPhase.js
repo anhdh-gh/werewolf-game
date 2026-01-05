@@ -18,6 +18,7 @@ export default function NightWolfPhase({ roomCode, flow }) {
   const [player, setPlayer] = useState(null);
   const [playersList, setPlayersList] = useState([]);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [isLoading, setIsLoading] = useState(false); // ⭐ loading
 
   const audioRef = useRef(null);
 
@@ -31,7 +32,6 @@ export default function NightWolfPhase({ roomCode, flow }) {
       return;
     }
 
-    // Lấy thông tin chính mình
     socket.emit(
       EVENTS.PLAYER_INFO,
       { room: { code: roomCode }, player: { ids: [playerId] } },
@@ -41,11 +41,12 @@ export default function NightWolfPhase({ roomCode, flow }) {
       }
     );
 
-    // Lấy danh sách người chơi còn sống
     socket.emit(EVENTS.PLAYER_INFO, { room: { code: roomCode } }, (res) => {
       if (!res?.data?.players?.length) return;
       setPlayersList(
-        res.data.players.filter((p) => p.is_alive && p.is_connected && p.is_ready)
+        res.data.players.filter(
+          (p) => p.is_alive && p.is_connected && p.is_ready
+        )
       );
     });
   }, [roomCode, socket, router]);
@@ -71,21 +72,21 @@ export default function NightWolfPhase({ roomCode, flow }) {
     return () => audio.pause();
   }, [flow?.message]);
 
-  /* ===== DONE ===== */
+  /* ===== DONE / SKIP ===== */
   const handleDone = () => {
-    if (!socket) return;
+    if (!socket || isLoading) return;
+
+    setIsLoading(true); // ⭐ show loading
 
     socket.emit(EVENTS.PLAYER_DONE, {
       room: { code: roomCode },
       current_phase: flow.phase,
     });
-
-    setSelectedPlayer(null);
   };
 
   /* ===== VOTE ===== */
   const handleVote = (p) => {
-    if (!socket) return;
+    if (!socket || isLoading) return;
 
     setSelectedPlayer(p);
 
@@ -99,6 +100,7 @@ export default function NightWolfPhase({ roomCode, flow }) {
     });
   };
 
+  /* ===== INITIAL LOADING ===== */
   if (!flow?.message || !player) {
     return <Loading textMsg="Đang chuẩn bị..." />;
   }
@@ -107,7 +109,10 @@ export default function NightWolfPhase({ roomCode, flow }) {
    * ⭐ Wolf chỉ tương tác khi WAKEUP
    */
   const isWolfWakeup =
-    player.role === ROLES.WEREWOLF && player?.is_alive && player?.is_connected && player?.is_ready &&
+    player.role === ROLES.WEREWOLF &&
+    player.is_alive &&
+    player.is_connected &&
+    player.is_ready &&
     flow?.event?.action === ACTIONS.WAKEUP;
 
   /* ===== PASSIVE VIEW ===== */
@@ -124,7 +129,6 @@ export default function NightWolfPhase({ roomCode, flow }) {
   /* ===== WOLF WAKEUP VIEW ===== */
   return (
     <div className="relative h-screen flex flex-col bg-black text-white overflow-hidden">
-      
       {/* HEADER */}
       <header className="shrink-0 bg-zinc-900 border-b border-zinc-800 p-4 z-10 shadow-md">
         <h2 className="text-lg font-bold">{flow.message}</h2>
@@ -149,6 +153,7 @@ export default function NightWolfPhase({ roomCode, flow }) {
                       ? "bg-red-700 border border-red-500"
                       : "bg-zinc-800 hover:bg-zinc-700"
                   }
+                  ${isLoading ? "opacity-60 pointer-events-none" : ""}
                 `}
               >
                 <div className="flex flex-col gap-1">
@@ -168,19 +173,36 @@ export default function NightWolfPhase({ roomCode, flow }) {
       {/* FOOTER */}
       <footer className="shrink-0 bg-zinc-900 border-t border-zinc-800 p-4 z-10 flex gap-3">
         <button
+          disabled={isLoading}
           onClick={handleDone}
-          className="flex-1 py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 font-bold transition"
+          className={`flex-1 py-3 rounded-xl font-bold transition ${
+            isLoading
+              ? "bg-gray-600 cursor-not-allowed"
+              : "bg-zinc-700 hover:bg-zinc-600"
+          }`}
         >
           Bỏ qua
         </button>
 
         <button
+          disabled={isLoading}
           onClick={handleDone}
-          className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-500 font-bold transition"
+          className={`flex-1 py-3 rounded-xl font-bold transition ${
+            isLoading
+              ? "bg-gray-600 cursor-not-allowed"
+              : "bg-red-600 hover:bg-red-500"
+          }`}
         >
           Đã xong
         </button>
       </footer>
+
+      {/* GLOBAL LOADING OVERLAY */}
+      {isLoading && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80">
+          <Loading textMsg="Đang xử lý..." />
+        </div>
+      )}
     </div>
   );
 }

@@ -17,6 +17,7 @@ export default function NightWitchSave({ roomCode, flow }) {
 
   const [player, setPlayer] = useState(null);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [isLoading, setIsLoading] = useState(false); // ⭐ loading
 
   const audioRef = useRef(null);
 
@@ -61,9 +62,11 @@ export default function NightWitchSave({ roomCode, flow }) {
     return () => audio.pause();
   }, [flow?.message]);
 
-  /* ===== DONE ===== */
+  /* ===== DONE / SKIP ===== */
   const handleDone = () => {
-    if (!socket) return;
+    if (!socket || isLoading) return;
+
+    setIsLoading(true); // ⭐ show loading
 
     socket.emit(EVENTS.PLAYER_DONE, {
       room: { code: roomCode },
@@ -75,7 +78,7 @@ export default function NightWitchSave({ roomCode, flow }) {
 
   /* ===== SAVE (VOTE) ===== */
   const handleSave = (p) => {
-    if (!socket) return;
+    if (!socket || isLoading) return;
 
     setSelectedPlayer(p);
 
@@ -89,6 +92,7 @@ export default function NightWitchSave({ roomCode, flow }) {
     });
   };
 
+  /* ===== INITIAL LOADING ===== */
   if (!flow?.message || !player) {
     return <Loading textMsg="Đang chuẩn bị..." />;
   }
@@ -97,7 +101,10 @@ export default function NightWitchSave({ roomCode, flow }) {
    * ⭐ Witch chỉ tương tác khi WAKEUP
    */
   const isWitchWakeup =
-    player.role === ROLES.WITCH && player?.is_alive && player?.is_connected && player?.is_ready &&
+    player.role === ROLES.WITCH &&
+    player.is_alive &&
+    player.is_connected &&
+    player.is_ready &&
     flow?.event?.action === ACTIONS.WAKEUP;
 
   /* ===== PASSIVE VIEW ===== */
@@ -116,7 +123,6 @@ export default function NightWitchSave({ roomCode, flow }) {
   /* ===== WITCH SAVE VIEW ===== */
   return (
     <div className="relative h-screen flex flex-col bg-black text-white overflow-hidden">
-      
       {/* HEADER */}
       <header className="shrink-0 bg-zinc-900 border-b border-zinc-800 p-4 z-10 shadow-md">
         <h2 className="text-lg font-bold">{flow.message}</h2>
@@ -126,7 +132,8 @@ export default function NightWitchSave({ roomCode, flow }) {
       {/* BODY */}
       <main className="flex-1 overflow-y-auto p-4">
         <p className="text-sm text-gray-400 mb-3">
-          👉 Click vào người bạn muốn <span className="text-green-400 font-semibold">cứu</span>
+          👉 Click vào người bạn muốn{" "}
+          <span className="text-green-400 font-semibold">cứu</span>
         </p>
 
         {candidates.length === 0 ? (
@@ -136,7 +143,8 @@ export default function NightWitchSave({ roomCode, flow }) {
         ) : (
           <div className="space-y-3 pb-4">
             {candidates.map((p) => {
-              const isSelected = selectedPlayer?.player_id === p.player_id;
+              const isSelected =
+                selectedPlayer?.player_id === p.player_id;
 
               return (
                 <div
@@ -148,6 +156,7 @@ export default function NightWitchSave({ roomCode, flow }) {
                         ? "bg-green-700 border border-green-500"
                         : "bg-zinc-800 hover:bg-zinc-700"
                     }
+                    ${isLoading ? "opacity-60 pointer-events-none" : ""}
                   `}
                 >
                   <div className="flex flex-col gap-1">
@@ -168,19 +177,36 @@ export default function NightWitchSave({ roomCode, flow }) {
       {/* FOOTER */}
       <footer className="shrink-0 bg-zinc-900 border-t border-zinc-800 p-4 z-10 flex gap-3">
         <button
+          disabled={isLoading}
           onClick={handleDone}
-          className="flex-1 py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 font-bold transition"
+          className={`flex-1 py-3 rounded-xl font-bold transition ${
+            isLoading
+              ? "bg-gray-600 cursor-not-allowed"
+              : "bg-zinc-700 hover:bg-zinc-600"
+          }`}
         >
           Bỏ qua
         </button>
 
         <button
+          disabled={isLoading}
           onClick={handleDone}
-          className="flex-1 py-3 rounded-xl bg-green-600 hover:bg-green-500 font-bold transition"
+          className={`flex-1 py-3 rounded-xl font-bold transition ${
+            isLoading
+              ? "bg-gray-600 cursor-not-allowed"
+              : "bg-green-600 hover:bg-green-500"
+          }`}
         >
           Đã xong
         </button>
       </footer>
+
+      {/* GLOBAL LOADING OVERLAY */}
+      {isLoading && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80">
+          <Loading textMsg="Đang xử lý..." />
+        </div>
+      )}
     </div>
   );
 }
