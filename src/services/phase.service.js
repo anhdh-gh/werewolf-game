@@ -379,7 +379,7 @@ const PhaseService = {
                 emit({
                     phase: PHASE.DAY_DISCUSSION.key,
                     message: "Đêm qua không có ai chết",
-                    event: { role: ROLES.ALL.key, action: ACTIONS.VIEW }
+                    event: { role: ROLES.ALL.key, action: ACTIONS.VOTE }
                 });
             }, EMIT_DELAY)
             await VoteRepository.clearVotes(roomCode);
@@ -458,7 +458,7 @@ const PhaseService = {
                 message: messages.length
                     ? `Đêm qua ${messages.join(', ')}`
                     : "Đêm qua không có ai chết",
-                event: { role: ROLES.ALL.key, action: ACTIONS.VIEW },
+                event: { role: ROLES.ALL.key, action: ACTIONS.VOTE },
                 data: players.length ? { players } : undefined
             });
         }, EMIT_DELAY)

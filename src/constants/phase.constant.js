@@ -5,7 +5,7 @@ const PHASE_TIME_MAX = 1800 // 30 mins
 const PHASE = {
     LOBBY: {
         key: 'LOBBY',
-        message: 'Cả làng sẵn sàng đê'
+        message: 'Cả làng sẵn sàng đi'
     },
 
     ALL_VIEW_ROLE: {
@@ -41,12 +41,12 @@ const PHASE = {
 
     NIGHT_WITCH_SAVE: {
         key: 'NIGHT_WITCH_SAVE',
-        message: 'Phù thủy thức dậy, đêm nay bạn có muốn cứu người chết này không?'
+        message: 'Phù thủy thức dậy, đêm nay người này bị chết, phù thủy có muốn cứu không?'
     },
 
     NIGHT_WITCH_KILL: {
         key: 'NIGHT_WITCH_KILL',
-        message: 'Phù thủy có muốn giết ai không?'
+        message: 'Phù thủy muốn giết ai không?'
     },
 
     NIGHT_CURSED: {
