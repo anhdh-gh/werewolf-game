@@ -51,7 +51,7 @@ export default function EndPhase({ roomCode, flow }) {
         clearTimeout(timerRef.current);
       }
     };
-  }, [flow?.message, roomCode, router]);
+  }, [flow?.message, roomCode]);
 
   if (!flow?.message) {
     return <Loading textMsg="Đang chuẩn bị..." />;
