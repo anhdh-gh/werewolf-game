@@ -50,7 +50,7 @@ module.exports = {
     },
 
     ROOM_IS_FULL: {
-        code: 4010,
+        code: 40010,
         message: 'Room is full'
     },
 
