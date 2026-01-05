@@ -55,28 +55,37 @@ export default function ServerPage() {
   const handleGoToSignup = () => router.push(PATHS.SIGN_UP);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0b0b12] via-[#0f0f1a] to-black text-white px-5 flex items-center justify-center">
-      <div className="w-full max-w-md flex flex-col items-center gap-8">
+    <div 
+      className="min-h-screen text-white px-4 sm:px-5 md:px-6 flex items-center justify-center relative overflow-hidden"
+      style={{
+        backgroundImage: "url('/image/OIG2.webp')",
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed'
+      }}
+    >
+      {/* Dark Overlay for Text Readability */}
+      <div className="absolute inset-0 bg-[rgba(0,0,0,0.6)] pointer-events-none"></div>
+      
+      <div className="w-full max-w-md flex flex-col items-center gap-8 sm:gap-10 relative z-20 py-8 sm:py-10">
         {/* Header */}
-        <div className="text-center">
-          <div className="text-xs tracking-widest text-purple-400 mb-2">
-            ĐÊM TRĂNG ĐÃ LÊN
-          </div>
-          <h1 className="text-3xl font-extrabold bg-gradient-to-r from-red-500 to-orange-400 bg-clip-text text-transparent">
-            CHỌN NGÔI LÀNG
+        <div className="text-center px-4 w-full">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold werewolf-title mb-3 sm:mb-4">
+            SELECT SERVER
           </h1>
-          <p className="text-slate-400 text-sm mt-2">
+          <p className="text-white/80 text-sm sm:text-base mt-2 tracking-wide werewolf-subtitle">
             Mỗi làng là một ván Ma Sói khác nhau
           </p>
         </div>
 
         {/* Server List */}
-        <div className="w-full flex flex-col gap-4">
+        <div className="w-full flex flex-col gap-4 sm:gap-5">
           {loading
             ? [1, 2].map((i) => (
               <div
                 key={i}
-                className="h-24 rounded-2xl bg-white/5 animate-pulse"
+                className="h-20 sm:h-24 rounded-2xl werewolf-server-card animate-pulse"
               />
             ))
             : servers.map((sv) => {
@@ -87,30 +96,34 @@ export default function ServerPage() {
                   key={sv.id}
                   onClick={() => handleSelect(sv)}
                   className={`
-                      relative w-full rounded-2xl p-5
-                      ${isSelected ? "bg-red-600 border-red-500" : "bg-white/5 border-white/10"}
-                      backdrop-blur
-                      hover:border-red-500/50
-                      active:scale-[0.97]
-                      transition-all duration-200
+                      relative w-full rounded-2xl p-5 sm:p-6 werewolf-server-card
+                      ${isSelected ? "werewolf-server-selected" : ""}
+                      active:scale-[0.98]
                       flex items-center justify-between
+                      group
                     `}
                 >
-                  <div className="flex flex-col items-start gap-1">
-                    <span className="text-lg font-bold">
+                  <div className="flex flex-col items-start gap-1.5 relative z-10 flex-1 min-w-0">
+                    <span className="text-base sm:text-lg md:text-xl font-semibold text-white truncate w-full werewolf-text">
                       {isSelected ? "🌕 " : "🐺 "} {sv.name}
                     </span>
-                    <span className="text-xs text-slate-400">Làng #{sv.id}</span>
+                    <span className="text-xs sm:text-sm text-white/60 font-normal werewolf-text">Làng #{sv.id}</span>
                   </div>
 
-                  <span className="relative flex h-3 w-3">
+                  <span className="relative flex h-3.5 w-3.5 sm:h-4 sm:w-4 relative z-10 ml-3 sm:ml-4 flex-shrink-0">
                     <span
-                      className={`absolute inline-flex h-full w-full rounded-full ${isSelected ? "bg-red-400" : "bg-emerald-400"
-                        } opacity-70 animate-ping`}
+                      className={`absolute inline-flex h-full w-full rounded-full ${
+                        isSelected 
+                          ? "bg-[rgba(220,20,60,0.6)] opacity-70" 
+                          : "bg-[rgba(138,43,226,0.4)] opacity-50"
+                      } animate-ping`}
                     />
                     <span
-                      className={`relative inline-flex h-3 w-3 rounded-full ${isSelected ? "bg-red-500" : "bg-emerald-500"
-                        }`}
+                      className={`relative inline-flex h-full w-full rounded-full ${
+                        isSelected 
+                          ? "bg-[rgba(220,20,60,1)] shadow-[0_0_12px_rgba(220,20,60,0.8)]" 
+                          : "bg-[rgba(138,43,226,0.8)] shadow-[0_0_8px_rgba(138,43,226,0.6)]"
+                      }`}
                     />
                   </span>
                 </button>
@@ -120,20 +133,19 @@ export default function ServerPage() {
 
         {/* Action Buttons: show only when a server is selected */}
         {selectedServer && (
-          <div className="w-full flex flex-col gap-4 mt-4">
-
+          <div className="w-full flex flex-col gap-3 sm:gap-4 mt-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <button
               onClick={handleBackToSignIn}
-              className="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 transition text-white font-semibold"
+              className="w-full py-4 sm:py-4.5 rounded-2xl text-white font-semibold text-sm sm:text-base werewolf-button-primary werewolf-text shadow-lg"
             >
-              Đăng nhập
+              JOIN SERVER
             </button>
 
             <button
               onClick={handleGoToSignup}
-              className="w-full py-3 rounded-xl border border-white/20 text-white hover:bg-white/5 transition font-semibold"
+              className="w-full py-4 sm:py-4.5 rounded-2xl text-white font-semibold text-sm sm:text-base werewolf-button-secondary werewolf-text"
             >
-              📝 Đăng ký
+               Đăng ký
             </button>
           </div>
         )}
