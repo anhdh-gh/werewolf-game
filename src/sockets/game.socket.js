@@ -100,6 +100,15 @@ module.exports = (io, socket) => {
         return { data: { players: await GameService.playerDone(socket.user.id, payload.room.code, payload.current_phase, data => io.to(payload.room.code).emit(EVENTS.GAME_DATA_FLOW, data)) } }
     }));
 
+    /**[ PLAYER_CHAT ]* */
+    socket.on(EVENTS.PLAYER_CHAT, socketHandlerError(async (socket, payload, ack) => {
+        io.to(payload.room.code).emit(EVENTS.ROOM_CHAT, { data: { chat: {
+            id: socket.user.id,
+            username: socket.user.username,
+            message: payload.chat.message
+        } } })
+    }));
+
     /**[ PLAYER_VOTE ]* */
     socket.on(EVENTS.PLAYER_VOTE, socketHandlerError(async (socket, payload, ack) => {
         return { data: { players: await GameService.playerVote(socket.user.id, payload.room.code, payload.current_phase, payload.target) } }

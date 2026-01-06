@@ -13,9 +13,11 @@ module.exports = {
     //
     PLAYER_DONE: 'PLAYER_DONE',
     PLAYER_VOTE: 'PLAYER_VOTE',
+    PLAYER_CHAT: 'PLAYER_CHAT',
 
     //
     ROOM_PLAYERS: 'ROOM_PLAYERS',
+    ROOM_CHAT: 'ROOM_CHAT',
     GAME_DATA_FLOW: 'GAME_DATA_FLOW',
     SOCKET_ERROR: 'SOCKET_ERROR',
     ERROR: 'error',
