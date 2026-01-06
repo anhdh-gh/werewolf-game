@@ -102,11 +102,11 @@ module.exports = (io, socket) => {
 
     /**[ PLAYER_CHAT ]* */
     socket.on(EVENTS.PLAYER_CHAT, socketHandlerError(async (socket, payload, ack) => {
-        io.to(payload.room.code).emit(EVENTS.ROOM_CHAT, { data: { chat: {
+        io.to(payload.room.code).emit(EVENTS.ROOM_CHAT, {
             id: socket.user.id,
             username: socket.user.username,
-            message: payload.chat.message
-        } } })
+            message: payload?.chat?.message
+        })
     }));
 
     /**[ PLAYER_VOTE ]* */
