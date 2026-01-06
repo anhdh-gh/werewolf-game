@@ -18,6 +18,7 @@ export default function NightSeerPhase({ roomCode, flow }) {
   const [player, setPlayer] = useState(null);
   const [playersList, setPlayersList] = useState([]);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [isLoading, setIsLoading] = useState(false); // ⭐ loading state
 
   const audioRef = useRef(null);
 
@@ -43,7 +44,9 @@ export default function NightSeerPhase({ roomCode, flow }) {
     socket.emit(EVENTS.PLAYER_INFO, { room: { code: roomCode } }, (res) => {
       if (!res?.data?.players?.length) return;
       setPlayersList(
-        res.data.players.filter((p) => p.is_alive && p.is_connected && p.is_ready)
+        res.data.players.filter(
+          (p) => p.is_alive && p.is_connected && p.is_ready
+        )
       );
     });
   }, [roomCode, socket, router]);
@@ -69,8 +72,11 @@ export default function NightSeerPhase({ roomCode, flow }) {
     return () => audio.pause();
   }, [flow?.message]);
 
+  /* ===== DONE / SKIP ===== */
   const handleDone = () => {
-    if (!socket) return;
+    if (!socket || isLoading) return;
+
+    setIsLoading(true); // ⭐ show loading immediately
 
     socket.emit(EVENTS.PLAYER_DONE, {
       room: { code: roomCode },
@@ -80,6 +86,7 @@ export default function NightSeerPhase({ roomCode, flow }) {
     setSelectedPlayer(null);
   };
 
+  /* ===== INITIAL LOADING ===== */
   if (!flow?.message || !player) {
     return <Loading textMsg="Đang chuẩn bị..." />;
   }
@@ -88,7 +95,10 @@ export default function NightSeerPhase({ roomCode, flow }) {
    * ⭐ Seer chỉ tương tác khi WAKEUP
    */
   const isSeerWakeup =
-    player.role === ROLES.SEER && player?.is_alive && player?.is_connected && player?.is_ready &&
+    player.role === ROLES.SEER &&
+    player.is_alive &&
+    player.is_connected &&
+    player.is_ready &&
     flow?.event?.action === ACTIONS.WAKEUP;
 
   /* ===== PASSIVE VIEW ===== */
@@ -109,26 +119,22 @@ export default function NightSeerPhase({ roomCode, flow }) {
 
   /* ===== SEER WAKEUP VIEW ===== */
   return (
-    // FIX: Sử dụng Flexbox layout thay vì Fixed position để tránh bị đè content
     <div className="relative h-screen flex flex-col bg-black text-white overflow-hidden">
-      
       {/* HEADER */}
-      {/* shrink-0 để header không bị co lại, z-10 để bóng đổ đè lên content khi cuộn */}
       <header className="shrink-0 bg-zinc-900 border-b border-zinc-800 p-4 z-10 shadow-md">
         <h2 className="text-lg font-bold">{flow.message}</h2>
         <p className="text-sm text-gray-400">Room #{roomCode}</p>
       </header>
 
       {/* BODY */}
-      {/* flex-1 để chiếm hết khoảng trống còn lại, overflow-y-auto để cuộn riêng phần danh sách */}
       <main className="flex-1 overflow-y-auto p-4">
         <h3 className="text-md mb-3">👥 Chọn người muốn soi</h3>
 
-        <div className="space-y-3 pb-4"> 
+        <div className="space-y-3 pb-4">
           {playersList.map((p) => (
             <div
               key={p.player_id}
-              onClick={() => setSelectedPlayer(p)}
+              onClick={() => !isLoading && setSelectedPlayer(p)}
               className="w-full flex items-center justify-between rounded-xl bg-zinc-800 px-4 py-3 hover:bg-zinc-700 transition cursor-pointer"
             >
               <div className="flex flex-col gap-1">
@@ -145,11 +151,15 @@ export default function NightSeerPhase({ roomCode, flow }) {
       </main>
 
       {/* FOOTER */}
-      {/* shrink-0 để footer luôn hiển thị ở đáy */}
       <footer className="shrink-0 bg-zinc-900 border-t border-zinc-800 p-4 z-10">
         <button
+          disabled={isLoading}
           onClick={handleDone}
-          className="w-full py-3 rounded-xl bg-red-600 hover:bg-red-500 font-bold transition"
+          className={`w-full py-3 rounded-xl font-bold transition ${
+            isLoading
+              ? "bg-gray-600 cursor-not-allowed"
+              : "bg-red-600 hover:bg-red-500"
+          }`}
         >
           Bỏ qua
         </button>
@@ -159,8 +169,10 @@ export default function NightSeerPhase({ roomCode, flow }) {
       {selectedPlayer && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/80 z-50 p-4 backdrop-blur-sm">
           <div className="bg-zinc-900 p-6 rounded-2xl w-full max-w-sm text-center border border-zinc-700 shadow-2xl">
-            <h3 className="text-lg font-bold mb-4 text-white">Kết quả soi</h3>
-            
+            <h3 className="text-lg font-bold mb-4 text-white">
+              Kết quả soi
+            </h3>
+
             <div className="w-full flex items-center justify-between rounded-xl bg-zinc-800 px-4 py-4 mb-6">
               <div className="flex flex-col gap-1 text-left">
                 <CopyableText label="ID" value={selectedPlayer.player_id} />
@@ -173,12 +185,24 @@ export default function NightSeerPhase({ roomCode, flow }) {
             </div>
 
             <button
+              disabled={isLoading}
               onClick={handleDone}
-              className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-xl transition"
+              className={`w-full font-bold py-3 px-4 rounded-xl transition ${
+                isLoading
+                  ? "bg-gray-600 cursor-not-allowed"
+                  : "bg-green-600 hover:bg-green-500"
+              }`}
             >
               Đã xong
             </button>
           </div>
+        </div>
+      )}
+
+      {/* GLOBAL LOADING OVERLAY */}
+      {isLoading && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80">
+          <Loading textMsg="Đang xử lý..." />
         </div>
       )}
     </div>

@@ -8,6 +8,7 @@ import { PATHS } from "@/constants/paths";
 import Loading from "@/components/Loading";
 import CopyableText from "@/components/CopyableText";
 import { useRouter } from "next/navigation";
+import { ACTIONS } from "@/constants/actions";
 
 export default function DayDiscussionPhase({ roomCode, flow }) {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
   const [playersList, setPlayersList] = useState([]);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [isVoting, setIsVoting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const audioRef = useRef(null);
 
@@ -40,6 +42,23 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
     );
   }, [roomCode, socket, router]);
 
+  /* ===== HANDLE FLOW ACTION ===== */
+  useEffect(() => {
+    if (!flow?.event?.action) return;
+
+    if (flow.event.action === ACTIONS.VIEW) {
+      setIsVoting(false);
+      setIsLoading(false);
+      setSelectedPlayer(null);
+    }
+
+    if (flow.event.action === ACTIONS.VOTE) {
+      setIsVoting(false);
+      setIsLoading(false);
+      setSelectedPlayer(null);
+    }
+  }, [flow]);
+
   /* ===== TTS ===== */
   useEffect(() => {
     if (!flow?.message) return;
@@ -60,39 +79,19 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
     };
 
     play();
-
-    return () => {
-      audio.pause();
-    };
+    return () => audio.pause();
   }, [flow?.message]);
 
   if (!player) {
     return <Loading textMsg="Đang chuẩn bị..." />;
   }
 
-  /* ===== INTERACTIVE CONDITION ===== */
+  /* ===== INTERACTION CONDITION ===== */
   const canInteract =
     player.is_alive &&
     player.is_connected &&
-    player.is_ready;
-
-  /* ===== PASSIVE VIEW (CHỈ XEM) ===== */
-  if (!canInteract) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-black text-white px-4">
-        <p className="text-lg text-gray-300 text-center max-w-md animate-pulse">
-          {flow.message}
-        </p>
-      </div>
-    );
-  }
-
-  /* ===== DATA ANALYSIS ===== */
-  const deadPlayers =
-    flow?.data?.players?.filter((p) => p.is_alive === false) || [];
-
-  const mutedPlayers =
-    flow?.data?.players?.filter((p) => p.is_muted) || [];
+    player.is_ready &&
+    flow?.event?.action === ACTIONS.VOTE;
 
   /* ===== LOAD PLAYERS FOR VOTE ===== */
   const loadPlayersForVote = () => {
@@ -101,18 +100,18 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
     socket.emit(EVENTS.PLAYER_INFO, { room: { code: roomCode } }, (res) => {
       if (!res?.data?.players?.length) return;
 
-      const list = res.data.players.filter(
-        (p) => p.is_alive && p.is_connected && p.is_ready
+      setPlayersList(
+        res.data.players.filter(
+          (p) => p.is_alive && p.is_connected && p.is_ready
+        )
       );
-
-      setPlayersList(list);
       setIsVoting(true);
     });
   };
 
   /* ===== VOTE ===== */
   const handleVote = (p) => {
-    if (!socket) return;
+    if (!socket || isLoading) return;
 
     setSelectedPlayer(p);
 
@@ -128,20 +127,23 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
 
   /* ===== DONE ===== */
   const handleDone = () => {
-    if (!socket) return;
+    if (!socket || isLoading) return;
+
+    setIsLoading(true);
 
     socket.emit(EVENTS.PLAYER_DONE, {
       room: { code: roomCode },
       current_phase: flow.phase,
     });
-
-    setSelectedPlayer(null);
   };
+
+  const deadPlayers = Array.isArray(flow?.data?.players)
+    ? flow.data.players
+    : [];
 
   /* ===== UI ===== */
   return (
     <div className="relative h-screen flex flex-col bg-black text-white overflow-hidden">
-      
       {/* HEADER */}
       <header className="shrink-0 bg-zinc-900 border-b border-zinc-800 p-4 z-10">
         <h2 className="text-lg font-bold">{flow.message}</h2>
@@ -150,56 +152,36 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
 
       {/* BODY */}
       <main className="flex-1 overflow-y-auto p-4">
-        {!isVoting && (
-          <div className="space-y-6">
-            {deadPlayers.length > 0 && (
-              <div>
-                <h3 className="font-semibold mb-2 text-red-400">
-                  ☠️ Người chết trong đêm
-                </h3>
-                <div className="space-y-2">
-                  {deadPlayers.map((p) => (
-                    <div
-                      key={p.player_id}
-                      className="bg-zinc-800 rounded-xl p-3"
-                    >
-                      <CopyableText label="ID" value={p.player_id} />
-                      <CopyableText label="Name" value={p.username} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+        {/* ===== DEAD PLAYERS ===== */}
+        {deadPlayers.length > 0 && (
+          <div className="mb-6">
+            <h3 className="font-semibold mb-3 text-red-400">
+              {flow.event?.action === ACTIONS.VIEW
+                ? "☠️ Người bị vote chết"
+                : "🌙 Người chết/câm trong đêm"}
+            </h3>
 
-            {mutedPlayers.length > 0 && (
-              <div>
-                <h3 className="font-semibold mb-2 text-yellow-400">
-                  🤐 Người bị câm
-                </h3>
-                <div className="space-y-2">
-                  {mutedPlayers.map((p) => (
-                    <div
-                      key={p.player_id}
-                      className="bg-zinc-800 rounded-xl p-3"
-                    >
-                      <CopyableText label="ID" value={p.player_id} />
-                      <CopyableText label="Name" value={p.username} />
-                    </div>
-                  ))}
+            <div className="space-y-2">
+              {deadPlayers.map((p) => (
+                <div
+                  key={p.player_id}
+                  className="bg-zinc-800 rounded-xl p-3"
+                >
+                  <CopyableText label="ID" value={p.player_id} />
+                  <CopyableText label="Name" value={p.username} />
                 </div>
-              </div>
-            )}
+              ))}
+            </div>
           </div>
         )}
 
+        {/* ===== VOTING LIST ===== */}
         {isVoting && (
           <div>
             <h3 className="text-md mb-3">🗳️ Chọn người để treo cổ</h3>
-
             <div className="space-y-3 pb-4">
               {playersList.map((p) => {
-                const isSelected =
-                  selectedPlayer?.player_id === p.player_id;
+                const isSelected = selectedPlayer?.player_id === p.player_id;
 
                 return (
                   <div
@@ -211,6 +193,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
                           ? "bg-red-700 border border-red-500"
                           : "bg-zinc-800 hover:bg-zinc-700"
                       }
+                      ${isLoading ? "pointer-events-none opacity-60" : ""}
                     `}
                   >
                     <div className="flex flex-col gap-1">
@@ -228,32 +211,43 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
       </main>
 
       {/* FOOTER */}
-      <footer className="shrink-0 bg-zinc-900 border-t border-zinc-800 p-4 z-10 flex gap-3">
-        {!isVoting ? (
-          <button
-            onClick={loadPlayersForVote}
-            className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold transition"
-          >
-            Bắt đầu vote
-          </button>
-        ) : (
-          <>
+      {canInteract && (
+        <footer className="shrink-0 bg-zinc-900 border-t border-zinc-800 p-4 z-10 flex gap-3">
+          {!isVoting ? (
             <button
-              onClick={handleDone}
-              className="flex-1 py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 font-bold transition"
+              onClick={loadPlayersForVote}
+              className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold transition"
             >
-              Bỏ qua
+              Bắt đầu vote
             </button>
+          ) : (
+            <>
+              <button
+                disabled={isLoading}
+                onClick={handleDone}
+                className="flex-1 py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 font-bold transition"
+              >
+                Bỏ qua
+              </button>
 
-            <button
-              onClick={handleDone}
-              className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-500 font-bold transition"
-            >
-              Đã xong
-            </button>
-          </>
-        )}
-      </footer>
+              <button
+                disabled={isLoading}
+                onClick={handleDone}
+                className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-500 font-bold transition"
+              >
+                Đã xong
+              </button>
+            </>
+          )}
+        </footer>
+      )}
+
+      {/* GLOBAL LOADING */}
+      {isLoading && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80">
+          <Loading textMsg="Đang xử lý kết quả vote..." />
+        </div>
+      )}
     </div>
   );
 }

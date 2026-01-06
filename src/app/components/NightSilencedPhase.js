@@ -11,7 +11,7 @@ import { ACTIONS } from "@/constants/actions";
 import { ROLES } from "@/constants/roles";
 import { useRouter } from "next/navigation";
 
-export default function NightWolfPhase({ roomCode, flow }) {
+export default function NightSilencedPhase({ roomCode, flow }) {
   const router = useRouter();
   const socket = getGameSocket();
 
@@ -87,8 +87,8 @@ export default function NightWolfPhase({ roomCode, flow }) {
     });
   };
 
-  /* ===== VOTE ===== */
-  const handleVote = (p) => {
+  /* ===== SILENCE (VOTE) ===== */
+  const handleSilence = (p) => {
     if (!socket || isLoading) return;
 
     setSelectedPlayer(p);
@@ -109,17 +109,17 @@ export default function NightWolfPhase({ roomCode, flow }) {
   }
 
   /**
-   * ⭐ Wolf chỉ tương tác khi WAKEUP
+   * ⭐ Silencer chỉ tương tác khi WAKEUP
    */
-  const isWolfWakeup =
-    player.role === ROLES.WEREWOLF &&
+  const isSilencerWakeup =
+    player.role === ROLES.SILENCED &&
     player.is_alive &&
     player.is_connected &&
     player.is_ready &&
     flow?.event?.action === ACTIONS.WAKEUP;
 
   /* ===== PASSIVE VIEW ===== */
-  if (!isWolfWakeup) {
+  if (!isSilencerWakeup) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-black text-white px-4">
         <p className="text-lg text-gray-300 text-center max-w-md animate-pulse">
@@ -129,7 +129,7 @@ export default function NightWolfPhase({ roomCode, flow }) {
     );
   }
 
-  /* ===== WOLF VIEW ===== */
+  /* ===== SILENCER VIEW ===== */
   return (
     <div className="relative h-screen flex flex-col bg-black text-white overflow-hidden">
       {/* HEADER */}
@@ -140,7 +140,10 @@ export default function NightWolfPhase({ roomCode, flow }) {
 
       {/* BODY */}
       <main className="flex-1 overflow-y-auto p-4">
-        <h3 className="text-md mb-3">🐺 Chọn người để cắn</h3>
+        <p className="text-sm text-gray-400 mb-3">
+          👉 Click vào người bạn muốn{" "}
+          <span className="text-purple-400 font-semibold">làm câm</span>
+        </p>
 
         <div className="space-y-3 pb-4">
           {playersList.map((p) => {
@@ -150,11 +153,11 @@ export default function NightWolfPhase({ roomCode, flow }) {
             return (
               <div
                 key={p.player_id}
-                onClick={() => handleVote(p)}
+                onClick={() => handleSilence(p)}
                 className={`w-full flex items-center justify-between rounded-xl px-4 py-3 cursor-pointer transition
                   ${
                     isSelected
-                      ? "bg-red-700 border border-red-500"
+                      ? "bg-purple-700 border border-purple-500"
                       : "bg-zinc-800 hover:bg-zinc-700"
                   }
                   ${isLoading ? "opacity-60 pointer-events-none" : ""}
@@ -165,8 +168,8 @@ export default function NightWolfPhase({ roomCode, flow }) {
                   <CopyableText label="Name" value={p.username} />
                 </div>
 
-                <span className="text-gray-400 text-sm">
-                  {p.is_connected ? "🟢 Online" : "🔴 Offline"}
+                <span className="text-purple-400 font-bold">
+                  🤐 Câm
                 </span>
               </div>
             );
@@ -181,11 +184,7 @@ export default function NightWolfPhase({ roomCode, flow }) {
           <button
             disabled={isLoading}
             onClick={handleDone}
-            className={`flex-1 py-3 rounded-xl font-bold transition ${
-              isLoading
-                ? "bg-gray-600 cursor-not-allowed"
-                : "bg-zinc-700 hover:bg-zinc-600"
-            }`}
+            className="flex-1 py-3 rounded-xl font-bold bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50"
           >
             Bỏ qua
           </button>
@@ -195,11 +194,7 @@ export default function NightWolfPhase({ roomCode, flow }) {
         <button
           disabled={isLoading}
           onClick={handleDone}
-          className={`flex-1 py-3 rounded-xl font-bold transition ${
-            isLoading
-              ? "bg-gray-600 cursor-not-allowed"
-              : "bg-red-600 hover:bg-red-500"
-          }`}
+          className="flex-1 py-3 rounded-xl font-bold bg-purple-600 hover:bg-purple-500 disabled:opacity-50"
         >
           Đã xong
         </button>

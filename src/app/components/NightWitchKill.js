@@ -18,6 +18,7 @@ export default function NightWitchKill({ roomCode, flow }) {
   const [player, setPlayer] = useState(null);
   const [playersList, setPlayersList] = useState([]);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const audioRef = useRef(null);
 
@@ -31,7 +32,7 @@ export default function NightWitchKill({ roomCode, flow }) {
       return;
     }
 
-    // Lấy thông tin chính mình
+    // self
     socket.emit(
       EVENTS.PLAYER_INFO,
       { room: { code: roomCode }, player: { ids: [playerId] } },
@@ -41,11 +42,14 @@ export default function NightWitchKill({ roomCode, flow }) {
       }
     );
 
-    // Lấy danh sách người chơi còn sống
+    // all players
     socket.emit(EVENTS.PLAYER_INFO, { room: { code: roomCode } }, (res) => {
       if (!res?.data?.players?.length) return;
+
       setPlayersList(
-        res.data.players.filter((p) => p.is_alive && p.is_connected && p.is_ready)
+        res.data.players.filter(
+          (p) => p.is_alive && p.is_connected && p.is_ready
+        )
       );
     });
   }, [roomCode, socket, router]);
@@ -73,19 +77,19 @@ export default function NightWitchKill({ roomCode, flow }) {
 
   /* ===== DONE ===== */
   const handleDone = () => {
-    if (!socket) return;
+    if (!socket || isLoading) return;
+
+    setIsLoading(true);
 
     socket.emit(EVENTS.PLAYER_DONE, {
       room: { code: roomCode },
       current_phase: flow.phase,
     });
-
-    setSelectedPlayer(null);
   };
 
   /* ===== KILL (VOTE) ===== */
   const handleVote = (p) => {
-    if (!socket) return;
+    if (!socket || isLoading || !canPoison) return;
 
     setSelectedPlayer(p);
 
@@ -99,58 +103,74 @@ export default function NightWitchKill({ roomCode, flow }) {
     });
   };
 
+  /* ===== INITIAL LOADING ===== */
   if (!flow?.message || !player) {
     return <Loading textMsg="Đang chuẩn bị..." />;
   }
 
-  /**
-   * ⭐ Witch chỉ tương tác khi WAKEUP
-   */
+  /* ===== WITCH WAKEUP CHECK ===== */
   const isWitchWakeup =
-    player.role === ROLES.WITCH && player?.is_alive && player?.is_connected && player?.is_ready && 
+    player.role === ROLES.WITCH &&
+    player.is_alive &&
+    player.is_connected &&
+    player.is_ready &&
     flow?.event?.action === ACTIONS.WAKEUP;
 
-  /* ===== PASSIVE VIEW ===== */
   if (!isWitchWakeup) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-black text-white px-4">
-        <p className="text-lg text-gray-300 text-center max-w-md animate-pulse">
+      <div className="flex min-h-screen flex-col items-center justify-center bg-black text-white px-4">
+        <p className="text-lg text-gray-300 animate-pulse">
           {flow.message}
         </p>
       </div>
     );
   }
 
-  /* ===== WITCH KILL VIEW ===== */
+  /* ===== LOGIC POISON ===== */
+  const canPoison = Number(player.witch_poison) > 0;
+  const hasSelected = !!selectedPlayer;
+
+  /* ===== VIEW ===== */
   return (
-    <div className="relative h-screen flex flex-col bg-black text-white overflow-hidden">
-      
+    <div className="relative h-screen flex flex-col bg-black text-white">
       {/* HEADER */}
-      <header className="shrink-0 bg-zinc-900 border-b border-zinc-800 p-4 z-10 shadow-md">
+      <header className="bg-zinc-900 border-b border-zinc-800 p-4">
         <h2 className="text-lg font-bold">{flow.message}</h2>
         <p className="text-sm text-gray-400">Room #{roomCode}</p>
       </header>
 
       {/* BODY */}
       <main className="flex-1 overflow-y-auto p-4">
-        <p className="text-sm text-gray-400 mb-3">
-          👉 Click vào người bạn muốn <span className="text-red-400 font-semibold">giết</span>
-        </p>
+        {!canPoison && (
+          <p className="text-yellow-400 mb-3 italic">
+            ⚠️ Bạn đã dùng hết bình độc.
+          </p>
+        )}
 
-        <div className="space-y-3 pb-4">
+        {canPoison && (
+          <p className="text-sm text-gray-400 mb-3">
+            👉 Click vào người bạn muốn{" "}
+            <span className="text-red-400 font-semibold">giết</span>
+          </p>
+        )}
+
+        <div className="space-y-3">
           {playersList.map((p) => {
-            const isSelected = selectedPlayer?.player_id === p.player_id;
+            const isSelected =
+              selectedPlayer?.player_id === p.player_id;
 
             return (
               <div
                 key={p.player_id}
                 onClick={() => handleVote(p)}
-                className={`w-full flex items-center justify-between rounded-xl px-4 py-3 cursor-pointer transition
+                className={`flex justify-between items-center px-4 py-3 rounded-xl transition
+                  ${canPoison ? "cursor-pointer" : "opacity-50"}
                   ${
                     isSelected
                       ? "bg-red-700 border border-red-500"
                       : "bg-zinc-800 hover:bg-zinc-700"
                   }
+                  ${isLoading ? "pointer-events-none opacity-60" : ""}
                 `}
               >
                 <div className="flex flex-col gap-1">
@@ -158,9 +178,7 @@ export default function NightWitchKill({ roomCode, flow }) {
                   <CopyableText label="Name" value={p.username} />
                 </div>
 
-                <span className="text-red-400 font-bold">
-                  ☠️ Giết
-                </span>
+                <span className="text-red-400 font-bold">☠️ Giết</span>
               </div>
             );
           })}
@@ -168,21 +186,36 @@ export default function NightWitchKill({ roomCode, flow }) {
       </main>
 
       {/* FOOTER */}
-      <footer className="shrink-0 bg-zinc-900 border-t border-zinc-800 p-4 z-10 flex gap-3">
-        <button
-          onClick={handleDone}
-          className="flex-1 py-3 rounded-xl bg-zinc-700 hover:bg-zinc-600 font-bold transition"
-        >
-          Bỏ qua
-        </button>
+      <footer className="bg-zinc-900 border-t border-zinc-800 p-4 flex gap-3">
+        {/* BỎ QUA – CHỈ KHI CHƯA CHỌN AI */}
+        {!hasSelected && (
+          <button
+            disabled={isLoading}
+            onClick={handleDone}
+            className="flex-1 py-3 rounded-xl font-bold bg-zinc-700 hover:bg-zinc-600"
+          >
+            Bỏ qua
+          </button>
+        )}
 
-        <button
-          onClick={handleDone}
-          className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-500 font-bold transition"
-        >
-          Đã xong
-        </button>
+        {/* ĐÃ XONG */}
+        {(canPoison || hasSelected) && (
+          <button
+            disabled={isLoading}
+            onClick={handleDone}
+            className="flex-1 py-3 rounded-xl font-bold bg-red-600 hover:bg-red-500"
+          >
+            Đã xong
+          </button>
+        )}
       </footer>
+
+      {/* LOADING */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center">
+          <Loading textMsg="Đang xử lý..." />
+        </div>
+      )}
     </div>
   );
 }
