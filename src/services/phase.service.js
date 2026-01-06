@@ -128,7 +128,7 @@ const PhaseService = {
                 // Next handle
                 let nextPhase;
                 let data = {}
-                let isRoleAlive
+                let roleAlive
                 for(const pi in PHASE_FLOW) {
                     //
                     nextPhase = PHASE_FLOW.filter(p => p.phase.key === currentPhaseTempt)?.[0];
@@ -156,8 +156,9 @@ const PhaseService = {
                     }
 
                     //
-                    isRoleAlive = await PlayerRepository.isRoleAlive(room.code, [nextPhase?.role.key]);
-                    if(!isRoleAlive) {
+                    roleAlive = await PlayerRepository.getRoleAlive(room.code, [nextPhase?.role.key]);
+                    data.roleAlive = roleAlive
+                    if(!roleAlive) {
                         data.time = 15 // TODO: Change
                     } else {
                         if(PHASE.NIGHT_WITCH_SAVE.key === data.phase) {
@@ -182,6 +183,11 @@ const PhaseService = {
                         phase_expires_at: await RoomRepository.raw('TIMESTAMPADD(SECOND, ?, NOW())', [data?.time])
                     }
                 ])
+
+                // Complete CURSED
+                if(data?.roleAlive === ROLES.CURSED.key && data.phase === PHASE.NIGHT_CURSED) {
+                    await PhaseService.processPhaseCursed(room.code, roles)
+                }
 
                 //
                 if(curPhase && curPhase?.role && curPhase?.role.key !== data.event.role) {
@@ -468,6 +474,50 @@ const PhaseService = {
             });
         }, EMIT_DELAY)
         await VoteRepository.clearVotes(roomCode);
+    },
+
+    async processPhaseCursed(roomCode, roles) {
+        const phases = PHASE_FLOW
+            .filter(p => p?.role?.key && p?.next?.key && roles.some(r => r.initial_role === p.role.key))
+            .map(p => p.next.key);
+
+        const votes = await VoteRepository.findByRoomAndPhases(roomCode, phases);
+
+        if (!votes.length) {
+            return;
+        }
+
+        const voteMap = votes.reduce((acc, v) => {
+            (acc[v.phase] ||= []).push(v);
+            return acc;
+        }, {});
+
+        const wolfTargetId = await PhaseService.getMajorityTarget(voteMap[PHASE.NIGHT_WOLF.key] || []);
+        const protectedId = voteMap[PHASE.NIGHT_GUARD.key]?.[0]?.target_id || null;
+        const healedId    = voteMap[PHASE.NIGHT_WITCH_SAVE.key]?.[0]?.target_id || null;
+        const poisonedId  = voteMap[PHASE.NIGHT_WITCH_KILL.key]?.[0]?.target_id || null;
+
+        const deadIds = await PhaseService.resolveNightResult({
+            wolfTargetId,
+            protectedId,
+            healedId,
+            poisonedId
+        });
+
+        // CURSED logic
+        const { cursedTurnWolfIds } = await PhaseService.splitDeadPlayers(roomCode, roles, deadIds);
+
+        await VoteRepository.withTransaction(async (conn) => {
+            // CURSED → WEREWOLF (KHÔNG CHẾT)
+            if (cursedTurnWolfIds.length) {
+                await VoteRepository.changeRole(
+                    cursedTurnWolfIds,
+                    ROLES.WEREWOLF.key,
+                    roomCode,
+                    conn
+                );
+            }
+        });
     },
 
     async decreasePhaseExpire(roomCode, seconds) {

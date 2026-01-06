@@ -131,6 +131,7 @@ const PlayerRepository = {
     },
 
     async isRoleAlive(roomCode, roles) {
+        if (!roles.length) return false;
         const [rows] = await pool.query(
             `
                 SELECT 1
@@ -146,6 +147,25 @@ const PlayerRepository = {
         );
 
         return rows.length > 0;
+    },
+
+    async getRoleAlive(roomCode, roles = []) {
+        if (!roles.length) return null;
+        const [rows] = await pool.query(
+            `
+            SELECT role
+            FROM players
+            WHERE room_code = ?
+              AND initial_role IN (?)
+              AND is_alive = TRUE
+              AND is_ready = TRUE
+              AND is_connected = TRUE
+            LIMIT 1
+        `,
+            [roomCode, roles]
+        );
+
+        return rows.length ? rows[0].role : null;
     },
 
     async checkGuard(roomCode, playerId) {
