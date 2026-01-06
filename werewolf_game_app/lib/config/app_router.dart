@@ -1,29 +1,36 @@
+// werewolf_game_app/lib/config/app_router.dart
 import 'package:go_router/go_router.dart';
-import 'package:werewolf_game_app/providers/auth/auth_provider.dart';
-import 'package:werewolf_game_app/screens/game/day_phase_screen.dart';
-import 'package:werewolf_game_app/screens/game/game_master_screen.dart';
-import 'package:werewolf_game_app/screens/game/night_phase_screen.dart';
 import 'package:werewolf_game_app/screens/login/screen_login.dart';
-import 'package:werewolf_game_app/screens/result/game_result_screen.dart';
-import 'package:werewolf_game_app/screens/role/screen_role_reveal.dart';
-import 'package:werewolf_game_app/screens/room/room_lobby_screen.dart';
-import 'package:werewolf_game_app/screens/room/room_setup_screen.dart';
+import 'package:werewolf_game_app/screens/server_selection/screen_server_selection.dart';
 import 'package:werewolf_game_app/screens/startgame/join_game.dart';
 import 'package:werewolf_game_app/screens/startgame/new_game.dart';
+import 'package:werewolf_game_app/screens/startgame/screen_role_reveal.dart';
+import 'package:werewolf_game_app/screens/waiting/screen_game.dart';
+import 'package:werewolf_game_app/screens/game/night/screen_night_seer.dart';
+import 'package:werewolf_game_app/screens/game/night/screen_night_wolf.dart';
 import 'package:werewolf_game_app/widgets/home_page.dart';
 
 class AppRouter {
   static final router = GoRouter(
-    initialLocation: '/',
+    initialLocation: '/server-selection',
     redirect: (context, state) {
-      // Add auth guard logic here if needed
       return null;
     },
     routes: [
       GoRoute(
-        path: '/',
+        path: '/server-selection',
+        name: 'server-selection',
+        builder: (_, __) => const ServerSelectionScreen(),
+      ),
+      GoRoute(
+        path: '/login',
         name: 'login',
         builder: (_, __) => const SignUpScreen(),
+      ),
+      GoRoute(
+        path: '/',
+        name: 'login-root',
+        redirect: (_, __) => '/login',
       ),
       GoRoute(
         path: '/home',
@@ -34,6 +41,18 @@ class AppRouter {
         path: '/new-game',
         name: 'new-game',
         builder: (_, __) => const ScreenNewGame(),
+        routes: [
+          GoRoute(
+            path: ':roomCode',
+            name: 'new-game-with-code',
+            builder: (context, state) {
+              final roomCode = state.pathParameters['roomCode'];
+              return ScreenNewGame(
+                roomCode: roomCode,
+              );
+            },
+          ),
+        ],
       ),
       GoRoute(
         path: '/join-game',
@@ -41,60 +60,26 @@ class AppRouter {
         builder: (_, __) => const ScreenJoinGame(),
       ),
       GoRoute(
-        path: '/room/setup/:roomCode',
-        name: 'room-setup',
-        builder: (context, state) {
-          final roomCode = state.pathParameters['roomCode']!;
-          return RoomSetupScreen(roomCode: roomCode);
-        },
-      ),
-      GoRoute(
-        path: '/room/lobby/:roomCode',
-        name: 'room-lobby',
-        builder: (context, state) {
-          final roomCode = state.pathParameters['roomCode']!;
-          return RoomLobbyScreen(roomCode: roomCode);
-        },
-      ),
-      GoRoute(
-        path: '/game/master/:roomCode',
-        name: 'game-master',
-        builder: (context, state) {
-          final roomCode = state.pathParameters['roomCode']!;
-          return GameMasterScreen(roomCode: roomCode);
-        },
-      ),
-      GoRoute(
-        path: '/game/night/:roomCode',
-        name: 'game-night',
-        builder: (context, state) {
-          final roomCode = state.pathParameters['roomCode']!;
-          return NightPhaseScreen(roomCode: roomCode);
-        },
-      ),
-      GoRoute(
-        path: '/game/day/:roomCode',
-        name: 'game-day',
-        builder: (context, state) {
-          final roomCode = state.pathParameters['roomCode']!;
-          return DayPhaseScreen(roomCode: roomCode);
-        },
-      ),
-      GoRoute(
-        path: '/role/:playerRole?',
+        path: '/role-reveal',
         name: 'role-reveal',
-        builder: (context, state) {
-          final playerRole = state.pathParameters['playerRole'];
-          return RoleRevealScreen(playerRole: playerRole);
-        },
+        builder: (_, __) => const ScreenRoleReveal(),
       ),
       GoRoute(
-        path: '/result/:roomCode',
-        name: 'game-result',
-        builder: (context, state) {
-          final roomCode = state.pathParameters['roomCode']!;
-          return GameResultScreen(roomCode: roomCode);
-        },
+        path: '/game',
+        name: 'game',
+        builder: (_, __) => const ScreenGame(),
+        routes: [
+          GoRoute(
+            path: 'night/seer',
+            name: 'night-seer',
+            builder: (_, __) => const ScreenNightSeer(),
+          ),
+          GoRoute(
+            path: 'night/wolf',
+            name: 'night-wolf',
+            builder: (_, __) => const ScreenNightWolf(),
+          ),
+        ],
       ),
     ],
   );

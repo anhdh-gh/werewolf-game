@@ -1,3 +1,6 @@
+
+import 'dart:developer' as developer;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -124,7 +127,7 @@ class _ScreenProfileState extends ConsumerState<ScreenProfile> {
     }
   }
 
-  @override
+@override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
 

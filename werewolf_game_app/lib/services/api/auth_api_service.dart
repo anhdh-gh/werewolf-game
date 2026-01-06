@@ -76,7 +76,6 @@ class AuthApiService {
         data: request.toJson(),
       );
 
-      // Handle backend response structure: {meta: {...}, data: {...}}
       final responseData =
           response.data is Map<String, dynamic>
               ? response.data as Map<String, dynamic>
@@ -88,17 +87,14 @@ class AuthApiService {
     }
   }
 
-  // Get current user information (POST /api/v1/users/info)
   Future<UserModel> getCurrentUser() async {
     try {
       final response = await _dio.post(Env.getUserInfoEndpoint);
 
-      // Handle backend response structure: {meta: {...}, data: {...}}
       final responseData = response.data is Map<String, dynamic>
           ? response.data as Map<String, dynamic>
           : {'data': response.data};
 
-      // Extract user from data
       final data = responseData['data'] ?? responseData;
       
       return UserModel.fromJson(data is Map<String, dynamic> ? data : {});
@@ -115,16 +111,13 @@ class AuthApiService {
     }
   }
 
-  // Handle API errors
   Exception _handleError(DioException error) {
     if (error.response != null) {
-      // Server responded with error status code
       final statusCode = error.response?.statusCode;
       final data = error.response?.data;
 
       String message;
 
-      // Handle backend response structure: {meta: {code, message}, data: {...}}
       if (data is Map<String, dynamic>) {
         if (data.containsKey('meta') && data['meta'] is Map<String, dynamic>) {
           final meta = data['meta'] as Map<String, dynamic>;

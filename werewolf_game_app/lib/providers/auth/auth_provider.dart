@@ -1,5 +1,8 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:werewolf_game_app/models/auth/user_model.dart';
+import 'package:werewolf_game_app/services/api/api_client.dart';
 import 'package:werewolf_game_app/services/api/auth_api_service.dart';
 import 'package:werewolf_game_app/services/storage/token_storage.dart';
 
@@ -97,33 +100,26 @@ class LoginNotifier extends StateNotifier<AsyncValue<void>> {
 
     try {
       final authService = ref.read(authApiServiceProvider);
+      
       final response = await authService.login(
         username: username,
         password: password,
       );
 
-      // Save tokens
       await TokenStorage.saveTokens(
         response.accessToken,
         response.refreshToken,
       );
 
-      // Get user info after login (login response doesn't include user info)
-      try {
-        final user = await authService.getCurrentUser();
-        ref.read(currentUserProvider.notifier).state = user;
-      } catch (e) {
-        // If getCurrentUser fails, try to use user from response if available
-        if (response.user != null) {
-          ref.read(currentUserProvider.notifier).state = response.user;
-        }
-        // If both fail, user info will be null but tokens are saved
-        // User can still use the app, just won't see their info
-      }
+      developer.log('💾 [LOGIN] Tokens saved');
+      final user = await authService.getCurrentUser();
+      
+      
+      ref.read(currentUserProvider.notifier).state = user;
 
       state = const AsyncValue.data(null);
-    } catch (e) {
-      state = AsyncValue.error(e, StackTrace.current);
+    } catch (e, stack) {
+      state = AsyncValue.error(e, stack);
       rethrow;
     }
   }
@@ -165,7 +161,6 @@ class RefreshTokenNotifier extends StateNotifier<AsyncValue<void>> {
         response.refreshToken,
       );
 
-      // Update current user
       ref.read(currentUserProvider.notifier).state = response.user;
 
       state = const AsyncValue.data(null);

@@ -7,7 +7,15 @@ part of 'join_room_request.dart';
 // **************************************************************************
 
 JoinRoomRequest _$JoinRoomRequestFromJson(Map<String, dynamic> json) =>
-    JoinRoomRequest(roomCode: json['room_code'] as String);
+    JoinRoomRequest(
+      room: RoomRequest.fromJson(json['room'] as Map<String, dynamic>),
+    );
 
 Map<String, dynamic> _$JoinRoomRequestToJson(JoinRoomRequest instance) =>
-    <String, dynamic>{'room_code': instance.roomCode};
+    <String, dynamic>{'room': instance.room};
+
+RoomRequest _$RoomRequestFromJson(Map<String, dynamic> json) =>
+    RoomRequest(code: json['code'] as String);
+
+Map<String, dynamic> _$RoomRequestToJson(RoomRequest instance) =>
+    <String, dynamic>{'code': instance.code};

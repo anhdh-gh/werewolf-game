@@ -3,8 +3,6 @@ import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:werewolf_game_app/providers/auth/auth_provider.dart';
-import 'package:werewolf_game_app/screens/startgame/join_game.dart';
-import 'package:werewolf_game_app/screens/startgame/new_game.dart';
 
 class ScreenHome extends ConsumerStatefulWidget {
   const ScreenHome({super.key});
@@ -91,7 +89,7 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
                         return IconButton(
                           icon: Icon(Icons.menu, color: _iconColor, size: 30),
                           onPressed: () {
-                            context.go('/role');
+                            // Placeholder - bạn sẽ thêm logic sau
                           },
                         );
                       },
@@ -138,12 +136,8 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
                           child: _buildGameButton(
                             title: "NEW GAME",
                             onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ScreenNewGame(),
-                                ),
-                              );
+                              // Navigate using GoRouter
+                              context.push('/new-game');
                             },
                           ),
                         ),
@@ -152,12 +146,8 @@ class _ScreenHomeState extends ConsumerState<ScreenHome> {
                           child: _buildGameButton(
                             title: "JOIN GAME",
                             onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ScreenJoinGame(),
-                                ),
-                              );
+                              // Navigate using GoRouter
+                              context.push('/join-game');
                             },
                           ),
                         ),

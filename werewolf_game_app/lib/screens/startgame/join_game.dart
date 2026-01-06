@@ -1,8 +1,12 @@
+// werewolf_game_app/lib/screens/startgame/join_game.dart
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:werewolf_game_app/providers/room/room_provider.dart';
+import 'package:werewolf_game_app/controllers/room/room_controller.dart';
 
+/// Screen để join vào room
+/// UI only - Business logic được xử lý bởi RoomController
 class ScreenJoinGame extends ConsumerStatefulWidget {
   const ScreenJoinGame({super.key});
 
@@ -16,7 +20,68 @@ class _ScreenJoinGameState extends ConsumerState<ScreenJoinGame> {
   final Color _glassColor = const Color(0xFF323345).withOpacity(0.9);
 
   @override
+  void dispose() {
+    _codeController.dispose();
+    super.dispose();
+  }
+
+  /// Join room - gọi controller để xử lý business logic
+  Future<void> _joinRoom() async {
+    final roomCode = _codeController.text.trim().toUpperCase();
+    if (roomCode.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a room code'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+
+    try {
+      developer.log('🎮 [ScreenJoinGame] Starting join room process - roomCode: $roomCode');
+      
+      // Gọi controller để join room
+      await ref.read(roomControllerProvider.notifier).joinRoom(roomCode);
+      developer.log('🎮 [ScreenJoinGame] Join room completed successfully');
+      
+      // Đợi một chút để WebSocket có thời gian nhận events
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      // Kiểm tra state trước khi navigate
+      final currentState = ref.read(roomControllerProvider);
+      developer.log('🎮 [ScreenJoinGame] State before navigate - roomCode: ${currentState.roomCode}, isConnected: ${currentState.isConnected}, players: ${currentState.players.length}, playerCount: ${currentState.playerCount}');
+      
+      // Navigate sang new_game sau khi join thành công
+      // Dùng GoRouter thay vì Navigator
+      if (mounted) {
+        developer.log('🎮 [ScreenJoinGame] Navigating to /new-game');
+        context.push('/new-game');
+      }
+    } catch (e) {
+      developer.log('❌ [ScreenJoinGame] Error joining room: $e');
+      developer.log('❌ [ScreenJoinGame] Error stack trace: ${StackTrace.current}');
+      
+      // Error đã được set trong controller state
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to join room: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // Watch room state để hiển thị loading
+    final roomState = ref.watch(roomControllerProvider);
+    final isLoading = roomState.isLoading;
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -32,20 +97,16 @@ class _ScreenJoinGameState extends ConsumerState<ScreenJoinGame> {
         ),
         centerTitle: true,
       ),
-      // Bọc GestureDetector để chạm ra ngoài thì ẩn bàn phím
       body: GestureDetector(
         onTap: () => FocusScope.of(context).unfocus(),
         child: Container(
           width: double.infinity,
           height: double.infinity,
-decoration: const BoxDecoration(
+          decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFF2C2D3A), // Xám xanh đậm (trầm) ở trên
-                Color(0xFF181920), // Gần như đen ở dưới đáy
-              ],
+              colors: [Color(0xFF2C2D3A), Color(0xFF181920)],
             ),
           ),
           child: SafeArea(
@@ -81,13 +142,13 @@ decoration: const BoxDecoration(
                     child: TextField(
                       controller: _codeController,
                       textAlign: TextAlign.center,
+                      enabled: !isLoading,
                       style: TextStyle(
                         color: _goldColor,
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 5,
                       ),
-                      // Tự động viết hoa
                       textCapitalization: TextCapitalization.characters,
                       cursorColor: _goldColor,
                       decoration: InputDecoration(
@@ -105,85 +166,54 @@ decoration: const BoxDecoration(
                     ),
                   ),
 
-                  const SizedBox(height: 50),
+                  const SizedBox(height: 20),
 
-                  // Error message display
-                  Consumer(
-                    builder: (context, ref, child) {
-                      final joinState = ref.watch(joinRoomProvider);
-                      return joinState.when(
-                        data: (_) => const SizedBox.shrink(),
-                        loading: () => const Padding(
-                          padding: EdgeInsets.only(bottom: 20),
-                          child: CircularProgressIndicator(color: Color(0xFFDeb887)),
-                        ),
-                        error: (error, stack) => Padding(
-                          padding: const EdgeInsets.only(bottom: 20),
-                          child: Text(
-                            error.toString().replaceAll('Exception: ', ''),
-                            style: const TextStyle(color: Colors.red),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+                  // --- Error Message từ state ---
+                  if (roomState.errorMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Text(
+                        roomState.errorMessage!,
+                        style: const TextStyle(color: Colors.red, fontSize: 14),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+
+                  const SizedBox(height: 30),
 
                   // --- Nút Join ---
                   SizedBox(
                     width: double.infinity,
                     height: 55,
-                    child: Consumer(
-                      builder: (context, ref, child) {
-                        final joinState = ref.watch(joinRoomProvider);
-                        final isLoading = joinState.isLoading;
-
-                        return ElevatedButton(
-                          onPressed: isLoading
-                              ? null
-                              : () async {
-                                  if (_codeController.text.isEmpty) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text("Please enter a room code"),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
-                                    return;
-                                  }
-
-                                  try {
-                                    await ref
-                                        .read(joinRoomProvider.notifier)
-                                        .joinRoom(_codeController.text.trim().toUpperCase());
-                                    
-                                    if (context.mounted) {
-                                      context.go('/room/lobby/${_codeController.text.trim().toUpperCase()}');
-                                    }
-                                  } catch (e) {
-                                    // Error is handled by the Consumer above
-                                  }
-                                },
+                    child: ElevatedButton(
+                      onPressed: isLoading ? null : _joinRoom,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _goldColor,
+                        backgroundColor: isLoading ? Colors.grey : _goldColor,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),
                         ),
                         elevation: 5,
                       ),
-                          child: isLoading
-                              ? const CircularProgressIndicator(color: Colors.black87)
-                              : const Text(
-                                  "ENTER VILLAGE",
-                                  style: TextStyle(
-                                    color: Colors.black87,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 1.0,
-                                  ),
+                      child: isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
                                 ),
-                        );
-                      },
+                              ),
+                            )
+                          : const Text(
+                              "ENTER VILLAGE",
+                              style: TextStyle(
+                                color: Colors.black87,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.0,
+                              ),
+                            ),
                     ),
                   ),
                 ],

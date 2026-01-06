@@ -1,0 +1,1118 @@
+================================================================================
+                    GAME_DATA_FLOW DOCUMENTATION
+                    Werewolf Game - WebSocket Event System
+================================================================================
+
+TABLE OF CONTENTS
+================================================================================
+
+1. Overview
+2. Event Structure
+3. Phase List
+4. Action Types
+5. Event Types
+6. Client Events
+7. Data Structure
+8. Phase Details
+9. Game Flow
+10. Examples
+11. Role-Specific Behaviors
+12. Special Cases
+
+================================================================================
+1. OVERVIEW
+================================================================================
+
+GAME_DATA_FLOW là event chính mà Backend (BE) gửi cho Client để điều khiển
+flow của game Werewolf. Event này chứa tất cả thông tin cần thiết để client
+hiển thị UI, phát âm thanh, và xử lý logic game.
+
+Event được gửi qua WebSocket với tên "GAME_DATA_FLOW" và chứa các thông tin:
+- Phase hiện tại của game
+- Action mà player cần thực hiện
+- Role nào cần action
+- Message để hiển thị/phát âm
+- Data chi tiết về players và game state
+
+Client sẽ lắng nghe event này và xử lý theo phase để:
+- Hiển thị màn hình phù hợp (đêm/ngày)
+- Phát âm thanh message (text-to-speech)
+- Cho phép player thực hiện action (vote, view, etc.)
+- Cập nhật trạng thái players (is_alive, is_muted, etc.)
+
+================================================================================
+2. EVENT STRUCTURE
+================================================================================
+
+Cấu trúc cơ bản của GAME_DATA_FLOW event:
+
+{
+  "event": "ALL" | "WOLF" | "SEER" | "GUARD" | "WITCH" | "CURSED" | "SILENCED" | "BORED",
+  "role": "WOLF" | "SEER" | "GUARD" | "WITCH" | "VILLAGER" | "CURSED" | "SILENCED" | "BORED",
+  "action": "SLEEP" | "WAKEUP" | "VIEW" | "VOTE",
+  "phase": "ALL_VIEW_ROLE" | "NIGHT_*" | "DAY_*" | "END",
+  "message": "String message để hiển thị và phát âm",
+  "data": {
+    "players": [
+      {
+        "player_id": "string",
+        "username": "string",
+        "is_alive": boolean,
+        "is_muted": boolean,
+        "is_protected": boolean,
+        "is_connected": boolean,
+        "witch_heal": number | null,
+        "witch_poison": number | null
+      }
+    ],
+    "night_result": {
+      "dead_players": ["player_id"],
+      "saved_players": ["player_id"],
+      "death_reasons": {
+        "player_id": "WOLF" | "WITCH"
+      }
+    },
+    "vote_result": {
+      "voted_player": "player_id",
+      "vote_count": number
+    },
+    "cursed_info": {
+      "player_id": "player_id",
+      "new_role": "WOLF"
+    }
+  }
+}
+
+================================================================================
+3. PHASE LIST
+================================================================================
+
+3.1 SETUP PHASES
+----------------
+ALL_VIEW_ROLE
+  - Tất cả players xem role của mình
+  - Hiển thị màn hình reveal role
+  - Chỉ hiển thị, không có action
+
+3.2 NIGHT PHASES
+----------------
+NIGHT_START
+  - Bắt đầu phase đêm
+  - Transition phase, màn hình tối dần
+
+NIGHT_ALL_SLEEP
+  - Tất cả players đi ngủ
+  - Màn hình tối đen
+  - Phát âm thanh "Đêm đã đến, tất cả đi ngủ"
+
+NIGHT_SEER
+  - Tiên tri thức dậy
+  - Tiên tri có thể xem role của 1 player
+  - Client gửi PLAYER_INFO để xem
+  - Sau khi xem xong gửi PLAYER_DONE
+
+NIGHT_GUARD
+  - Bảo vệ thức dậy
+  - Bảo vệ chọn 1 player để bảo vệ
+  - Client gửi PLAYER_VOTE để chọn
+  - Sau khi chọn xong gửi PLAYER_DONE
+
+NIGHT_WOLF
+  - Sói thức dậy
+  - Sói chọn 1 player để giết
+  - Client gửi PLAYER_VOTE để chọn
+  - Sau khi chọn xong gửi PLAYER_DONE
+
+NIGHT_WITCH_SAVE
+  - Phù thủy thức dậy và cứu
+  - Phù thủy có thể cứu người bị sói giết
+  - Client gửi PLAYER_VOTE để cứu (hoặc không cứu)
+  - Sau khi quyết định gửi PLAYER_DONE
+
+NIGHT_WITCH_KILL
+  - Phù thủy giết
+  - Phù thủy có thể giết 1 player (nếu còn bình)
+  - Client gửi PLAYER_VOTE để giết (hoặc không giết)
+  - Sau khi quyết định gửi PLAYER_DONE
+
+NIGHT_CURSED
+  - Bị nguyền thức dậy
+  - Player bị nguyền xem role mới của mình
+  - Client gửi PLAYER_INFO để xem role
+  - Sau khi xem xong gửi PLAYER_DONE
+
+NIGHT_SILENCED
+  - Bị câm thức dậy
+  - Player bị câm không thể làm gì
+  - Chỉ thông báo, không có action
+
+NIGHT_BORED
+  - Chán đời (Bên thứ 3) thức dậy
+  - Chán đời có thể có action đêm (tùy game design)
+  - Client gửi PLAYER_VOTE nếu có action
+  - Sau khi xong gửi PLAYER_DONE
+
+NIGHT_END
+  - Kết thúc đêm
+  - Transition phase
+
+3.3 DAY PHASES
+--------------
+DAY_START
+  - Bắt đầu phase ngày
+  - Transition phase, màn hình sáng dần
+
+DAY_NIGHT_RESULT
+  - Thông báo kết quả đêm qua
+  - Ai chết, ai được cứu
+  - Hiển thị card thông báo cho từng player
+
+DAY_DISCUSSION
+  - Thảo luận ban ngày
+  - Tất cả players có thể nói
+  - Không có action bắt buộc
+
+DAY_VOTING
+  - Phase vote ban ngày
+  - Tất cả players còn sống vote
+  - Client gửi PLAYER_VOTE để vote
+  - Có thể chọn lại, khi chọn xong gửi PLAYER_DONE
+
+DAY_VOTE_RESULT
+  - Kết quả vote
+  - Ai bị treo cổ
+  - Thông báo player bị vote
+
+DAY_END
+  - Kết thúc ngày
+  - Transition phase
+
+3.4 SPECIAL ANNOUNCEMENT PHASES
+--------------------------------
+DEATH_ANNOUNCEMENT
+  - Thông báo player chết
+  - Gửi riêng cho player vừa chết
+  - Hiển thị card với lý do chết (WOLF, WITCH)
+  - Player chết chỉ có thể theo dõi game
+
+MUTED_ANNOUNCEMENT
+  - Thông báo player bị câm
+  - Gửi riêng cho player bị câm
+  - Hiển thị card bị câm
+  - Player bị câm không thể nói
+
+CURSED_ANNOUNCEMENT
+  - Thông báo player bị nguyền
+  - Gửi riêng cho player bị nguyền
+  - Hiển thị card với role mới
+  - Role của player đã thay đổi
+
+3.5 END PHASE
+-------------
+END
+  - Kết thúc game
+  - Thông báo team thắng (Sói/Dân làng/Bên thứ 3)
+  - Hiển thị màn hình kết thúc
+
+================================================================================
+4. ACTION TYPES
+================================================================================
+
+SLEEP
+  - Player đi ngủ
+  - Không có action gì
+  - Chỉ hiển thị và phát âm thanh
+
+WAKEUP
+  - Player thức dậy
+  - Có thể thực hiện action
+  - Tùy role mà có action khác nhau
+
+VIEW
+  - Player xem thông tin
+  - Ví dụ: Tiên tri xem role, Bị nguyền xem role mới
+  - Client gửi PLAYER_INFO để xem
+  - Sau khi xem xong gửi PLAYER_DONE
+
+VOTE
+  - Player vote/chọn target
+  - Ví dụ: Sói chọn giết, Bảo vệ chọn bảo vệ, Vote ban ngày
+  - Client gửi PLAYER_VOTE để vote
+  - Có thể chọn lại, khi chọn xong gửi PLAYER_DONE
+
+================================================================================
+5. EVENT TYPES
+================================================================================
+
+ALL
+  - Tất cả players đều nhận event này
+  - Ví dụ: ALL_VIEW_ROLE, NIGHT_ALL_SLEEP, DAY_DISCUSSION
+
+WOLF
+  - Chỉ players có role Sói nhận event
+  - Ví dụ: NIGHT_WOLF
+
+SEER
+  - Chỉ players có role Tiên tri nhận event
+  - Ví dụ: NIGHT_SEER
+
+GUARD
+  - Chỉ players có role Bảo vệ nhận event
+  - Ví dụ: NIGHT_GUARD
+
+WITCH
+  - Chỉ players có role Phù thủy nhận event
+  - Ví dụ: NIGHT_WITCH_SAVE, NIGHT_WITCH_KILL
+
+CURSED
+  - Chỉ players bị nguyền nhận event
+  - Ví dụ: NIGHT_CURSED
+
+SILENCED
+  - Chỉ players bị câm nhận event
+  - Ví dụ: NIGHT_SILENCED
+
+BORED
+  - Chỉ players có role Chán đời nhận event
+  - Ví dụ: NIGHT_BORED (nếu có)
+
+================================================================================
+6. CLIENT EVENTS
+================================================================================
+
+Client gửi các event sau lên Backend qua WebSocket:
+
+6.1 PLAYER_INFO
+----------------
+Khi player cần xem thông tin của ai đó hoặc của chính mình.
+
+Format:
+{
+  "target_id": "player_id" | null
+}
+
+- Nếu target_id = null: Xem thông tin của chính mình
+- Nếu target_id = "xxx": Xem thông tin của player đó
+
+Ví dụ sử dụng:
+- Tiên tri muốn xem role của ai đó
+- Bị nguyền muốn xem role của mình đêm nay là gì
+- Phù thủy xem đã hết bình cứu, bình giết chưa để hiển thị UI
+- Xem role hiện tại của mình là gì
+
+6.2 PLAYER_VOTE
+---------------
+Khi player thực hiện vote/chọn target.
+
+Format:
+{
+  "target_id": "player_id"
+}
+
+- Client có thể gửi nhiều lần để chọn lại
+- Khi chọn xong, gửi PLAYER_DONE để xác nhận
+
+Ví dụ sử dụng:
+- Sói chọn người để giết
+- Bảo vệ chọn người để bảo vệ
+- Phù thủy chọn cứu/giết
+- Vote ban ngày
+
+6.3 PLAYER_DONE
+---------------
+Khi player đã hoàn thành action.
+
+Format:
+{}
+
+- Gửi sau khi đã xem xong (PLAYER_INFO)
+- Gửi sau khi đã vote xong (PLAYER_VOTE)
+- Backend sẽ xử lý và gửi GAME_DATA_FLOW tiếp theo
+
+Lưu ý:
+- Client có thể chọn lại bằng cách gửi PLAYER_VOTE mới
+- Chỉ khi gửi PLAYER_DONE thì action mới được xác nhận
+
+================================================================================
+7. DATA STRUCTURE
+================================================================================
+
+7.1 Root Level
+--------------
+event: string
+  - "ALL" hoặc role cụ thể ("WOLF", "SEER", etc.)
+  - Xác định ai nhận event này
+
+role: string
+  - Role cần thực hiện action
+  - "WOLF", "SEER", "GUARD", "WITCH", "VILLAGER", "CURSED", "SILENCED", "BORED"
+
+action: string
+  - "SLEEP", "WAKEUP", "VIEW", "VOTE"
+  - Hành động mà player cần làm
+
+phase: string
+  - Phase hiện tại của game
+  - Xem danh sách đầy đủ ở section 3
+
+message: string
+  - Message để hiển thị trên UI
+  - Message để phát âm thanh (text-to-speech)
+  - Ngôn ngữ: Tiếng Việt
+
+data: object
+  - Chứa data chi tiết về game state
+  - Xem chi tiết ở section 7.2
+
+7.2 Data Object
+---------------
+data.players: array
+  - Danh sách tất cả players trong game
+  - Mỗi player object có các field:
+
+  player_id: string (required)
+    - ID duy nhất của player
+
+  username: string (required)
+    - Tên hiển thị của player
+
+  is_alive: boolean (required)
+    - Player còn sống không
+    - false = đã chết, chỉ có thể theo dõi
+
+  is_muted: boolean (required)
+    - Player bị câm không
+    - true = không thể nói
+
+  is_protected: boolean (required)
+    - Player được bảo vệ đêm này không
+    - true = không thể bị giết đêm này
+
+  is_connected: boolean (required)
+    - Player đang kết nối không
+
+  witch_heal: number | null (optional)
+    - Số bình cứu còn lại của Phù thủy
+    - null nếu không phải Phù thủy
+
+  witch_poison: number | null (optional)
+    - Số bình giết còn lại của Phù thủy
+    - null nếu không phải Phù thủy
+
+data.night_result: object (optional)
+  - Chỉ có trong DAY_NIGHT_RESULT phase
+  - Chứa kết quả đêm qua:
+
+  dead_players: array<string>
+    - Danh sách player_id của players chết đêm qua
+
+  saved_players: array<string>
+    - Danh sách player_id của players được cứu
+
+  death_reasons: object
+    - Map player_id -> lý do chết
+    - "WOLF" = bị sói giết
+    - "WITCH" = bị phù thủy giết
+
+data.vote_result: object (optional)
+  - Chỉ có trong DAY_VOTE_RESULT phase
+  - Chứa kết quả vote:
+
+  voted_player: string
+    - player_id của player bị vote nhiều nhất
+
+  vote_count: number
+    - Số vote mà player đó nhận được
+
+data.cursed_info: object (optional)
+  - Chỉ có trong CURSED_ANNOUNCEMENT phase
+  - Chứa thông tin bị nguyền:
+
+  player_id: string
+    - player_id của player bị nguyền
+
+  new_role: string
+    - Role mới của player (thường là "WOLF")
+
+================================================================================
+8. PHASE DETAILS
+================================================================================
+
+8.1 ALL_VIEW_ROLE
+-----------------
+Mục đích: Tất cả players xem role của mình
+
+Event: "ALL"
+Role: Tất cả roles
+Action: "VIEW"
+Message: "Hãy xem role của bạn"
+
+Client xử lý:
+- Navigate đến màn hình reveal role
+- Hiển thị role của player
+- Sau khi xem xong, tự động chuyển sang phase tiếp theo
+
+Data:
+- data.players: Danh sách players với role của mỗi player
+
+8.2 NIGHT_ALL_SLEEP
+-------------------
+Mục đích: Tất cả players đi ngủ, bắt đầu đêm
+
+Event: "ALL"
+Role: Tất cả roles
+Action: "SLEEP"
+Message: "Đêm đã đến, tất cả đi ngủ"
+
+Client xử lý:
+- Màn hình tối đen hoàn toàn
+- Phát âm thanh message
+- Chờ phase tiếp theo
+
+8.3 NIGHT_SEER
+--------------
+Mục đích: Tiên tri thức dậy và xem role của 1 player
+
+Event: "SEER"
+Role: "SEER"
+Action: "WAKEUP"
+Message: "Tiên tri thức dậy, hãy chọn một người để xem role"
+
+Client xử lý:
+- Hiển thị danh sách players còn sống
+- Cho phép Tiên tri chọn 1 player
+- Khi chọn, gửi PLAYER_INFO với target_id
+- Backend trả về role của player đó
+- Sau khi xem xong, gửi PLAYER_DONE
+
+8.4 NIGHT_GUARD
+---------------
+Mục đích: Bảo vệ thức dậy và chọn người để bảo vệ
+
+Event: "GUARD"
+Role: "GUARD"
+Action: "WAKEUP"
+Message: "Bảo vệ thức dậy, hãy chọn một người để bảo vệ"
+
+Client xử lý:
+- Hiển thị danh sách players còn sống
+- Cho phép Bảo vệ chọn 1 player
+- Gửi PLAYER_VOTE với target_id
+- Sau khi chọn xong, gửi PLAYER_DONE
+
+8.5 NIGHT_WOLF
+--------------
+Mục đích: Sói thức dậy và chọn người để giết
+
+Event: "WOLF"
+Role: "WOLF"
+Action: "WAKEUP"
+Message: "Sói thức dậy, hãy chọn một người để giết"
+
+Client xử lý:
+- Hiển thị danh sách players còn sống (trừ sói)
+- Cho phép Sói chọn 1 player
+- Gửi PLAYER_VOTE với target_id
+- Sau khi chọn xong, gửi PLAYER_DONE
+
+8.6 NIGHT_WITCH_SAVE
+--------------------
+Mục đích: Phù thủy thức dậy và quyết định có cứu không
+
+Event: "WITCH"
+Role: "WITCH"
+Action: "WAKEUP"
+Message: "Phù thủy thức dậy, có người bị sói giết. Bạn có muốn cứu không?"
+
+Client xử lý:
+- Hiển thị thông tin người bị sói giết
+- Hiển thị số bình cứu còn lại (data.players[witch].witch_heal)
+- Cho phép Phù thủy chọn cứu hoặc không
+- Nếu cứu: Gửi PLAYER_VOTE với target_id = player bị giết
+- Nếu không cứu: Gửi PLAYER_VOTE với target_id = null hoặc không gửi
+- Sau khi quyết định, gửi PLAYER_DONE
+
+8.7 NIGHT_WITCH_KILL
+--------------------
+Mục đích: Phù thủy quyết định có giết ai không
+
+Event: "WITCH"
+Role: "WITCH"
+Action: "WAKEUP"
+Message: "Phù thủy, bạn có muốn giết ai không?"
+
+Client xử lý:
+- Hiển thị số bình giết còn lại (data.players[witch].witch_poison)
+- Cho phép Phù thủy chọn 1 player để giết hoặc không giết
+- Nếu giết: Gửi PLAYER_VOTE với target_id
+- Nếu không giết: Gửi PLAYER_VOTE với target_id = null
+- Sau khi quyết định, gửi PLAYER_DONE
+
+8.8 NIGHT_CURSED
+----------------
+Mục đích: Player bị nguyền xem role mới của mình
+
+Event: "CURSED"
+Role: "CURSED"
+Action: "VIEW"
+Message: "Bạn bị nguyền, hãy xem role mới của bạn"
+
+Client xử lý:
+- Gửi PLAYER_INFO để xem role mới
+- Backend trả về role mới (thường là "WOLF")
+- Hiển thị card thông báo bị nguyền với role mới
+- Sau khi xem xong, gửi PLAYER_DONE
+
+8.9 NIGHT_SILENCED
+------------------
+Mục đích: Thông báo player bị câm
+
+Event: "SILENCED"
+Role: "SILENCED"
+Action: "WAKEUP"
+Message: "Bạn bị câm, không thể nói trong phiên này"
+
+Client xử lý:
+- Hiển thị card thông báo bị câm
+- Hiển thị icon im lặng trên UI
+- Player không thể nói trong phase tiếp theo
+
+8.10 DAY_NIGHT_RESULT
+---------------------
+Mục đích: Thông báo kết quả đêm qua
+
+Event: "ALL"
+Role: Tất cả roles
+Action: "WAKEUP"
+Message: "Mặt trời mọc, hãy xem kết quả đêm qua"
+
+Client xử lý:
+- Hiển thị danh sách players chết (data.night_result.dead_players)
+- Hiển thị danh sách players được cứu (data.night_result.saved_players)
+- Với mỗi player chết, hiển thị card thông báo với lý do chết
+- Cập nhật is_alive của players trong data.players
+
+8.11 DAY_DISCUSSION
+-------------------
+Mục đích: Thảo luận ban ngày
+
+Event: "ALL"
+Role: Tất cả roles
+Action: "WAKEUP"
+Message: "Ban ngày đến, hãy thảo luận"
+
+Client xử lý:
+- Màn hình sáng lại
+- Tất cả players còn sống có thể nói
+- Players bị câm không thể nói (is_muted = true)
+- Players đã chết chỉ có thể theo dõi (is_alive = false)
+
+8.12 DAY_VOTING
+---------------
+Mục đích: Vote ban ngày để treo cổ
+
+Event: "ALL"
+Role: Tất cả roles còn sống
+Action: "VOTE"
+Message: "Hãy vote để treo cổ một người"
+
+Client xử lý:
+- Hiển thị danh sách players còn sống
+- Cho phép player chọn 1 player để vote
+- Gửi PLAYER_VOTE với target_id
+- Có thể chọn lại bằng cách gửi PLAYER_VOTE mới
+- Khi chọn xong, gửi PLAYER_DONE
+- Hiển thị số người đã vote / tổng số người cần vote
+
+8.13 DAY_VOTE_RESULT
+--------------------
+Mục đích: Thông báo kết quả vote
+
+Event: "ALL"
+Role: Tất cả roles
+Action: "WAKEUP"
+Message: "Kết quả vote: [username] bị treo cổ"
+
+Client xử lý:
+- Hiển thị player bị vote (data.vote_result.voted_player)
+- Hiển thị số vote (data.vote_result.vote_count)
+- Cập nhật is_alive của player bị vote = false
+- Hiển thị card thông báo cho player bị vote
+
+8.14 DEATH_ANNOUNCEMENT
+-----------------------
+Mục đích: Thông báo riêng cho player vừa chết
+
+Event: "ALL" (nhưng chỉ gửi cho player chết)
+Role: Role của player chết
+Action: "WAKEUP"
+Message: "Bạn đã chết vì [lý do]"
+
+Client xử lý:
+- Hiển thị card thông báo chết với animation
+- Hiển thị lý do chết (WOLF/WITCH)
+- Player chỉ có thể theo dõi game từ giờ
+- Disable tất cả actions
+
+8.15 END
+--------
+Mục đích: Kết thúc game
+
+Event: "ALL"
+Role: Tất cả roles
+Action: "WAKEUP"
+Message: "[Team] thắng!"
+
+Client xử lý:
+- Hiển thị màn hình kết thúc
+- Hiển thị team thắng (Sói/Dân làng/Bên thứ 3)
+- Hiển thị danh sách players và roles của họ
+
+================================================================================
+9. GAME FLOW
+================================================================================
+
+Flow chính của game:
+
+WAITING_ROOM
+    |
+    v
+ALL_VIEW_ROLE (Tất cả xem role)
+    |
+    v
+[NIGHT CYCLE]
+    |
+    v
+NIGHT_START
+    |
+    v
+NIGHT_ALL_SLEEP
+    |
+    v
+NIGHT_SEER (Tiên tri xem)
+    |
+    v
+NIGHT_GUARD (Bảo vệ bảo vệ)
+    |
+    v
+NIGHT_WOLF (Sói giết)
+    |
+    v
+NIGHT_WITCH_SAVE (Phù thủy cứu)
+    |
+    v
+NIGHT_WITCH_KILL (Phù thủy giết)
+    |
+    v
+NIGHT_CURSED (Bị nguyền xem role)
+    |
+    v
+NIGHT_SILENCED (Bị câm thông báo)
+    |
+    v
+NIGHT_END
+    |
+    v
+[DAY CYCLE]
+    |
+    v
+DAY_START
+    |
+    v
+DAY_NIGHT_RESULT (Kết quả đêm)
+    |
+    v
+DAY_DISCUSSION (Thảo luận)
+    |
+    v
+DAY_VOTING (Vote)
+    |
+    v
+DAY_VOTE_RESULT (Kết quả vote)
+    |
+    v
+DAY_END
+    |
+    v
+[Kiểm tra điều kiện thắng]
+    |
+    +---> END (Nếu có team thắng)
+    |
+    +---> NIGHT_START (Nếu chưa thắng, quay lại đêm)
+
+Special Events (có thể xảy ra bất cứ lúc nào):
+- DEATH_ANNOUNCEMENT: Khi player chết
+- MUTED_ANNOUNCEMENT: Khi player bị câm
+- CURSED_ANNOUNCEMENT: Khi player bị nguyền
+
+================================================================================
+10. EXAMPLES
+================================================================================
+
+10.1 ALL_VIEW_ROLE
+------------------
+{
+  "event": "ALL",
+  "role": "SEER",
+  "action": "VIEW",
+  "phase": "ALL_VIEW_ROLE",
+  "message": "Hãy xem role của bạn",
+  "data": {
+    "players": [
+      {
+        "player_id": "p1",
+        "username": "Player1",
+        "is_alive": true,
+        "is_muted": false,
+        "is_protected": false,
+        "is_connected": true
+      }
+    ]
+  }
+}
+
+10.2 NIGHT_WOLF
+---------------
+{
+  "event": "WOLF",
+  "role": "WOLF",
+  "action": "WAKEUP",
+  "phase": "NIGHT_WOLF",
+  "message": "Sói thức dậy, hãy chọn một người để giết",
+  "data": {
+    "players": [
+      {
+        "player_id": "p1",
+        "username": "Player1",
+        "is_alive": true,
+        "is_muted": false,
+        "is_protected": false,
+        "is_connected": true
+      },
+      {
+        "player_id": "p2",
+        "username": "Player2",
+        "is_alive": true,
+        "is_muted": false,
+        "is_protected": false,
+        "is_connected": true
+      }
+    ]
+  }
+}
+
+Client response:
+1. PLAYER_VOTE: {"target_id": "p2"}
+2. PLAYER_DONE: {}
+
+10.3 NIGHT_SEER
+---------------
+{
+  "event": "SEER",
+  "role": "SEER",
+  "action": "WAKEUP",
+  "phase": "NIGHT_SEER",
+  "message": "Tiên tri thức dậy, hãy chọn một người để xem role",
+  "data": {
+    "players": [
+      {
+        "player_id": "p1",
+        "username": "Player1",
+        "is_alive": true,
+        "is_muted": false,
+        "is_protected": false,
+        "is_connected": true
+      }
+    ]
+  }
+}
+
+Client response:
+1. PLAYER_INFO: {"target_id": "p1"}
+   -> Backend trả về GAME_DATA_FLOW với role của p1
+2. PLAYER_DONE: {}
+
+10.4 DAY_NIGHT_RESULT
+---------------------
+{
+  "event": "ALL",
+  "role": "ALL",
+  "action": "WAKEUP",
+  "phase": "DAY_NIGHT_RESULT",
+  "message": "Mặt trời mọc, hãy xem kết quả đêm qua",
+  "data": {
+    "players": [
+      {
+        "player_id": "p2",
+        "username": "Player2",
+        "is_alive": false,
+        "is_muted": false,
+        "is_protected": false,
+        "is_connected": true
+      }
+    ],
+    "night_result": {
+      "dead_players": ["p2"],
+      "saved_players": [],
+      "death_reasons": {
+        "p2": "WOLF"
+      }
+    }
+  }
+}
+
+10.5 DEATH_ANNOUNCEMENT
+-----------------------
+{
+  "event": "ALL",
+  "role": "VILLAGER",
+  "action": "WAKEUP",
+  "phase": "DEATH_ANNOUNCEMENT",
+  "message": "Bạn đã chết vì bị sói giết",
+  "data": {
+    "players": [
+      {
+        "player_id": "p2",
+        "username": "Player2",
+        "is_alive": false,
+        "is_muted": false,
+        "is_protected": false,
+        "is_connected": true
+      }
+    ],
+    "death_reasons": {
+      "p2": "WOLF"
+    }
+  }
+}
+
+10.6 CURSED_ANNOUNCEMENT
+------------------------
+{
+  "event": "CURSED",
+  "role": "CURSED",
+  "action": "VIEW",
+  "phase": "CURSED_ANNOUNCEMENT",
+  "message": "Bạn bị nguyền, role của bạn đã thay đổi",
+  "data": {
+    "players": [
+      {
+        "player_id": "p1",
+        "username": "Player1",
+        "is_alive": true,
+        "is_muted": false,
+        "is_protected": false,
+        "is_connected": true
+      }
+    ],
+    "cursed_info": {
+      "player_id": "p1",
+      "new_role": "WOLF"
+    }
+  }
+}
+
+10.7 DAY_VOTING
+---------------
+{
+  "event": "ALL",
+  "role": "ALL",
+  "action": "VOTE",
+  "phase": "DAY_VOTING",
+  "message": "Hãy vote để treo cổ một người",
+  "data": {
+    "players": [
+      {
+        "player_id": "p1",
+        "username": "Player1",
+        "is_alive": true,
+        "is_muted": false,
+        "is_protected": false,
+        "is_connected": true
+      },
+      {
+        "player_id": "p3",
+        "username": "Player3",
+        "is_alive": true,
+        "is_muted": false,
+        "is_protected": false,
+        "is_connected": true
+      }
+    ]
+  }
+}
+
+Client response:
+1. PLAYER_VOTE: {"target_id": "p1"}
+   (Có thể chọn lại)
+2. PLAYER_VOTE: {"target_id": "p3"}
+   (Chọn lại)
+3. PLAYER_DONE: {}
+
+10.8 END
+--------
+{
+  "event": "ALL",
+  "role": "ALL",
+  "action": "WAKEUP",
+  "phase": "END",
+  "message": "Sói thắng!",
+  "data": {
+    "players": [
+      {
+        "player_id": "p1",
+        "username": "Player1",
+        "is_alive": true,
+        "is_muted": false,
+        "is_protected": false,
+        "is_connected": true
+      }
+    ],
+    "winner": "WOLF"
+  }
+}
+
+================================================================================
+11. ROLE-SPECIFIC BEHAVIORS
+================================================================================
+
+11.1 SÓI (WOLF)
+--------------
+- Phase: NIGHT_WOLF
+- Action: Chọn 1 player để giết
+- Client: Gửi PLAYER_VOTE với target_id
+- Đặc biệt: Nếu có nhiều sói, cần vote đồng thuận
+
+11.2 BẢO VỆ (GUARD)
+-------------------
+- Phase: NIGHT_GUARD
+- Action: Chọn 1 player để bảo vệ
+- Client: Gửi PLAYER_VOTE với target_id
+- Đặc biệt: Không thể bảo vệ cùng 1 người 2 đêm liên tiếp
+
+11.3 PHÙ THỦY (WITCH)
+---------------------
+- Phase: NIGHT_WITCH_SAVE, NIGHT_WITCH_KILL
+- Action: 
+  - SAVE: Quyết định có cứu người bị sói giết không
+  - KILL: Quyết định có giết ai không
+- Client: Gửi PLAYER_VOTE (có thể null nếu không cứu/giết)
+- Đặc biệt: 
+  - Có số lượng bình cứu/giết giới hạn (witch_heal, witch_poison)
+  - Chỉ cứu được 1 lần, chỉ giết được 1 lần
+
+11.4 TIÊN TRI (SEER)
+--------------------
+- Phase: NIGHT_SEER
+- Action: Xem role của 1 player
+- Client: Gửi PLAYER_INFO với target_id, sau đó PLAYER_DONE
+- Đặc biệt: Có thể xem mỗi đêm 1 lần
+
+11.5 BỊ NGUYỀN (CURSED)
+-----------------------
+- Phase: NIGHT_CURSED, CURSED_ANNOUNCEMENT
+- Action: Xem role mới của mình
+- Client: Gửi PLAYER_INFO để xem role mới
+- Đặc biệt: 
+  - Role thay đổi thành WOLF
+  - Vẫn ở team dân làng nhưng có thể bị sói giết
+  - Khi chết, hiển thị là sói
+
+11.6 CHÁN ĐỜI (BORED)
+---------------------
+- Phase: NIGHT_BORED (nếu có action đêm)
+- Action: Tùy game design
+- Đặc biệt: Bên thứ 3, mục tiêu riêng
+
+11.7 BỊ CÂM (SILENCED)
+----------------------
+- Phase: NIGHT_SILENCED, MUTED_ANNOUNCEMENT
+- Action: Không có action
+- Đặc biệt: 
+  - Không thể nói trong phase tiếp theo
+  - Hiển thị icon im lặng trên UI
+  - is_muted = true
+
+11.8 DÂN LÀNG (VILLAGER)
+------------------------
+- Phase: DAY_DISCUSSION, DAY_VOTING
+- Action: 
+  - Thảo luận ban ngày
+  - Vote ban ngày
+- Đặc biệt: Không có power đêm
+
+================================================================================
+12. SPECIAL CASES
+================================================================================
+
+12.1 PLAYER CHẾT
+-----------------
+Khi player chết:
+- is_alive = false trong data.players
+- Nhận DEATH_ANNOUNCEMENT event
+- Chỉ có thể theo dõi game, không thể:
+  - Vote
+  - Nói
+  - Thực hiện bất kỳ action nào
+- UI: Hiển thị overlay tối, card thông báo chết
+
+12.2 PLAYER BỊ CÂM
+------------------
+Khi player bị câm:
+- is_muted = true trong data.players
+- Nhận MUTED_ANNOUNCEMENT event
+- Không thể nói trong phase tiếp theo
+- Vẫn có thể vote và thực hiện action khác
+- UI: Hiển thị icon im lặng, card thông báo
+
+12.3 PLAYER BỊ NGUYỀN
+---------------------
+Khi player bị nguyền:
+- Nhận CURSED_ANNOUNCEMENT event
+- Role thay đổi (thường thành WOLF)
+- Nhận NIGHT_CURSED phase để xem role mới
+- Vẫn ở team ban đầu nhưng có thể bị sói giết
+- UI: Hiển thị card với role mới
+
+12.4 PLAYER ĐƯỢC BẢO VỆ
+------------------------
+Khi player được bảo vệ:
+- is_protected = true trong data.players
+- Không thể bị giết đêm đó
+- Chỉ có hiệu lực 1 đêm
+- Không có event riêng, chỉ update trong data.players
+
+12.5 PLAYER MẤT KẾT NỐI
+------------------------
+Khi player mất kết nối:
+- is_connected = false trong data.players
+- Backend có thể tự động vote hoặc skip
+- UI: Hiển thị indicator mất kết nối
+
+12.6 PHÙ THỦY HẾT BÌNH
+-----------------------
+Khi Phù thủy hết bình:
+- witch_heal = 0 hoặc witch_poison = 0
+- Không thể cứu/giết nữa
+- UI: Disable button cứu/giết
+- Vẫn nhận phase nhưng không thể action
+
+12.7 VOTE ĐỒNG THUẬN (Nhiều sói)
+---------------------------------
+Khi có nhiều sói:
+- Tất cả sói phải vote cùng 1 target
+- Nếu không đồng thuận, không giết ai
+- Backend xử lý logic này
+- Client chỉ cần gửi PLAYER_VOTE
+
+12.8 BẢO VỆ KHÔNG THỂ BẢO VỆ CÙNG NGƯỜI
+----------------------------------------
+Bảo vệ không thể bảo vệ cùng 1 người 2 đêm liên tiếp:
+- Backend xử lý logic này
+- Client có thể disable option trong UI
+- Hoặc Backend reject và gửi lại phase
+
+================================================================================
+END OF DOCUMENTATION
+================================================================================
+

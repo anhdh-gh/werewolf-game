@@ -98,7 +98,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         height: double.infinity,
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('images/img_werewolf.avif'),
+            image: AssetImage('images/img_werewolf.png'),
             fit: BoxFit.cover,
           ),
         ),
