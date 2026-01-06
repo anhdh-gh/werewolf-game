@@ -32,7 +32,7 @@ export default function NightSilencedPhase({ roomCode, flow }) {
       return;
     }
 
-    // self
+    // Self
     socket.emit(
       EVENTS.PLAYER_INFO,
       { room: { code: roomCode }, player: { ids: [playerId] } },
@@ -42,7 +42,7 @@ export default function NightSilencedPhase({ roomCode, flow }) {
       }
     );
 
-    // all players
+    // All players
     socket.emit(EVENTS.PLAYER_INFO, { room: { code: roomCode } }, (res) => {
       if (!res?.data?.players?.length) return;
 
@@ -85,8 +85,6 @@ export default function NightSilencedPhase({ roomCode, flow }) {
       room: { code: roomCode },
       current_phase: flow.phase,
     });
-
-    setSelectedPlayer(null);
   };
 
   /* ===== SILENCE (VOTE) ===== */
@@ -181,16 +179,18 @@ export default function NightSilencedPhase({ roomCode, flow }) {
 
       {/* FOOTER */}
       <footer className="shrink-0 bg-zinc-900 border-t border-zinc-800 p-4 z-10 flex gap-3">
-        {/* BỎ QUA */}
-        <button
-          disabled={isLoading}
-          onClick={handleDone}
-          className="flex-1 py-3 rounded-xl font-bold bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50"
-        >
-          Bỏ qua
-        </button>
+        {/* 👉 CHỈ HIỆN BỎ QUA KHI CHƯA CHỌN */}
+        {!selectedPlayer && (
+          <button
+            disabled={isLoading}
+            onClick={handleDone}
+            className="flex-1 py-3 rounded-xl font-bold bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50"
+          >
+            Bỏ qua
+          </button>
+        )}
 
-        {/* ĐÃ XONG */}
+        {/* ĐÃ XONG – LUÔN CÓ */}
         <button
           disabled={isLoading}
           onClick={handleDone}

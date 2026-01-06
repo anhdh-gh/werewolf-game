@@ -72,8 +72,6 @@ export default function NightWitchSave({ roomCode, flow }) {
       room: { code: roomCode },
       current_phase: flow.phase,
     });
-
-    setSelectedPlayer(null);
   };
 
   /* ===== SAVE (VOTE) ===== */
@@ -191,14 +189,16 @@ export default function NightWitchSave({ roomCode, flow }) {
 
       {/* FOOTER */}
       <footer className="shrink-0 bg-zinc-900 border-t border-zinc-800 p-4 z-10 flex gap-3">
-        {/* BỎ QUA – LUÔN CÓ */}
-        <button
-          disabled={isLoading}
-          onClick={handleDone}
-          className="flex-1 py-3 rounded-xl font-bold bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50"
-        >
-          Bỏ qua
-        </button>
+        {/* 👉 CHỈ HIỆN BỎ QUA KHI CHƯA CHỌN */}
+        {!selectedPlayer && (
+          <button
+            disabled={isLoading}
+            onClick={handleDone}
+            className="flex-1 py-3 rounded-xl font-bold bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50"
+          >
+            Bỏ qua
+          </button>
+        )}
 
         {/* ĐÃ XONG – CHỈ KHI CÒN HEAL */}
         {canHeal && (

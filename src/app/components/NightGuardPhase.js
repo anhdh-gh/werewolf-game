@@ -85,8 +85,6 @@ export default function NightGuardPhase({ roomCode, flow }) {
       room: { code: roomCode },
       current_phase: flow.phase,
     });
-
-    setSelectedPlayer(null);
   };
 
   /* ===== PROTECT (VOTE) ===== */
@@ -153,7 +151,11 @@ export default function NightGuardPhase({ roomCode, flow }) {
                 key={p.player_id}
                 onClick={() => handleProtect(p)}
                 className={`w-full flex items-center justify-between rounded-xl px-4 py-3 cursor-pointer transition
-                  ${isSelected ? "bg-green-700 border border-green-500" : "bg-zinc-800 hover:bg-zinc-700"}
+                  ${
+                    isSelected
+                      ? "bg-green-700 border border-green-500"
+                      : "bg-zinc-800 hover:bg-zinc-700"
+                  }
                   ${isLoading ? "opacity-60 pointer-events-none" : ""}
                 `}
               >
@@ -171,14 +173,16 @@ export default function NightGuardPhase({ roomCode, flow }) {
 
       {/* FOOTER */}
       <footer className="shrink-0 bg-zinc-900 border-t border-zinc-800 p-4 z-10 flex gap-3">
-        {/* BỎ QUA – LUÔN CÓ */}
-        <button
-          disabled={isLoading}
-          onClick={handleDone}
-          className="flex-1 py-3 rounded-xl font-bold bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50"
-        >
-          Bỏ qua
-        </button>
+        {/* 👉 CHỈ HIỆN BỎ QUA KHI CHƯA CHỌN AI */}
+        {!selectedPlayer && (
+          <button
+            disabled={isLoading}
+            onClick={handleDone}
+            className="flex-1 py-3 rounded-xl font-bold bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50"
+          >
+            Bỏ qua
+          </button>
+        )}
 
         {/* ĐÃ XONG – LUÔN CÓ */}
         <button
