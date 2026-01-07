@@ -161,8 +161,13 @@ export default function NightWolfPhase({ roomCode, flow }) {
 
   if (!canWolfAct) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-black text-gray-400">
-        {flow.message}
+      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-black text-white px-4">
+        <p className="text-lg text-gray-300 text-center max-w-md animate-pulse">
+          {flow.message}
+        </p>
+        <div className="flex flex-col items-center justify-center">
+          <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id})</p>
+        </div>
       </div>
     );
   }
@@ -174,6 +179,7 @@ export default function NightWolfPhase({ roomCode, flow }) {
       <header className="p-4 border-b border-zinc-800">
         <h2 className="font-bold">{flow.message}</h2>
         <p className="text-sm text-gray-400">Room #{roomCode}</p>
+        <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id})</p>
       </header>
 
       {/* BODY */}
