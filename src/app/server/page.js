@@ -2,9 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { Creepster, Nosifer } from "next/font/google";
 import { KEYS } from "@/constants/keys";
 import { PATHS } from "@/constants/paths";
 import { API_PATHS } from "@/constants/paths.api";
+
+// Tối ưu Font: Next.js sẽ tự động tải và lưu font này ở server nội bộ
+const fontHorror = Creepster({ weight: "400", subsets: ["latin"], display: "swap" });
+const fontBlood = Nosifer({ weight: "400", subsets: ["latin"], display: "swap" });
 
 export default function ServerPage() {
   const router = useRouter();
@@ -13,16 +19,10 @@ export default function ServerPage() {
   const [selectedServer, setSelectedServer] = useState(null);
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      // Clear previous server & tokens to force new selection
-      localStorage.removeItem(KEYS.SERVER_SELECTED);
-      localStorage.removeItem(KEYS.ACCESS_TOKEN);
-      localStorage.removeItem(KEYS.REFRESH_TOKEN);
-      localStorage.removeItem(KEYS.USER_ID);
-      localStorage.removeItem(KEYS.USERNAME);
-    }
+    // Chỉ thực hiện xóa khi cần thiết để tránh chặn main thread
+    const itemsToRemove = [KEYS.SERVER_SELECTED, KEYS.ACCESS_TOKEN, KEYS.REFRESH_TOKEN, KEYS.USER_ID, KEYS.USERNAME];
+    itemsToRemove.forEach(key => localStorage.removeItem(key));
 
-    // Fetch server list from API
     const fetchServers = async () => {
       try {
         const res = await fetch(API_PATHS.SERVER_LIST);
@@ -38,106 +38,100 @@ export default function ServerPage() {
     fetchServers();
   }, []);
 
-  // Handle server selection
   const handleSelect = (server) => {
-    // Save selected server to localStorage
     localStorage.setItem(KEYS.SERVER_SELECTED, JSON.stringify(server));
     setSelectedServer(server);
-
-    // Vibrate lightly on mobile
-    if (typeof navigator !== "undefined" && navigator.vibrate) {
-      navigator.vibrate(50);
-    }
+    if (navigator.vibrate) navigator.vibrate(50);
   };
 
-  // Action buttons
-  const handleBackToSignIn = () => router.push(PATHS.SIGN_IN);
-  const handleGoToSignup = () => router.push(PATHS.SIGN_UP);
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0b0b12] via-[#0f0f1a] to-black text-white px-5 flex items-center justify-center">
-      <div className="w-full max-w-md flex flex-col items-center gap-8">
+    <div className="relative min-h-screen w-full overflow-hidden bg-black flex items-center justify-center px-4">
+      
+      {/* 1. Tối ưu Ảnh nền: Dùng Image component thay vì style background-image */}
+      <Image
+        src="/image/select_server.png"
+        alt="Horror Background"
+        fill
+        priority
+        className="object-cover opacity-60 contrast-125 saturate-150" // Dùng class thay vì inline style filter nặng
+      />
+
+      {/* 2. Overlay ma mị: Dùng gradient thay vì filter toàn trang */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-black/80 z-10 pointer-events-none" />
+
+      <div className="w-full max-w-md flex flex-col items-center gap-8 relative z-20 py-8">
         {/* Header */}
-        <div className="text-center">
-          <div className="text-xs tracking-widest text-purple-400 mb-2">
-            ĐÊM TRĂNG ĐÃ LÊN
-          </div>
-          <h1 className="text-3xl font-extrabold bg-gradient-to-r from-red-500 to-orange-400 bg-clip-text text-transparent">
-            CHỌN NGÔI LÀNG
+        <div className="text-center w-full">
+          <h1 className={`${fontBlood.className} text-4xl sm:text-5xl text-[#990000] mb-3 drop-shadow-[0_0_15px_rgba(255,0,0,0.4)] tracking-widest`}>
+            CHỌN MÁY CHỦ
           </h1>
-          <p className="text-slate-400 text-sm mt-2">
-            Mỗi làng là một ván Ma Sói khác nhau
+          <p className={`${fontHorror.className} text-red-600/90 text-2xl tracking-widest`}>
+            "Cẩn thận... lũ sói đang đói"
           </p>
         </div>
 
         {/* Server List */}
-        <div className="w-full flex flex-col gap-4">
-          {loading
-            ? [1, 2].map((i) => (
-              <div
-                key={i}
-                className="h-24 rounded-2xl bg-white/5 animate-pulse"
-              />
-            ))
-            : servers.map((sv) => {
+        <div className="w-full flex flex-col gap-4 max-h-[45vh] overflow-y-auto pr-2 custom-scrollbar">
+          {loading ? (
+            <div className="animate-pulse space-y-4">
+               {[1, 2].map(i => <div key={i} className="h-20 rounded-2xl bg-white/5 border border-white/5" />)}
+            </div>
+          ) : (
+            servers.map((sv) => {
               const isSelected = selectedServer?.id === sv.id;
-
               return (
                 <button
                   key={sv.id}
                   onClick={() => handleSelect(sv)}
-                  className={`
-                      relative w-full rounded-2xl p-5
-                      ${isSelected ? "bg-red-600 border-red-500" : "bg-white/5 border-white/10"}
-                      backdrop-blur
-                      hover:border-red-500/50
-                      active:scale-[0.97]
-                      transition-all duration-200
-                      flex items-center justify-between
-                    `}
+                  className={`relative w-full rounded-2xl p-5 transition-all duration-300 group
+                    ${isSelected 
+                      ? "bg-red-950/40 border-2 border-red-700 shadow-[0_0_20px_rgba(153,0,0,0.3)]" 
+                      : "bg-black/40 border border-white/10 hover:border-red-900/50 hover:bg-red-900/5"}`}
                 >
-                  <div className="flex flex-col items-start gap-1">
-                    <span className="text-lg font-bold">
-                      {isSelected ? "🌕 " : "🐺 "} {sv.name}
+                  <div className="flex flex-col items-start">
+                    <span className={`${fontHorror.className} text-2xl ${isSelected ? "text-red-500" : "text-gray-400 group-hover:text-red-400"}`}>
+                      {isSelected ? "🩸" : "💀"} {sv.name}
                     </span>
-                    <span className="text-xs text-slate-400">Làng #{sv.id}</span>
+                    <span className="text-[10px] font-mono opacity-30 uppercase tracking-tighter">ID: {sv.id}</span>
                   </div>
-
-                  <span className="relative flex h-3 w-3">
-                    <span
-                      className={`absolute inline-flex h-full w-full rounded-full ${isSelected ? "bg-red-400" : "bg-emerald-400"
-                        } opacity-70 animate-ping`}
-                    />
-                    <span
-                      className={`relative inline-flex h-3 w-3 rounded-full ${isSelected ? "bg-red-500" : "bg-emerald-500"
-                        }`}
-                    />
-                  </span>
                 </button>
               );
-            })}
+            })
+          )}
         </div>
 
-        {/* Action Buttons: show only when a server is selected */}
+        {/* Action Button */}
         {selectedServer && (
-          <div className="w-full flex flex-col gap-4 mt-4">
-
+          <div className="w-full flex flex-col gap-4 mt-2 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <button
-              onClick={handleBackToSignIn}
-              className="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 transition text-white font-semibold"
+              onClick={() => router.push(PATHS.SIGN_IN)}
+              className="relative w-full py-5 rounded-2xl text-red-100 bg-[#7f1d1d] hover:bg-red-700 border-2 border-red-900 transition-all overflow-hidden"
             >
-              Đăng nhập
+              <span className={`${fontHorror.className} relative z-10 text-3xl drop-shadow-[2px_2px_2px_black]`}>
+                VÀO LÀNG
+              </span>
+              {/* Giọt máu tĩnh - Tối ưu bằng Tailwind thay vì div chay */}
+              <div className="absolute top-0 left-[20%] w-[1px] h-4 bg-red-500/40" />
+              <div className="absolute top-0 left-[50%] w-[1px] h-6 bg-red-500/40" />
+              <div className="absolute top-0 left-[80%] w-[1px] h-3 bg-red-500/40" />
             </button>
 
             <button
-              onClick={handleGoToSignup}
-              className="w-full py-3 rounded-xl border border-white/20 text-white hover:bg-white/5 transition font-semibold"
+              onClick={() => router.push(PATHS.SIGN_UP)}
+              className={`${fontHorror.className} w-full py-2 text-red-800 text-lg hover:text-red-500 transition-colors tracking-widest`}
             >
-              📝 Đăng ký
+              Linh hồn mới vào!... Đăng ký
             </button>
           </div>
         )}
       </div>
+      
+      {/* Tối ưu Custom Scrollbar chỉ dành riêng cho vùng này */}
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #450a0a; border-radius: 10px; }
+      `}</style>
     </div>
   );
 }
