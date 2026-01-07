@@ -65,7 +65,8 @@ const GameService = {
 
         //
         if(STATUS.PLAYING === room.status) {
-            await PlayerRepository.playerDisconnected(playerId, roomCode)
+            await GameService.playerDone(playerId, roomCode, room.current_phase, () => {})
+            await PlayerRepository.playerDisconnected(playerId, roomCode);
             return;
         }
 

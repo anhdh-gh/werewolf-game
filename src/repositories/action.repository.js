@@ -46,7 +46,7 @@ const ActionRepository = {
                         FROM actions a
                         WHERE a.room_code = ?
                           AND a.phase = ?
-                    ) =
+                    ) >=
                     (
                         SELECT COUNT(*)
                         FROM players p
