@@ -142,7 +142,7 @@ const GameService = {
                     //
                     emit({
                         phase: PHASE.DAY_DISCUSSION.key,
-                        message: `Có ${players.length} người bị vote chết`,
+                        message: players.length <= 0 ? `Không có ai bị vote chết` : `Có ${players.length} người bị vote chết`,
                         event: { role: ROLES.ALL.key, action: ACTIONS.VIEW },
                         data: players.length ? { players } : undefined
                     });
