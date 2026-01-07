@@ -164,7 +164,7 @@ export default function NightGuardPhase({ roomCode, flow }) {
                 `}
               >
                 <div className="flex flex-col gap-1">
-                  <CopyableText label="ID" value={p.player_id} />
+                  <CopyableText label="ID" value={`${p.player_id}${p.player_id === player?.player_id ? ' (Me)' : ''}`} />
                   <CopyableText label="Name" value={p.username} />
                 </div>
 

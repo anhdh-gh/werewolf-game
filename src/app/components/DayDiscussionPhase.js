@@ -189,12 +189,12 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
         {deadPlayers.length > 0 && (
           <div className="mb-6">
             <h3 className="font-semibold mb-3 text-red-400">
-              ☠️ Người chết
+              ☠️ Người chết/câm
             </h3>
             <div className="space-y-2">
               {deadPlayers.map((p) => (
                 <div key={p.player_id} className="bg-zinc-800 rounded-xl p-3">
-                  <CopyableText label="ID" value={p.player_id} />
+                  <CopyableText label="ID" value={`${p.player_id}${p.player_id === player?.player_id ? ' (Me)' : ''}`} />
                   <CopyableText label="Name" value={p.username} />
                 </div>
               ))}
@@ -221,7 +221,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
                           : "bg-zinc-800 hover:bg-zinc-700"
                       }`}
                   >
-                    <CopyableText label="ID" value={p.player_id} />
+                    <CopyableText label="ID" value={`${p.player_id}${p.player_id === player?.player_id ? ' (Me)' : ''}`} />
                     <CopyableText label="Name" value={p.username} />
                   </div>
                 );
