@@ -56,8 +56,10 @@ const VoteRepository = {
     },
 
     /* ===== PLAYER UPDATE ===== */
-
     async resetNight(roomCode, conn) {
+        if(!roomCode) {
+            return
+        }
         await conn.query(
             `UPDATE players
              SET is_protected = false, is_muted = false
@@ -67,6 +69,9 @@ const VoteRepository = {
     },
 
     async setProtected(playerId, roomCode, conn) {
+        if(!roomCode || !playerId) {
+            return
+        }
         await conn.query(
             `UPDATE players
              SET is_protected = true
@@ -76,6 +81,9 @@ const VoteRepository = {
     },
 
     async setMuted(playerId, roomCode, conn) {
+        if(!roomCode || !playerId) {
+            return
+        }
         await conn.query(
             `UPDATE players
              SET is_muted = true
@@ -85,6 +93,10 @@ const VoteRepository = {
     },
 
     async killPlayers(playerIds, roomCode, conn) {
+        if(!roomCode || !playerIds || playerIds.length < 1) {
+            return
+        }
+
         await conn.query(
             `UPDATE players
              SET is_alive = false
@@ -94,6 +106,10 @@ const VoteRepository = {
     },
 
     async killPlayerList(roomCode, playerIds) {
+        if(!roomCode || !playerIds || playerIds.length < 1) {
+            return
+        }
+
         await pool.query(
             `UPDATE players
              SET is_alive = false
@@ -103,6 +119,9 @@ const VoteRepository = {
     },
 
     async consumeHeal(roomCode, conn) {
+        if(!roomCode) {
+            return
+        }
         await conn.query(
             `UPDATE players
              SET witch_heal = witch_heal - 1
@@ -112,6 +131,9 @@ const VoteRepository = {
     },
 
     async consumePoison(roomCode, conn) {
+        if(!roomCode) {
+            return
+        }
         await conn.query(
             `UPDATE players
              SET witch_poison = witch_poison - 1
@@ -121,6 +143,9 @@ const VoteRepository = {
     },
 
     async changeRole(playerIds, newRole, roomCode, conn) {
+        if(!roomCode || !playerIds || playerIds.length < 1 || !newRole) {
+            return
+        }
         return conn.query(
             `UPDATE players 
              SET role = ? 
