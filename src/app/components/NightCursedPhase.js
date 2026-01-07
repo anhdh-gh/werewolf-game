@@ -94,6 +94,10 @@ export default function NightCursedPhase({ roomCode, flow }) {
         <p className="text-lg text-gray-300 text-center max-w-md animate-pulse">
           {flow.message}
         </p>
+
+        <div className="flex flex-col items-center justify-center">
+          <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id})</p>
+        </div>
       </div>
     );
   }
@@ -105,6 +109,7 @@ export default function NightCursedPhase({ roomCode, flow }) {
       <header className="bg-zinc-900 border-b border-zinc-800 p-4">
         <h2 className="text-lg font-bold">{flow.message}</h2>
         <p className="text-sm text-gray-400">Room #{roomCode}</p>
+        <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id})</p>
       </header>
 
       {/* BODY */}

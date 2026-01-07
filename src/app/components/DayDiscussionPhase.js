@@ -181,6 +181,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
       <header className="bg-zinc-900 border-b border-zinc-800 p-4">
         <h2 className="text-lg font-bold">{flow.message}</h2>
         <p className="text-sm text-gray-400">Room #{roomCode}</p>
+        <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id})</p>
       </header>
 
       {/* BODY */}
@@ -260,7 +261,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
       )}
 
       {/* CHAT BUTTON */}
-      <button
+      {canInteract && !player?.is_muted && <button
         onClick={() => {
           setIsChatOpen(true);
           setHasUnread(false);
@@ -271,7 +272,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
         {hasUnread && (
           <span className="absolute top-2 right-2 w-3 h-3 bg-green-400 rounded-full animate-ping" />
         )}
-      </button>
+      </button>}
 
       {/* CHAT POPUP */}
       {isChatOpen && (

@@ -62,7 +62,7 @@ export default function ServerPage() {
       <div className="w-full max-w-md flex flex-col items-center gap-8 relative z-20 py-8">
         {/* Header */}
         <div className="text-center w-full">
-          <h1 className={`${fontHorror.className} text-4xl sm:text-5xl text-[#990000] mb-3 drop-shadow-[0_0_15px_rgba(255,0,0,0.4)] tracking-widest`}>
+         <h1 className={`${fontHorror.className} text-4xl sm:text-5xl text-[#990000] mb-3 drop-shadow-[0_0_15px_rgba(255,0,0,0.4)] tracking-widest`}>
             CHỌN MÁY CHỦ
           </h1>
           <p className={`${fontHorror.className} text-red-600/90 text-2xl tracking-widest`}>
