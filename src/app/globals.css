@@ -35,6 +35,7 @@ body {
 .rotate-y-180 {
   transform: rotateY(180deg);
 }
+<<<<<<< HEAD
 
 /* Werewolf Game - Dark Fantasy Cinematic Styles */
 
@@ -460,3 +461,5 @@ body {
   -webkit-text-fill-color: transparent;
   animation: blood-flow 3s infinite;
 }
+=======
+>>>>>>> website

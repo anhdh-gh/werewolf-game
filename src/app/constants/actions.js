@@ -5,6 +5,8 @@ export const ACTIONS = {
     WAKEUP: 'WAKEUP',
     
     VIEW: 'VIEW',
+
+    VOTE: 'VOTE',
     
     ENDED: 'ENDED'
 };

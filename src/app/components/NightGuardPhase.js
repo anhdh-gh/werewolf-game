@@ -11,14 +11,14 @@ import { ACTIONS } from "@/constants/actions";
 import { ROLES } from "@/constants/roles";
 import { useRouter } from "next/navigation";
 
-export default function NightSeerPhase({ roomCode, flow }) {
+export default function NightGuardPhase({ roomCode, flow }) {
   const router = useRouter();
   const socket = getGameSocket();
 
   const [player, setPlayer] = useState(null);
   const [playersList, setPlayersList] = useState([]);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
-  const [isLoading, setIsLoading] = useState(false); // ⭐ loading state
+  const [isLoading, setIsLoading] = useState(false);
 
   const audioRef = useRef(null);
 
@@ -32,6 +32,7 @@ export default function NightSeerPhase({ roomCode, flow }) {
       return;
     }
 
+    // Self player
     socket.emit(
       EVENTS.PLAYER_INFO,
       { room: { code: roomCode }, player: { ids: [playerId] } },
@@ -41,11 +42,13 @@ export default function NightSeerPhase({ roomCode, flow }) {
       }
     );
 
+    // All players
     socket.emit(EVENTS.PLAYER_INFO, { room: { code: roomCode } }, (res) => {
       if (!res?.data?.players?.length) return;
+
       setPlayersList(
         res.data.players.filter(
-          (p) => p.is_alive && p.is_connected && p.is_ready
+          (p) => p.is_alive && p.is_connected && p.is_ready && !p.is_protected
         )
       );
     });
@@ -76,14 +79,28 @@ export default function NightSeerPhase({ roomCode, flow }) {
   const handleDone = () => {
     if (!socket || isLoading) return;
 
-    setIsLoading(true); // ⭐ show loading immediately
+    setIsLoading(true);
 
     socket.emit(EVENTS.PLAYER_DONE, {
       room: { code: roomCode },
       current_phase: flow.phase,
     });
+  };
 
-    setSelectedPlayer(null);
+  /* ===== PROTECT (VOTE) ===== */
+  const handleProtect = (p) => {
+    if (!socket || isLoading) return;
+
+    setSelectedPlayer(p);
+
+    socket.emit(EVENTS.PLAYER_VOTE, {
+      room: { code: roomCode },
+      current_phase: flow.phase,
+      target: {
+        id: p.player_id,
+        username: p.username,
+      },
+    });
   };
 
   /* ===== INITIAL LOADING ===== */
@@ -91,18 +108,15 @@ export default function NightSeerPhase({ roomCode, flow }) {
     return <Loading textMsg="Đang chuẩn bị..." />;
   }
 
-  /**
-   * ⭐ Seer chỉ tương tác khi WAKEUP
-   */
-  const isSeerWakeup =
-    player.role === ROLES.SEER &&
+  const isGuardWakeup =
+    player.role === ROLES.BODYGUARD &&
     player.is_alive &&
     player.is_connected &&
     player.is_ready &&
     flow?.event?.action === ACTIONS.WAKEUP;
 
   /* ===== PASSIVE VIEW ===== */
-  if (!isSeerWakeup) {
+  if (!isGuardWakeup) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-black text-white px-4">
         <p className="text-lg text-gray-300 text-center max-w-md animate-pulse">
@@ -112,12 +126,7 @@ export default function NightSeerPhase({ roomCode, flow }) {
     );
   }
 
-  /* ===== SEER RESULT MAPPING ===== */
-  const getSeerResultLabel = (role) => {
-    return role === ROLES.WEREWOLF ? "🐺 Sói" : "👤 Người";
-  };
-
-  /* ===== SEER WAKEUP VIEW ===== */
+  /* ===== GUARD VIEW ===== */
   return (
     <div className="relative h-screen flex flex-col bg-black text-white overflow-hidden">
       {/* HEADER */}
@@ -128,78 +137,64 @@ export default function NightSeerPhase({ roomCode, flow }) {
 
       {/* BODY */}
       <main className="flex-1 overflow-y-auto p-4">
-        <h3 className="text-md mb-3">👥 Chọn người muốn soi</h3>
+        <p className="text-sm text-gray-400 mb-3">
+          👉 Click vào người bạn muốn{" "}
+          <span className="text-green-400 font-semibold">bảo vệ</span>
+        </p>
 
         <div className="space-y-3 pb-4">
-          {playersList.map((p) => (
-            <div
-              key={p.player_id}
-              onClick={() => !isLoading && setSelectedPlayer(p)}
-              className="w-full flex items-center justify-between rounded-xl bg-zinc-800 px-4 py-3 hover:bg-zinc-700 transition cursor-pointer"
-            >
-              <div className="flex flex-col gap-1">
-                <CopyableText label="ID" value={p.player_id} />
-                <CopyableText label="Name" value={p.username} />
-              </div>
+          {playersList.map((p) => {
+            const isSelected = selectedPlayer?.player_id === p.player_id;
 
-              <span className="text-gray-400 text-sm">
-                {p.is_connected ? "🟢 Online" : "🔴 Offline"}
-              </span>
-            </div>
-          ))}
+            return (
+              <div
+                key={p.player_id}
+                onClick={() => handleProtect(p)}
+                className={`w-full flex items-center justify-between rounded-xl px-4 py-3 cursor-pointer transition
+                  ${
+                    isSelected
+                      ? "bg-green-700 border border-green-500"
+                      : "bg-zinc-800 hover:bg-zinc-700"
+                  }
+                  ${isLoading ? "opacity-60 pointer-events-none" : ""}
+                `}
+              >
+                <div className="flex flex-col gap-1">
+                  <CopyableText label="ID" value={p.player_id} />
+                  <CopyableText label="Name" value={p.username} />
+                </div>
+
+                <span className="text-green-400 font-bold">🛡️ Bảo vệ</span>
+              </div>
+            );
+          })}
         </div>
       </main>
 
       {/* FOOTER */}
-      <footer className="shrink-0 bg-zinc-900 border-t border-zinc-800 p-4 z-10">
+      <footer className="shrink-0 bg-zinc-900 border-t border-zinc-800 p-4 z-10 flex gap-3">
+        {/* 👉 CHỈ HIỆN BỎ QUA KHI CHƯA CHỌN AI */}
+        {!selectedPlayer && (
+          <button
+            disabled={isLoading}
+            onClick={handleDone}
+            className="flex-1 py-3 rounded-xl font-bold bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50"
+          >
+            Bỏ qua
+          </button>
+        )}
+
+        {/* ĐÃ XONG – LUÔN CÓ */}
         <button
           disabled={isLoading}
           onClick={handleDone}
-          className={`w-full py-3 rounded-xl font-bold transition ${
-            isLoading
-              ? "bg-gray-600 cursor-not-allowed"
-              : "bg-red-600 hover:bg-red-500"
-          }`}
+          className="flex-1 py-3 rounded-xl font-bold bg-green-600 hover:bg-green-500 disabled:opacity-50"
         >
-          Bỏ qua
+          Đã xong
         </button>
       </footer>
 
-      {/* SEER RESULT POPUP */}
-      {selectedPlayer && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/80 z-50 p-4 backdrop-blur-sm">
-          <div className="bg-zinc-900 p-6 rounded-2xl w-full max-w-sm text-center border border-zinc-700 shadow-2xl">
-            <h3 className="text-lg font-bold mb-4 text-white">
-              Kết quả soi
-            </h3>
-
-            <div className="w-full flex items-center justify-between rounded-xl bg-zinc-800 px-4 py-4 mb-6">
-              <div className="flex flex-col gap-1 text-left">
-                <CopyableText label="ID" value={selectedPlayer.player_id} />
-                <CopyableText label="Name" value={selectedPlayer.username} />
-              </div>
-
-              <span className="text-lg font-bold">
-                {getSeerResultLabel(selectedPlayer.role)}
-              </span>
-            </div>
-
-            <button
-              disabled={isLoading}
-              onClick={handleDone}
-              className={`w-full font-bold py-3 px-4 rounded-xl transition ${
-                isLoading
-                  ? "bg-gray-600 cursor-not-allowed"
-                  : "bg-green-600 hover:bg-green-500"
-              }`}
-            >
-              Đã xong
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* GLOBAL LOADING OVERLAY */}
+      {/* GLOBAL LOADING */}
       {isLoading && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80">
           <Loading textMsg="Đang xử lý..." />
