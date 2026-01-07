@@ -260,7 +260,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
       )}
 
       {/* CHAT BUTTON */}
-      <button
+      {canInteract && player?.is_muted && <button
         onClick={() => {
           setIsChatOpen(true);
           setHasUnread(false);
@@ -271,7 +271,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
         {hasUnread && (
           <span className="absolute top-2 right-2 w-3 h-3 bg-green-400 rounded-full animate-ping" />
         )}
-      </button>
+      </button>}
 
       {/* CHAT POPUP */}
       {isChatOpen && (
