@@ -142,7 +142,7 @@ export default function NightSeerPhase({ roomCode, flow }) {
               className="w-full flex items-center justify-between rounded-xl bg-zinc-800 px-4 py-3 hover:bg-zinc-700 transition cursor-pointer"
             >
               <div className="flex flex-col gap-1">
-                <CopyableText label="ID" value={p.player_id} />
+                <CopyableText label="ID" value={`${p.player_id}${p.player_id === player?.player_id ? ' (Me)' : ''}`} />
                 <CopyableText label="Name" value={p.username} />
               </div>
 
