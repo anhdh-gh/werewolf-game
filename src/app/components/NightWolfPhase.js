@@ -166,7 +166,7 @@ export default function NightWolfPhase({ roomCode, flow }) {
           {flow.message}
         </p>
         <div className="flex flex-col items-center justify-center">
-          <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id})</p>
+          <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id}) ({player?.role})</p>
         </div>
       </div>
     );
@@ -179,7 +179,7 @@ export default function NightWolfPhase({ roomCode, flow }) {
       <header className="p-4 border-b border-zinc-800">
         <h2 className="font-bold">{flow.message}</h2>
         <p className="text-sm text-gray-400">Room #{roomCode}</p>
-        <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id})</p>
+        <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id}) ({player?.role})</p>
       </header>
 
       {/* BODY */}
