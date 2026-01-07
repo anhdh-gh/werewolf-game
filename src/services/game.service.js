@@ -99,8 +99,20 @@ const GameService = {
         if(!room) {
             throw new AppError(ERROR_CODES.ROOM_NOT_FOUND)
         }
+
         //
-        return await GameService.getPlayerInfo(roomCode, playerIds);
+        let players = await GameService.getPlayerInfo(roomCode, playerIds);
+        if(players
+            && players.length === 1
+            && players[0].role === ROLES.CURSED.key
+            && players[0]?.is_alive && players[0]?.is_ready && players[0]?.is_connected) {
+            //
+            await PhaseService.processPhaseCursed(roomCode, await PlayerRepository.getRoles(room.code))
+            players = await GameService.getPlayerInfo(roomCode, playerIds);
+        }
+
+        //
+        return players;
     },
 
     /**[ PLAYER_DONE ]* */

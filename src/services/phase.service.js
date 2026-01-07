@@ -184,11 +184,6 @@ const PhaseService = {
                     }
                 ])
 
-                // Complete CURSED
-                if(data?.roleAlive === ROLES.CURSED.key && data.phase === PHASE.NIGHT_CURSED) {
-                    await PhaseService.processPhaseCursed(room.code, roles)
-                }
-
                 //
                 if(curPhase && curPhase?.role && curPhase?.role.key !== data.event.role) {
                     emit({
