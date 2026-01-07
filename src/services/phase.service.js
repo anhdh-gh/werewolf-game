@@ -505,12 +505,7 @@ const PhaseService = {
         await VoteRepository.withTransaction(async (conn) => {
             // CURSED → WEREWOLF (KHÔNG CHẾT)
             if (cursedTurnWolfIds.length) {
-                await VoteRepository.changeRole(
-                    cursedTurnWolfIds,
-                    ROLES.WEREWOLF.key,
-                    roomCode,
-                    conn
-                );
+                return ROLES.WEREWOLF.key
             }
         });
     },

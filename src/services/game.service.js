@@ -106,9 +106,7 @@ const GameService = {
             && players.length === 1
             && players[0].role === ROLES.CURSED.key
             && players[0]?.is_alive && players[0]?.is_ready && players[0]?.is_connected) {
-            //
-            await PhaseService.processPhaseCursed(roomCode, await PlayerRepository.getRoles(room.code))
-            players = await GameService.getPlayerInfo(roomCode, playerIds);
+            players[0].role = await PhaseService.processPhaseCursed(roomCode, await PlayerRepository.getRoles(room.code)) || players[0].role
         }
 
         //
