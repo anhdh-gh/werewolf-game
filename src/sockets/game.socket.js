@@ -114,17 +114,6 @@ module.exports = (io, socket) => {
         return { data: { players: await GameService.playerVote(socket.user.id, payload.room.code, payload.current_phase, payload.target) } }
     }));
 
-    /**[ PLAYER_CALL ]* */
-    socket.on(EVENTS.PLAYER_CALL, ({ roomCode, signal }) => {
-        if (!roomCode || !signal) return;
-
-        // chỉ làm cầu nối
-        socket.to(roomCode).emit(EVENTS.ROOM_CALL, {
-            from: socket.id,
-            signal,
-        });
-    });
-
     /**[ ERROR ]* */
     socket.on(EVENTS.ERROR, err => {
         console.error('Socket error:', err);
