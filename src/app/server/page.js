@@ -133,7 +133,7 @@ export default function ServerPage() {
               onClick={handleGoToSignup}
               className="w-full py-3 rounded-xl border border-white/20 text-white hover:bg-white/5 transition font-semibold"
             >
-              📝 Đăng ký
+               Đăng ký
             </button>
           </div>
         )}
