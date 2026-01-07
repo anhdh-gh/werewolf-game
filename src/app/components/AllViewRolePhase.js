@@ -101,7 +101,7 @@ export default function AllViewRolePhase({ roomCode, flow }) {
       >
         <div className={`absolute inset-0 rounded-xl transition-transform duration-700 preserve-3d ${revealed ? "rotate-y-180" : ""}`}>
           <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-zinc-800 backface-hidden">
-            <span className="text-xl font-bold">🐺 {player?.username} (ID: {player?.player_id})</span>
+            <span className="text-xl font-bold">🐺 Werewolf</span>
           </div>
           <div className="absolute inset-0 flex flex-col items-center justify-center rounded-xl bg-red-700 rotate-y-180 backface-hidden">
             <span className="text-sm opacity-80">Vai trò của bạn</span>
@@ -112,6 +112,9 @@ export default function AllViewRolePhase({ roomCode, flow }) {
 
       <p className="text-sm text-gray-500">
         {revealed ? "Nhấn để ẩn" : "Nhấn để xem"}
+      </p>
+      <p className="text-sm text-gray-400">
+        {player?.username} (ID: {player?.player_id})
       </p>
     </div>
   );
