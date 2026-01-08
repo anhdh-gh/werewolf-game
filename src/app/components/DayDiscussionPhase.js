@@ -193,7 +193,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
           >
             <div className="flex flex-col gap-1">
               <CopyableText label="ID" value={`${p?.player_id}${p?.player_id === player?.player_id ? ' (Me)' : ''}`} />
-              <CopyableText label="Name" value={p.username} />
+              <CopyableText label="Name" value={p?.username} />
             </div>
 
             <span className="text-purple-400 font-bold">
