@@ -115,11 +115,7 @@ export default function NightCursedPhase({ roomCode, flow }) {
       {/* BODY */}
       <main className="flex-1 flex flex-col items-center justify-center gap-4 px-4">
         <p className="text-red-400 text-xl font-bold">
-          ☠️ Bạn đã bị nguyền
-        </p>
-
-        <p className="text-gray-300 text-center">
-          Vai trò hiện tại của bạn là:
+          ☠️ Vai trò hiện tại của bạn là:
         </p>
 
         <div className="px-6 py-3 rounded-xl bg-zinc-800 text-lg font-semibold text-yellow-400">
