@@ -192,7 +192,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
             className={`w-full flex items-center justify-between rounded-xl px-4 py-3 cursor-pointer transition`}
           >
             <div className="flex flex-col gap-1">
-              <CopyableText label="ID" value={`${p.player_id}${p.player_id === player?.player_id ? ' (Me)' : ''}`} />
+              <CopyableText label="ID" value={`${p?.player_id}${p?.player_id === player?.player_id ? ' (Me)' : ''}`} />
               <CopyableText label="Name" value={p.username} />
             </div>
 
