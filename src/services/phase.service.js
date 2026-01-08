@@ -300,9 +300,9 @@ const PhaseService = {
     async resolveNightResult({ wolfTargetId, protectedId, healedId, poisonedId }) {
         const dead = new Set();
         if (wolfTargetId) dead.add(wolfTargetId);
+        if (poisonedId) dead.add(poisonedId);
         if (protectedId) dead.delete(protectedId);
         if (healedId) dead.delete(healedId);
-        if (poisonedId) dead.add(poisonedId);
 
         return [...dead];
     },
