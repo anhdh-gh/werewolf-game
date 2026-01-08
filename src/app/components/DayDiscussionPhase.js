@@ -186,7 +186,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
 
       {/* BODY */}
       <main className="flex-1 overflow-y-auto p-4">
-        {deadPlayers.length > 0 && (
+        {deadPlayers.length > 0 && deadPlayers.map((p) => (
           <div
             key={p.player_id}
             className={`w-full flex items-center justify-between rounded-xl px-4 py-3 cursor-pointer transition`}
@@ -200,7 +200,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
               {p?.is_muted ? '🤐 Câm' : '🐺 Chết'}
             </span>
           </div>
-        )}
+        ))}
 
         {isVoting && (
           <>
