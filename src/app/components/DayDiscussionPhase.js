@@ -128,7 +128,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
 
       setPlayersList(
         res.data.players.filter(
-          (p) => p.is_alive && p.is_connected && p.is_ready
+          (p) => p.is_alive && p.is_connected && p.is_ready && player?.player_id !== p?.player_id
         )
       );
       setIsVoting(true);
