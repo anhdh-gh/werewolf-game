@@ -105,8 +105,12 @@ const GameService = {
         if(players
             && players.length === 1
             && players[0].role === ROLES.CURSED.key
-            && players[0]?.is_alive && players[0]?.is_ready && players[0]?.is_connected) {
-            players[0].role = await PhaseService.processPhaseCursed(roomCode, await PlayerRepository.getRoles(room.code)) || players[0].role
+            && players[0]?.is_alive && players[0].is_ready && players[0].is_connected) {
+            //
+            const roleCursed = await PhaseService.processPhaseCursed(roomCode, await PlayerRepository.getRoles(roomCode));
+            if(roleCursed === ROLES.WEREWOLF.key) {
+                players[0].role = roleCursed;
+            }
         }
 
         //

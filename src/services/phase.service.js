@@ -501,13 +501,10 @@ const PhaseService = {
 
         // CURSED logic
         const { cursedTurnWolfIds } = await PhaseService.splitDeadPlayers(roomCode, roles, deadIds);
-
-        await VoteRepository.withTransaction(async (conn) => {
-            // CURSED → WEREWOLF (KHÔNG CHẾT)
-            if (cursedTurnWolfIds.length) {
-                return ROLES.WEREWOLF.key
-            }
-        });
+        // CURSED → WEREWOLF (KHÔNG CHẾT)
+        if (cursedTurnWolfIds.length) {
+            return ROLES.WEREWOLF.key
+        }
     },
 
     async decreasePhaseExpire(roomCode, seconds) {
