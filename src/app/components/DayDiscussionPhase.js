@@ -243,12 +243,12 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
             </button>
           ) : (
             <>
-              <button
+              {!selectedPlayer && <button
                 onClick={handleDone}
                 className="flex-1 py-3 rounded-xl bg-zinc-700 font-bold"
               >
                 Bỏ qua
-              </button>
+              </button>}
               <button
                 onClick={handleDone}
                 className="flex-1 py-3 rounded-xl bg-red-600 font-bold"
