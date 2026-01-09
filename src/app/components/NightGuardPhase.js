@@ -200,7 +200,7 @@ export default function NightGuardPhase({ roomCode, flow }) {
 
       {/* GLOBAL LOADING */}
       {isLoading && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/100">
           <Loading textMsg="Đang xử lý..." />
         </div>
       )}
