@@ -11,7 +11,7 @@ import { EVENTS } from "@/constants/events";
 import { PATHS } from "@/constants/paths";
 import { PHASES } from "@/constants/phases";
 import { ERRORS } from "@/constants/errors";
-import Loading from "@/components/Loading";
+import { LoadingOverlay } from "@/components/Loading";
 import LobbyRoom from "@/components/LobbyRoom";
 import AllViewRolePhase from "@/components/AllViewRolePhase";
 import NightAllSleepPhase from "@/components/NightAllSleepPhase";
@@ -31,12 +31,17 @@ export default function RoomContent() {
   const router = useRouter();
 
   const [connected, setConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // New loading state
   const { gameFlow, setPlayers, setGameFlow } = useRoom();
 
   useEffect(() => {
+    console.log("RoomContent mounted");
+    console.log("Initial isLoading:", isLoading);
+
     /* ===== CONNECT SOCKET ===== */
     const socket = connectGameSocket();
     if (!socket) {
+      console.error("Socket connection failed");
       router.push(PATHS.SERVER);
       return;
     }
@@ -59,6 +64,7 @@ export default function RoomContent() {
 
           console.log("✅ CONNECT_ROOM OK");
 
+          setIsLoading(false); // Stop loading when connected
           /* ===== ALL DONE ===== */
           setConnected(true);
         }
@@ -133,6 +139,11 @@ export default function RoomContent() {
       disconnectGameSocket(); // ✅ disconnect hoàn toàn
     };
   }, [room_code, router]);
+
+  if (isLoading) {
+    console.log("Rendering LoadingOverlay");
+    return <LoadingOverlay textMsg="Đang xử lý..." />;
+  }
 
   /* ===== LOBBY ===== */
   if (connected && !gameFlow) {

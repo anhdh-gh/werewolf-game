@@ -216,7 +216,7 @@ export default function NightWitchKill({ roomCode, flow }) {
 
       {/* LOADING */}
       {isLoading && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/100 flex items-center justify-center">
           <Loading textMsg="Đang xử lý..." />
         </div>
       )}

@@ -42,7 +42,7 @@ export default function NightAllSleepPhase({ roomCode, flow }) {
     };
   }, [flow?.message]);
 
-  if (!flow?.message) {
+  if (!flow?.message){
     return <Loading textMsg="Đang chuẩn bị..." />;
   }
 
