@@ -129,14 +129,14 @@ export default function SigninPage() {
           onClick={() => router.push(PATHS.SIGN_UP)}
           className="w-full py-3 rounded-xl border border-white/20 text-white hover:bg-white/5 transition font-semibold"
         >
-          📝 Đăng ký
+           Đăng ký
         </button>
 
         <button
           onClick={() => router.push(PATHS.SERVER)}
           className="w-full py-3 rounded-xl bg-slate-700 hover:bg-slate-600 transition text-white font-semibold"
         >
-          🔄 Chọn lại server
+           Chọn lại server
         </button>
       </div>
     </div>

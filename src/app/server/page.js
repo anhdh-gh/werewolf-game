@@ -53,7 +53,7 @@ export default function ServerPage() {
         alt="Horror Background"
         fill
         priority
-        className="object-cover opacity-60 contrast-125 saturate-150" // Dùng class thay vì inline style filter nặng
+        className="object-cover opacity-100 contrast-100 saturate-100" // Dùng class thay vì inline style filter nặng
       />
 
       {/* 2. Overlay ma mị: Dùng gradient thay vì filter toàn trang */}
