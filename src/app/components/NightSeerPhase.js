@@ -109,7 +109,7 @@ export default function NightSeerPhase({ roomCode, flow }) {
           {flow.message}
         </p>
         <div className="flex flex-col items-center justify-center">
-          <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id})</p>
+          <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id}) ({player?.role})</p>
         </div>
       </div>
     );
@@ -127,7 +127,7 @@ export default function NightSeerPhase({ roomCode, flow }) {
       <header className="shrink-0 bg-zinc-900 border-b border-zinc-800 p-4 z-10 shadow-md">
         <h2 className="text-lg font-bold">{flow.message}</h2>
         <p className="text-sm text-gray-400">Room #{roomCode}</p>
-        <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id})</p>
+        <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id}) ({player?.role})</p>
       </header>
 
       {/* BODY */}
@@ -171,7 +171,7 @@ export default function NightSeerPhase({ roomCode, flow }) {
 
       {/* SEER RESULT POPUP */}
       {selectedPlayer && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/80 z-50 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 flex items-center justify-center bg-black/100 z-50 p-4 backdrop-blur-sm">
           <div className="bg-zinc-900 p-6 rounded-2xl w-full max-w-sm text-center border border-zinc-700 shadow-2xl">
             <h3 className="text-lg font-bold mb-4 text-white">
               Kết quả soi
@@ -205,7 +205,7 @@ export default function NightSeerPhase({ roomCode, flow }) {
 
       {/* GLOBAL LOADING OVERLAY */}
       {isLoading && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/100">
           <Loading textMsg="Đang xử lý..." />
         </div>
       )}

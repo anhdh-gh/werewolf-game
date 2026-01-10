@@ -123,7 +123,7 @@ export default function NightGuardPhase({ roomCode, flow }) {
           {flow.message}
         </p>
         <div className="flex flex-col items-center justify-center">
-          <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id})</p>
+          <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id}) ({player?.role})</p>
         </div>
       </div>
     );
@@ -136,7 +136,7 @@ export default function NightGuardPhase({ roomCode, flow }) {
       <header className="shrink-0 bg-zinc-900 border-b border-zinc-800 p-4 z-10 shadow-md">
         <h2 className="text-lg font-bold">{flow.message}</h2>
         <p className="text-sm text-gray-400">Room #{roomCode}</p>
-        <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id})</p>
+        <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id}) ({player?.role})</p>
       </header>
 
       {/* BODY */}
@@ -200,7 +200,7 @@ export default function NightGuardPhase({ roomCode, flow }) {
 
       {/* GLOBAL LOADING */}
       {isLoading && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/100">
           <Loading textMsg="Đang xử lý..." />
         </div>
       )}

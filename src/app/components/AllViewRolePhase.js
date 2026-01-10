@@ -114,7 +114,7 @@ export default function AllViewRolePhase({ roomCode, flow }) {
         {revealed ? "Nhấn để ẩn" : "Nhấn để xem"}
       </p>
       <p className="text-sm text-gray-400">
-        {player?.username} (ID: {player?.player_id})
+        {player?.username} (ID: {player?.player_id}) ({player?.role})
       </p>
     </div>
   );

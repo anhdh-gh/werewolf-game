@@ -128,7 +128,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
 
       setPlayersList(
         res.data.players.filter(
-          (p) => p.is_alive && p.is_connected && p.is_ready
+          (p) => p.is_alive && p.is_connected && p.is_ready && player?.player_id !== p?.player_id
         )
       );
       setIsVoting(true);
@@ -181,26 +181,26 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
       <header className="bg-zinc-900 border-b border-zinc-800 p-4">
         <h2 className="text-lg font-bold">{flow.message}</h2>
         <p className="text-sm text-gray-400">Room #{roomCode}</p>
-        <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id})</p>
+        <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id}) ({player?.role})</p>
       </header>
 
       {/* BODY */}
       <main className="flex-1 overflow-y-auto p-4">
-        {deadPlayers.length > 0 && (
-          <div className="mb-6">
-            <h3 className="font-semibold mb-3 text-red-400">
-              ☠️ Người chết/câm
-            </h3>
-            <div className="space-y-2">
-              {deadPlayers.map((p) => (
-                <div key={p.player_id} className="bg-zinc-800 rounded-xl p-3">
-                  <CopyableText label="ID" value={`${p.player_id}${p.player_id === player?.player_id ? ' (Me)' : ''}`} />
-                  <CopyableText label="Name" value={p.username} />
-                </div>
-              ))}
+        {deadPlayers.length > 0 && deadPlayers.map((p) => (
+          <div
+            key={p.player_id}
+            className={`w-full flex items-center justify-between rounded-xl px-4 py-3 cursor-pointer transition`}
+          >
+            <div className="flex flex-col gap-1">
+              <CopyableText label="ID" value={`${p?.player_id}${p?.player_id === player?.player_id ? ' (Me)' : ''}`} />
+              <CopyableText label="Name" value={p?.username} />
             </div>
+
+            <span className="text-purple-400 font-bold">
+              {p?.is_muted ? '🤐 Câm' : '🐺 Chết'}
+            </span>
           </div>
-        )}
+        ))}
 
         {isVoting && (
           <>
@@ -243,12 +243,12 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
             </button>
           ) : (
             <>
-              <button
+              {!selectedPlayer && <button
                 onClick={handleDone}
                 className="flex-1 py-3 rounded-xl bg-zinc-700 font-bold"
               >
                 Bỏ qua
-              </button>
+              </button>}
               <button
                 onClick={handleDone}
                 className="flex-1 py-3 rounded-xl bg-red-600 font-bold"
@@ -322,7 +322,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
       )}
 
       {isLoading && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center">
+        <div className="fixed inset-0 bg-black/100 flex items-center justify-center">
           <Loading textMsg="Đang xử lý..." />
         </div>
       )}

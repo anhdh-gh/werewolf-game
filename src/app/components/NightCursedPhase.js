@@ -96,7 +96,7 @@ export default function NightCursedPhase({ roomCode, flow }) {
         </p>
 
         <div className="flex flex-col items-center justify-center">
-          <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id})</p>
+          <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id}) ({player?.role})</p>
         </div>
       </div>
     );
@@ -109,17 +109,13 @@ export default function NightCursedPhase({ roomCode, flow }) {
       <header className="bg-zinc-900 border-b border-zinc-800 p-4">
         <h2 className="text-lg font-bold">{flow.message}</h2>
         <p className="text-sm text-gray-400">Room #{roomCode}</p>
-        <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id})</p>
+        <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id}) ({player?.role})</p>
       </header>
 
       {/* BODY */}
       <main className="flex-1 flex flex-col items-center justify-center gap-4 px-4">
         <p className="text-red-400 text-xl font-bold">
-          ☠️ Bạn đã bị nguyền
-        </p>
-
-        <p className="text-gray-300 text-center">
-          Vai trò hiện tại của bạn là:
+          ☠️ Vai trò hiện tại của bạn là:
         </p>
 
         <div className="px-6 py-3 rounded-xl bg-zinc-800 text-lg font-semibold text-yellow-400">
@@ -140,7 +136,7 @@ export default function NightCursedPhase({ roomCode, flow }) {
 
       {/* GLOBAL LOADING */}
       {isLoading && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/100">
           <Loading textMsg="Đang xử lý..." />
         </div>
       )}
