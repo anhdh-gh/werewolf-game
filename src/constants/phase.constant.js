@@ -10,7 +10,7 @@ const PHASE = {
 
     ALL_VIEW_ROLE: {
         key: 'ALL_VIEW_ROLE',
-        time: 20, // TODO: Change
+        time: 15, // TODO: Change
         message: 'Cả làng xem chức năng của mình đi',
     },
 
@@ -62,7 +62,7 @@ const PHASE = {
     END: {
         key: 'END',
         message: 'Kết thúc phe thắng cuộc là: ',
-        time: 20, // TODO: Change
+        time: 15, // TODO: Change
     },
 };
 
@@ -71,7 +71,7 @@ const PHASE_FLOW = [
     {
         phase: PHASE.ALL_VIEW_ROLE,
         next: PHASE.NIGHT_ALL_SLEEP,
-        time: 10
+        time: 5
     },
     {
         phase: PHASE.NIGHT_ALL_SLEEP,
