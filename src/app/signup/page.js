@@ -2,11 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { Creepster } from "next/font/google";
 import { KEYS } from "@/constants/keys";
 import { PATHS } from "@/constants/paths";
 import { API_PATHS } from "@/constants/paths.api";
 import { useApiFetch } from "@/hooks/useApiFetch";
 import { CODES } from "@/constants/codes";
+
+// Đồng bộ Font giống hệt trang Server
+const fontHorror = Creepster({ weight: "400", subsets: ["latin"], display: "swap" });
 
 export default function SignupPage() {
   const router = useRouter();
@@ -15,6 +20,7 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const apiFetch = useApiFetch();
 
+  // Logic giữ nguyên 100%
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.removeItem(KEYS.ACCESS_TOKEN);
@@ -23,7 +29,7 @@ export default function SignupPage() {
       localStorage.removeItem(KEYS.USERNAME);
       const selected = localStorage.getItem(KEYS.SERVER_SELECTED);
       if (!selected) {
-        router.replace(PATHS.SERVER); // redirect if no server selected
+        router.replace(PATHS.SERVER);
       } else {
         setServer(JSON.parse(selected));
       }
@@ -57,69 +63,111 @@ export default function SignupPage() {
     }
   };
 
-  if (!server) return null; // avoid flash UI before redirect
+  if (!server) return null;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#0b0b12] via-[#0f0f1a] to-black px-5 py-10">
+    <div className="relative min-h-screen w-full overflow-hidden bg-black flex items-center justify-center px-4">
       
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-md bg-white/5 backdrop-blur rounded-2xl p-8 flex flex-col gap-6"
-      >
-        <h2 className="text-2xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-400">
-          Đăng ký vào {server.name}
-        </h2>
+      {/* 1. Background Image: Rõ nét lấy từ trang Server */}
+      <Image
+        src="/image/select_server.png"
+        alt="Horror Background"
+        fill
+        priority
+        className="object-cover opacity-100 contrast-100 saturate-100" 
+      />
+      
+      {/* 2. Overlay ma mị: Giữ gradient để nổi bật form */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-black/80 z-10 pointer-events-none" />
 
-        <input
-          name="email"
-          value={form.email}
-          onChange={handleChange}
-          placeholder="Email"
-          required
-          className="p-3 rounded-lg bg-white/10 border border-white/20 focus:border-red-500 outline-none text-white placeholder-white/60"
-        />
-        <input
-          name="username"
-          value={form.username}
-          onChange={handleChange}
-          placeholder="Username"
-          required
-          className="p-3 rounded-lg bg-white/10 border border-white/20 focus:border-red-500 outline-none text-white placeholder-white/60"
-        />
-        <input
-          name="password"
-          type="password"
-          value={form.password}
-          onChange={handleChange}
-          placeholder="Password"
-          required
-          className="p-3 rounded-lg bg-white/10 border border-white/20 focus:border-red-500 outline-none text-white placeholder-white/60"
-        />
+      {/* Main Content */}
+      <div className="w-full max-w-md flex flex-col items-center gap-6 relative z-20 py-8 animate-in fade-in zoom-in duration-500">
+        
+        {/* Header Title: Đồng bộ font Creepster */}
+        <div className="text-center w-full mb-2">
+           <h1 className={`${fontHorror.className} text-5xl text-[#990000] mb-2 drop-shadow-[0_0_15px_rgba(255,0,0,0.6)] tracking-widest`}>
+             HIẾN TẾ LINH HỒN
+           </h1>
+           <p className={`${fontHorror.className} text-red-500/90 text-xl tracking-widest uppercase border-b border-red-900/30 pb-2 inline-block`}>
+             Máy chủ: {server.name}
+           </p>
+        </div>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 transition text-white font-semibold disabled:opacity-50"
+        {/* Form Container: Style tối, border đỏ giống trang Server */}
+        <form
+          onSubmit={handleSubmit}
+          className="w-full bg-black/70 border border-red-900/30 backdrop-blur-md rounded-2xl p-8 flex flex-col gap-5 shadow-[0_0_40px_rgba(0,0,0,0.8)]"
         >
-          {loading ? "Đang đăng ký..." : "Đăng ký"}
-        </button>
-      </form>
+          {/* Inputs: Placeholder sáng màu đỏ, font kinh dị */}
+          <div className="space-y-4">
+            <input
+              name="email"
+              type="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="ĐỊA CHỈ EMAIL..."
+              required
+              className={`${fontHorror.className} w-full p-4 rounded-xl bg-black/50 border border-red-900/20 text-red-100 placeholder-red-400 outline-none focus:border-red-600 focus:shadow-[0_0_15px_rgba(153,0,0,0.3)] transition-all text-xl tracking-widest`}
+            />
+            
+            <input
+              name="username"
+              value={form.username}
+              onChange={handleChange}
+              placeholder="TÊN NGƯỜI DÙNG..."
+              required
+              className={`${fontHorror.className} w-full p-4 rounded-xl bg-black/50 border border-red-900/20 text-red-100 placeholder-red-400 outline-none focus:border-red-600 focus:shadow-[0_0_15px_rgba(153,0,0,0.3)] transition-all text-xl tracking-widest`}
+            />
 
-      {/* Two buttons below form */}
-      <div className="w-full max-w-md flex flex-col gap-3 mt-6">
-        <button
-          onClick={() => router.push(PATHS.SERVER)}
-          className="w-full py-3 rounded-xl border border-white/20 text-white hover:bg-white/5 transition font-semibold"
-        >
-          🔄 Chọn lại server
-        </button>
+            <input
+              name="password"
+              type="password"
+              value={form.password}
+              onChange={handleChange}
+              placeholder="MẬT MÃ..."
+              required
+              className={`${fontHorror.className} w-full p-4 rounded-xl bg-black/50 border border-red-900/20 text-red-100 placeholder-red-400 outline-none focus:border-red-600 focus:shadow-[0_0_15px_rgba(153,0,0,0.3)] transition-all text-xl tracking-widest`}
+            />
+          </div>
 
-        <button
-          onClick={() => router.push(PATHS.SIGN_IN)}
-          className="w-full py-3 rounded-xl bg-slate-700 hover:bg-slate-600 transition text-white font-semibold"
-        >
-          ← Quay về đăng nhập
-        </button>
+          {/* Submit button: Style giống nút VÀO LÀNG có giọt máu */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="relative w-full py-4 mt-2 rounded-2xl text-red-100 bg-[#7f1d1d] hover:bg-red-700 border-2 border-red-900 transition-all overflow-hidden group disabled:opacity-50"
+          >
+            <span className={`${fontHorror.className} relative z-10 text-3xl drop-shadow-[2px_2px_2px_black] tracking-wider`}>
+              {loading ? "ĐANG TRIỆU HỒI..." : "XÁC NHẬN"}
+            </span>
+            
+            {/* Giọt máu trang trí */}
+            {!loading && (
+                <>
+                    <div className="absolute top-0 left-[20%] w-[1px] h-4 bg-red-500/40 group-hover:h-6 transition-all duration-500" />
+                    <div className="absolute top-0 left-[50%] w-[1px] h-6 bg-red-500/40 group-hover:h-10 transition-all duration-500" />
+                    <div className="absolute top-0 left-[80%] w-[1px] h-3 bg-red-500/40 group-hover:h-5 transition-all duration-500" />
+                </>
+            )}
+          </button>
+        </form>
+
+        {/* Action Buttons: Dưới form */}
+        <div className="w-full max-w-md flex flex-col items-center gap-4">
+          <button
+            onClick={() => router.push(PATHS.SIGN_IN)}
+            className={`${fontHorror.className} text-red-400 text-xl hover:text-red-200 transition-all tracking-widest drop-shadow-[0_0_5px_rgba(255,0,0,0.3)]`}
+          >
+            Đã có khế ước?... Đăng nhập
+          </button>
+
+          <button
+            onClick={() => router.push(PATHS.SERVER)}
+            className={`${fontHorror.className} text-sm text-red-900/80 hover:text-red-600 transition-colors tracking-[0.2em] uppercase`}
+          >
+            [ Rời bỏ máy chủ này ]
+          </button>
+        </div>
+
       </div>
     </div>
   );
