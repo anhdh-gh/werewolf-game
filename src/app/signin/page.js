@@ -2,10 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { Creepster, Nosifer } from "next/font/google";
 import { KEYS } from "@/constants/keys";
 import { PATHS } from "@/constants/paths";
 import { API_PATHS } from "@/constants/paths.api";
 import { useApiFetch } from "@/hooks/useApiFetch";
+
+// Đồng bộ Font giống hệt trang Server
+const fontHorror = Creepster({ weight: "400", subsets: ["latin"], display: "swap" });
+const fontBlood = Nosifer({ weight: "400", subsets: ["latin"], display: "swap" });
 
 function parseJwt(token) {
   try {
@@ -30,7 +36,7 @@ export default function SigninPage() {
   const [loading, setLoading] = useState(false);
   const apiFetch = useApiFetch();
 
-  // Load selected server or redirect to server selection
+  // Logic giữ nguyên
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.removeItem(KEYS.ACCESS_TOKEN);
@@ -39,19 +45,17 @@ export default function SigninPage() {
       localStorage.removeItem(KEYS.USERNAME);
       const selected = localStorage.getItem(KEYS.SERVER_SELECTED);
       if (!selected) {
-        router.replace(PATHS.SERVER); // no server → redirect
+        router.replace(PATHS.SERVER);
       } else {
         setServer(JSON.parse(selected));
       }
     }
   }, []);
 
-  // Handle input change
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Handle login submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!server) return;
@@ -70,7 +74,7 @@ export default function SigninPage() {
         localStorage.setItem(KEYS.REFRESH_TOKEN, data.data.refresh_token);
         localStorage.setItem(KEYS.USER_ID, decoded.sub);
         localStorage.setItem(KEYS.USERNAME, decoded.username);
-        router.push(PATHS.HOME); // redirect to app page
+        router.push(PATHS.HOME);
       }
     } catch (err) {
       console.error(err);
@@ -80,64 +84,110 @@ export default function SigninPage() {
     }
   };
 
-  if (!server) return null; // prevent flash UI before redirect
+  if (!server) return null;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#0b0b12] via-[#0f0f1a] to-black px-5 py-10">
+    <div className="relative min-h-screen w-full overflow-hidden bg-black flex items-center justify-center px-4">
+      
+      {/* 1. Background đã làm rõ hơn (Bỏ các filter làm tối) */}
+      <Image
+        src="/image/select_server.png"
+        alt="Horror Background"
+        fill
+        priority
+        className="object-cover opacity-100 contrast-100 saturate-100" 
+      />
+      
+      {/* Giảm lớp phủ đen xuống mức thấp để nhìn rõ ảnh nền */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-black/40 z-10 pointer-events-none" />
 
-      {/* Form container */}
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-md bg-white/5 backdrop-blur rounded-2xl p-8 flex flex-col gap-6"
-      >
-        <h2 className="text-2xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-orange-400">
-          Đăng nhập vào {server.name}
-        </h2>
+      {/* Main Content */}
+      <div className="w-full max-w-md flex flex-col items-center gap-8 relative z-20 py-8 animate-in fade-in zoom-in duration-500">
+        
+        {/* Header Title - Dùng lại font Creepster giống Server */}
+        <div className="text-center w-full relative">
+           <h1 className={`${fontHorror.className} text-5xl text-[#990000] mb-2 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] tracking-widest leading-relaxed`}>
+             ĐĂNG NHẬP
+           </h1>
+           <div className="text-red-200/80 font-mono text-sm tracking-[0.3em] uppercase border-b border-red-900/50 pb-1 inline-block bg-black/40 px-4 rounded-full backdrop-blur-sm">
+             Server: {server.name}
+           </div>
+        </div>
 
-        {/* Inputs */}
-        <input
-          name="username"
-          value={form.username}
-          onChange={handleChange}
-          placeholder="Username"
-          required
-          className="p-3 rounded-lg bg-white/10 border border-white/20 focus:border-red-500 outline-none text-white placeholder-white/60"
-        />
-        <input
-          name="password"
-          type="password"
-          value={form.password}
-          onChange={handleChange}
-          placeholder="Password"
-          required
-          className="p-3 rounded-lg bg-white/10 border border-white/20 focus:border-red-500 outline-none text-white placeholder-white/60"
-        />
-
-        {/* Submit button */}
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 transition text-white font-semibold disabled:opacity-50"
+        {/* Form Container - Nền tối nhẹ để nổi bật trên background sáng */}
+        <form
+          onSubmit={handleSubmit}
+          className="w-full bg-black/70 border border-red-900/40 backdrop-blur-md rounded-2xl p-8 flex flex-col gap-6 shadow-[0_0_40px_rgba(0,0,0,0.6)] relative overflow-hidden"
         >
-          {loading ? "Đang đăng nhập..." : "Đăng nhập"}
-        </button>
-      </form>
+          {/* Inputs */}
+          <div className="space-y-5">
+            <div className="group relative">
+                <input
+                    name="username"
+                    value={form.username}
+                    onChange={handleChange}
+                    placeholder="Tên đăng nhập"
+                    required
+                    className={`w-full p-4 bg-black/40 border border-red-900/30 text-red-50 placeholder-red-200/30 rounded-xl outline-none 
+                    focus:border-red-500 focus:bg-black/60 focus:shadow-[0_0_15px_rgba(220,38,38,0.3)] transition-all duration-300 ${fontHorror.className} text-xl tracking-widest`}
+                />
+            </div>
+            
+            <div className="group relative">
+                <input
+                    name="password"
+                    type="password"
+                    value={form.password}
+                    onChange={handleChange}
+                    placeholder="Mật khẩu"
+                    required
+                    className={`w-full p-4 bg-black/40 border border-red-900/30 text-red-50 placeholder-red-200/30 rounded-xl outline-none 
+                    focus:border-red-500 focus:bg-black/60 focus:shadow-[0_0_15px_rgba(220,38,38,0.3)] transition-all duration-300 ${fontHorror.className} text-xl tracking-widest`}
+                />
+            </div>
+          </div>
 
-      {/* Two action buttons: Sign up or choose server */}
-      <div className="w-full max-w-md flex flex-col gap-3 mt-6">
-        <button
-          onClick={() => router.push(PATHS.SIGN_UP)}
-          className="w-full py-3 rounded-xl border border-white/20 text-white hover:bg-white/5 transition font-semibold"
-        >
-           Đăng ký
-        </button>
+          {/* Submit button - Style máu me nhưng dùng font Creepster */}
+          <button
+            type="submit"
+            disabled={loading}
+            className="relative w-full group overflow-hidden rounded-xl border-2 border-[#7f1d1d] shadow-[0_0_10px_#450a0a] transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 mt-2 bg-[#450a0a]/80 hover:bg-[#7f1d1d]"
+          >
+            {/* Nội dung button */}
+            <div className="relative py-4 z-10 flex items-center justify-center gap-2">
+                <span className={`${fontHorror.className} text-3xl text-red-100 drop-shadow-[2px_2px_0_#000] tracking-widest`}>
+                {loading ? "ĐANG VÀO..." : "XÁC NHẬN"}
+                </span>
+                {!loading && <span className="text-xl animate-pulse">🩸</span>}
+            </div>
 
-        <button
-          onClick={() => router.push(PATHS.SERVER)}
-          className="w-full py-3 rounded-xl bg-slate-700 hover:bg-slate-600 transition text-white font-semibold"
-        >
-           Chọn lại server
-        </button>
+            {/* Hiệu ứng giọt máu chảy (Decoration) */}
+            {!loading && (
+                <>
+                    <div className="absolute top-0 left-[15%] w-[1px] h-6 bg-red-500/30 group-hover:h-10 transition-all duration-500" />
+                    <div className="absolute top-0 right-[25%] w-[1px] h-4 bg-red-500/30 group-hover:h-8 transition-all duration-500" />
+                </>
+            )}
+          </button>
+        </form>
+
+        {/* Links */}
+        <div className="w-full flex flex-col items-center gap-4 bg-black/30 p-4 rounded-xl backdrop-blur-sm border border-white/5">
+          <button
+            onClick={() => router.push(PATHS.SIGN_UP)}
+            className={`${fontHorror.className} text-red-400 text-xl hover:text-red-200 hover:drop-shadow-[0_0_8px_rgba(255,0,0,0.5)] transition-all tracking-widest`}
+          >
+            Chưa có xác?... Đăng ký
+          </button>
+
+          <button
+            onClick={() => router.push(PATHS.SERVER)}
+            className="text-[10px] text-gray-400 hover:text-white font-mono tracking-[0.2em] uppercase transition-colors"
+          >
+            [ Quay lại chọn máy chủ ]
+          </button>
+        </div>
+
       </div>
     </div>
   );
