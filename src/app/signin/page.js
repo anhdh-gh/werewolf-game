@@ -3,15 +3,13 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Creepster, Nosifer } from "next/font/google";
+import { Creepster } from "next/font/google";
 import { KEYS } from "@/constants/keys";
 import { PATHS } from "@/constants/paths";
 import { API_PATHS } from "@/constants/paths.api";
 import { useApiFetch } from "@/hooks/useApiFetch";
 
-// Đồng bộ Font giống hệt trang Server
 const fontHorror = Creepster({ weight: "400", subsets: ["latin"], display: "swap" });
-const fontBlood = Nosifer({ weight: "400", subsets: ["latin"], display: "swap" });
 
 function parseJwt(token) {
   try {
@@ -89,100 +87,98 @@ export default function SigninPage() {
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-black flex items-center justify-center px-4">
       
-      {/* 1. Background đã làm rõ hơn (Bỏ các filter làm tối) */}
+      {/* Background Image */}
       <Image
         src="/image/select_server.png"
         alt="Horror Background"
         fill
         priority
-        className="object-cover opacity-100 contrast-100 saturate-100" 
+        className="object-cover opacity-100 contrast-100 saturate-100"
       />
-      
-      {/* Giảm lớp phủ đen xuống mức thấp để nhìn rõ ảnh nền */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-black/40 z-10 pointer-events-none" />
+
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/80 z-10 pointer-events-none" />
 
       {/* Main Content */}
-      <div className="w-full max-w-md flex flex-col items-center gap-8 relative z-20 py-8 animate-in fade-in zoom-in duration-500">
+      <div className="w-full max-w-md flex flex-col items-center gap-6 relative z-20 py-8 animate-in fade-in zoom-in duration-500">
         
-        {/* Header Title - Dùng lại font Creepster giống Server */}
-        <div className="text-center w-full relative">
-           <h1 className={`${fontHorror.className} text-5xl text-[#990000] mb-2 drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] tracking-widest leading-relaxed`}>
+        {/* Header Title */}
+        <div className="text-center w-full mb-2">
+           <h1 className={`${fontHorror.className} text-5xl text-[#990000] mb-2 drop-shadow-[0_0_15px_rgba(255,0,0,0.4)] tracking-widest`}>
              ĐĂNG NHẬP
            </h1>
-           <div className="text-red-200/80 font-mono text-sm tracking-[0.3em] uppercase border-b border-red-900/50 pb-1 inline-block bg-black/40 px-4 rounded-full backdrop-blur-sm">
-             Server: {server.name}
-           </div>
+           {/* Đã sửa font chữ Server */}
+           <p className={`${fontHorror.className} text-red-500/90 text-xl tracking-widest uppercase border-b border-red-900/30 pb-2 inline-block`}>
+             Máy chủ: {server.name}
+           </p>
         </div>
 
-        {/* Form Container - Nền tối nhẹ để nổi bật trên background sáng */}
+        {/* Form Container */}
         <form
           onSubmit={handleSubmit}
-          className="w-full bg-black/70 border border-red-900/40 backdrop-blur-md rounded-2xl p-8 flex flex-col gap-6 shadow-[0_0_40px_rgba(0,0,0,0.6)] relative overflow-hidden"
+          className="w-full bg-black/60 border border-red-900/30 backdrop-blur-sm rounded-2xl p-8 flex flex-col gap-6 shadow-[0_0_30px_rgba(0,0,0,0.8)]"
         >
           {/* Inputs */}
-          <div className="space-y-5">
-            <div className="group relative">
+          <div className="space-y-4">
+            <div className="group">
                 <input
                     name="username"
                     value={form.username}
                     onChange={handleChange}
-                    placeholder="Tên đăng nhập"
+                    placeholder="Tên đăng nhập..."
                     required
-                    className={`w-full p-4 bg-black/40 border border-red-900/30 text-red-50 placeholder-red-200/30 rounded-xl outline-none 
-                    focus:border-red-500 focus:bg-black/60 focus:shadow-[0_0_15px_rgba(220,38,38,0.3)] transition-all duration-300 ${fontHorror.className} text-xl tracking-widest`}
+                    // Đã thêm fontHorror, chỉnh màu placeholder sáng lên (red-400), tăng size chữ (text-xl)
+                    className={`${fontHorror.className} w-full p-4 rounded-xl bg-black/50 border border-red-900/20 text-red-100 placeholder-red-400 outline-none focus:border-red-600 focus:shadow-[0_0_15px_rgba(153,0,0,0.2)] transition-all duration-300 text-xl tracking-widest`}
                 />
             </div>
             
-            <div className="group relative">
+            <div className="group">
                 <input
                     name="password"
                     type="password"
                     value={form.password}
                     onChange={handleChange}
-                    placeholder="Mật khẩu"
+                    placeholder="Mật khẩu..."
                     required
-                    className={`w-full p-4 bg-black/40 border border-red-900/30 text-red-50 placeholder-red-200/30 rounded-xl outline-none 
-                    focus:border-red-500 focus:bg-black/60 focus:shadow-[0_0_15px_rgba(220,38,38,0.3)] transition-all duration-300 ${fontHorror.className} text-xl tracking-widest`}
+                    // Tương tự cho password
+                    className={`${fontHorror.className} w-full p-4 rounded-xl bg-black/50 border border-red-900/20 text-red-100 placeholder-red-400 outline-none focus:border-red-600 focus:shadow-[0_0_15px_rgba(153,0,0,0.2)] transition-all duration-300 text-xl tracking-widest`}
                 />
             </div>
           </div>
 
-          {/* Submit button - Style máu me nhưng dùng font Creepster */}
+          {/* Submit button */}
           <button
             type="submit"
             disabled={loading}
-            className="relative w-full group overflow-hidden rounded-xl border-2 border-[#7f1d1d] shadow-[0_0_10px_#450a0a] transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 mt-2 bg-[#450a0a]/80 hover:bg-[#7f1d1d]"
+            className="relative w-full py-4 mt-2 rounded-2xl text-red-100 bg-[#7f1d1d] hover:bg-red-700 border-2 border-red-900 transition-all overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {/* Nội dung button */}
-            <div className="relative py-4 z-10 flex items-center justify-center gap-2">
-                <span className={`${fontHorror.className} text-3xl text-red-100 drop-shadow-[2px_2px_0_#000] tracking-widest`}>
-                {loading ? "ĐANG VÀO..." : "XÁC NHẬN"}
-                </span>
-                {!loading && <span className="text-xl animate-pulse">🩸</span>}
-            </div>
-
-            {/* Hiệu ứng giọt máu chảy (Decoration) */}
+            <span className={`${fontHorror.className} relative z-10 text-3xl drop-shadow-[2px_2px_2px_black] tracking-wider`}>
+              {loading ? "ĐANG VÀO..." : "XÁC NHẬN"}
+            </span>
+            
             {!loading && (
                 <>
-                    <div className="absolute top-0 left-[15%] w-[1px] h-6 bg-red-500/30 group-hover:h-10 transition-all duration-500" />
-                    <div className="absolute top-0 right-[25%] w-[1px] h-4 bg-red-500/30 group-hover:h-8 transition-all duration-500" />
+                    <div className="absolute top-0 left-[20%] w-[1px] h-4 bg-red-500/40 group-hover:h-6 transition-all duration-500" />
+                    <div className="absolute top-0 left-[50%] w-[1px] h-6 bg-red-500/40 group-hover:h-10 transition-all duration-500" />
+                    <div className="absolute top-0 left-[80%] w-[1px] h-3 bg-red-500/40 group-hover:h-5 transition-all duration-500" />
                 </>
             )}
           </button>
         </form>
 
-        {/* Links */}
-        <div className="w-full flex flex-col items-center gap-4 bg-black/30 p-4 rounded-xl backdrop-blur-sm border border-white/5">
+        {/* Action Links */}
+        <div className="w-full flex flex-col items-center gap-3">
           <button
             onClick={() => router.push(PATHS.SIGN_UP)}
-            className={`${fontHorror.className} text-red-400 text-xl hover:text-red-200 hover:drop-shadow-[0_0_8px_rgba(255,0,0,0.5)] transition-all tracking-widest`}
+            className={`${fontHorror.className} text-red-800 text-lg hover:text-red-500 transition-colors tracking-widest`}
           >
             Chưa có xác?... Đăng ký
           </button>
 
           <button
             onClick={() => router.push(PATHS.SERVER)}
-            className="text-[10px] text-gray-400 hover:text-white font-mono tracking-[0.2em] uppercase transition-colors"
+            // Đã sửa font chữ nút quay lại
+            className={`${fontHorror.className} text-sm text-red-900/80 hover:text-red-500 tracking-widest uppercase transition-colors`}
           >
             [ Quay lại chọn máy chủ ]
           </button>
