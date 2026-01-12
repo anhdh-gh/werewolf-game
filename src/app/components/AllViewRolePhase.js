@@ -4,15 +4,19 @@ import { useEffect, useState, useRef } from "react";
 import { EVENTS } from "@/constants/events";
 import { getGameSocket } from "@/socket/gameSocket";
 import { KEYS } from "@/constants/keys";
+import { PATHS } from "@/constants/paths";
 import Loading from "@/components/Loading";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { Creepster, Nosifer } from "next/font/google";
+
+const fontHorror = Creepster({ weight: "400", subsets: ["latin"], display: "swap" });
+const fontBlood = Nosifer({ weight: "400", subsets: ["latin"], display: "swap" });
 
 export default function AllViewRolePhase({ roomCode, flow }) {
   const router = useRouter();
-  const [ player, setPlayer ] = useState();
+  const [player, setPlayer] = useState();
   const [revealed, setRevealed] = useState(false);
-  
-  // Dùng Ref để quản lý Audio instance duy nhất
   const audioRef = useRef(null);
 
   /* ===== FETCH PLAYER INFO ===== */
@@ -28,94 +32,143 @@ export default function AllViewRolePhase({ roomCode, flow }) {
       if (!res?.data?.players?.length) return;
       setPlayer(res.data.players[0]);
     });
-  }, [roomCode]);
+  }, [roomCode, router]);
 
-  /* ===== TTS LOGIC (ĐÃ FIX ABORT ERROR) ===== */
+  /* ===== TTS LOGIC ===== */
   useEffect(() => {
     if (!flow?.message) return;
 
-    // 1. Nếu chưa có Audio instance thì tạo mới 1 lần thôi
     if (!audioRef.current) {
       audioRef.current = new Audio();
     }
-
     const audio = audioRef.current;
 
     const playAudio = async () => {
       try {
-        // Dừng âm thanh đang đọc dở (nếu có)
-        // Lưu ý: Không gọi pause() nếu audio đang trong trạng thái chưa load xong,
-        // nhưng gán src mới sẽ tự động stop cái cũ.
-        
-        // Gọi API Proxy của bạn
         const url = `/api/v1/tts?text=${encodeURIComponent(flow.message)}`;
-        
         audio.src = url;
-        audio.load(); // Bắt buộc load lại
-
-        // Chờ phát
+        audio.load();
         await audio.play();
         console.log("Đang đọc: ", flow.message);
-
       } catch (err) {
-        // 🔥 QUAN TRỌNG: Lọc lỗi
         if (err.name === "AbortError") {
-          // Lỗi này do người dùng chuyển trang hoặc message đổi nhanh quá
-          // => Không phải lỗi nghiêm trọng, bỏ qua.
           console.log("Audio bị ngắt (bình thường):", err.message);
-        } else if (err.name === "NotAllowedError") {
-          // Lỗi này mới là bị trình duyệt chặn thật
-          console.error("Vẫn bị chặn Autoplay, cần click:", err);
         } else {
-          console.error("Lỗi Audio khác:", err);
+          console.error("Lỗi Audio:", err);
         }
       }
     };
 
     playAudio();
 
-    // Cleanup: Khi component unmount -> Dừng đọc
     return () => {
       if (audioRef.current) {
         audioRef.current.pause();
-        // Không set src = "" để tránh lỗi phụ trên một số trình duyệt
       }
     };
   }, [flow?.message]);
 
+  const handleFlip = () => {
+    setRevealed(!revealed);
+    if (navigator.vibrate) navigator.vibrate(30);
+  };
+
   if (!player) {
-    return <Loading textMsg="Đang lấy thông tin vai trò..." />;
+    return <Loading textMsg="Đang triệu hồi linh hồn..." />;
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-black text-white px-4">
-      {/* MESSAGE */}
-      <p className="text-lg text-gray-300 text-center max-w-md animate-pulse">
-        {flow.message}
-      </p>
+    <div className="relative min-h-screen w-full overflow-hidden bg-black flex flex-col items-center justify-center px-4 gap-8">
+      
+      {/* === BACKGROUND LAYER (ĐÃ BỎ OVERLAY) === */}
+      <Image
+        src="/image/select_server_screen.jpg"
+        alt="Role Reveal Background"
+        fill
+        priority
+        // Tăng opacity lên một chút vì không còn lớp phủ làm tối
+        className="object-cover opacity-80 contrast-125 saturate-50"
+      />
+      
+      {/* (ĐÃ XÓA DIV OVERLAY Ở ĐÂY) */}
 
-      {/* CARD */}
-      <div
-        onClick={() => setRevealed(!revealed)}
-        className="relative h-64 w-44 cursor-pointer perspective"
-      >
-        <div className={`absolute inset-0 rounded-xl transition-transform duration-700 preserve-3d ${revealed ? "rotate-y-180" : ""}`}>
-          <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-zinc-800 backface-hidden">
-            <span className="text-xl font-bold">🐺 Werewolf</span>
-          </div>
-          <div className="absolute inset-0 flex flex-col items-center justify-center rounded-xl bg-red-700 rotate-y-180 backface-hidden">
-            <span className="text-sm opacity-80">Vai trò của bạn</span>
-            <span className="mt-2 text-2xl font-bold">{player.initial_role}</span>
-          </div>
+      {/* === CONTENT LAYER === */}
+      <div className="relative z-20 flex flex-col items-center gap-10 w-full max-w-md">
+        
+        {/* MESSAGE HEADER */}
+        <div className="text-center space-y-2">
+            <h2 className={`${fontHorror.className} text-3xl sm:text-4xl text-red-100 drop-shadow-[0_2px_10px_rgba(220,38,38,0.8)] tracking-widest animate-pulse`}>
+                LỜI NHẮN TỪ BÓNG TỐI
+            </h2>
+            {/* Thêm nền đen mờ cho text dễ đọc hơn vì đã bỏ overlay toàn màn hình */}
+            <p className="text-gray-200 italic font-medium bg-black/60 px-4 py-2 rounded-lg border border-white/10 backdrop-blur-sm">
+                "{flow.message}"
+            </p>
         </div>
+
+        {/* CARD CONTAINER */}
+        <div className="relative w-64 h-96 group perspective">
+            <div
+                onClick={handleFlip}
+                className={`relative w-full h-full duration-700 preserve-3d cursor-pointer transition-transform ${revealed ? "rotate-y-180" : ""}`}
+            >
+                {/* --- MẶT SAU --- */}
+                <div className="absolute inset-0 backface-hidden rounded-2xl bg-[#1a0505] border-4 border-[#3f0e0e] shadow-[0_0_30px_rgba(0,0,0,1)] flex flex-col items-center justify-center overflow-hidden">
+                    <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/black-scales.png')]"></div>
+                    <div className="w-[90%] h-[90%] border border-red-900/30 rounded-xl flex items-center justify-center relative bg-black/40">
+                        <span className={`${fontBlood.className} text-4xl text-red-700/80 drop-shadow-md text-center`}>
+                            YOUR<br/>FATE
+                        </span>
+                    </div>
+                    <p className={`${fontHorror.className} absolute bottom-4 text-gray-400 text-sm tracking-widest animate-bounce`}>
+                        CHẠM ĐỂ MỞ
+                    </p>
+                </div>
+
+                {/* --- MẶT TRƯỚC --- */}
+                <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-2xl bg-[#0a0a0a] border-2 border-red-600 shadow-[0_0_50px_rgba(220,38,38,0.5)] flex flex-col items-center justify-between p-6 overflow-hidden">
+                    
+                    <div className="text-center">
+                        <span className={`${fontHorror.className} text-gray-400 text-xl tracking-widest block mb-1`}>
+                            VAI TRÒ
+                        </span>
+                        <div className="h-[1px] w-12 bg-red-600 mx-auto"></div>
+                    </div>
+
+                    <div className="flex flex-col items-center gap-4">
+                        <div className="text-6xl drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
+                            {player.initial_role.toLowerCase().includes('wolf') ? '🐺' : '👤'}
+                        </div>
+                        <h1 className={`${fontBlood.className} text-3xl text-red-500 text-center drop-shadow-[0_2px_2px_black] uppercase leading-relaxed break-words`}>
+                            {player.initial_role}
+                        </h1>
+                    </div>
+
+                    <div className="text-center bg-black/60 w-full py-2 rounded-lg border border-red-900/30">
+                         <p className="text-xs text-red-400/60 uppercase font-bold tracking-widest">
+                            ID: {player.player_id}
+                        </p>
+                        <p className={`${fontHorror.className} text-lg text-white/90`}>
+                            {player.username}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {/* INSTRUCTION TEXT - Thêm nền mờ để không bị chìm vào background */}
+        <p className={`${fontHorror.className} text-gray-300 text-lg tracking-widest bg-black/40 px-3 py-1 rounded-full`}>
+            {revealed ? "--- HÃY GIỮ BÍ MẬT ---" : "--- SỐ PHẬN ĐÃ ĐỊNH ---"}
+        </p>
+
       </div>
 
-      <p className="text-sm text-gray-500">
-        {revealed ? "Nhấn để ẩn" : "Nhấn để xem"}
-      </p>
-      <p className="text-sm text-gray-400">
-        {player?.username} (ID: {player?.player_id}) ({player?.role})
-      </p>
+      <style jsx global>{`
+        .perspective { perspective: 1000px; }
+        .preserve-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+      `}</style>
     </div>
   );
 }
