@@ -99,7 +99,7 @@ export default function MainContent() {
       />
       
       {/* Overlay - Đã làm mờ lớp này đi để không bị đen quá */}
-      <div className="absolute inset-0 bg-black/30 z-10 pointer-events-none" />
+      <div className="absolute inset-0 bg-black/50 z-10 pointer-events-none" />
 
       {/* Main Content Box */}
       <div className="w-full max-w-md flex flex-col items-center gap-6 relative z-20">
