@@ -74,7 +74,7 @@ export default function SignupPage() {
         alt="Horror Background"
         fill
         priority
-        className="object-cover opacity-100 contrast-100 saturate-100" 
+        className="object-cover object-center opacity-100 contrast-100 saturate-100" 
       />
       
       {/* 2. Overlay ma mị: Giữ gradient để nổi bật form */}
