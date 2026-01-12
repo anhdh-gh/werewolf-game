@@ -91,7 +91,7 @@ export default function MainContent() {
       
       {/* Background Image - Đảm bảo hiện rõ 100% */}
       <Image
-        src="/image/lobby_screen.jpg"
+        src="/image/room_screen.jpg"
         alt="Horror Background"
         fill
         priority
