@@ -97,7 +97,7 @@ export default function SigninPage() {
       />
 
       {/* Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/80 z-10 pointer-events-none" />
+      <div className="absolute inset-0 bg-black/20 z-10 pointer-events-none shadow-[inset_0_0_100px_rgba(0,0,0,0.8)]" />
 
       {/* Main Content */}
       <div className="w-full max-w-md flex flex-col items-center gap-6 relative z-20 py-8 animate-in fade-in zoom-in duration-500">
@@ -116,7 +116,7 @@ export default function SigninPage() {
         {/* Form Container */}
         <form
           onSubmit={handleSubmit}
-          className="w-full bg-black/60 border border-red-900/30 backdrop-blur-sm rounded-2xl p-8 flex flex-col gap-6 shadow-[0_0_30px_rgba(0,0,0,0.8)]"
+          className="w-full bg-black/60 border border-red-900/30  rounded-2xl p-8 flex flex-col gap-6 shadow-[0_0_30px_rgba(0,0,0,0.8)]"
         >
           {/* Inputs */}
           <div className="space-y-4">
@@ -180,7 +180,7 @@ export default function SigninPage() {
             // Đã sửa font chữ nút quay lại
             className={`${fontHorror.className} text-sm text-red-900/80 hover:text-red-500 tracking-widest uppercase transition-colors`}
           >
-            [ Quay lại chọn máy chủ ]
+             Quay lại chọn máy chủ 
           </button>
         </div>
 

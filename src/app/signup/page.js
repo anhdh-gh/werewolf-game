@@ -78,7 +78,7 @@ export default function SignupPage() {
       />
       
       {/* 2. Overlay ma mị: Giữ gradient để nổi bật form */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-black/80 z-10 pointer-events-none" />
+      <div className="absolute inset-0 bg-black/20 z-10 pointer-events-none shadow-[inset_0_0_100px_rgba(0,0,0,0.8)]" />
 
       {/* Main Content */}
       <div className="w-full max-w-md flex flex-col items-center gap-6 relative z-20 py-8 animate-in fade-in zoom-in duration-500">
@@ -96,7 +96,7 @@ export default function SignupPage() {
         {/* Form Container: Style tối, border đỏ giống trang Server */}
         <form
           onSubmit={handleSubmit}
-          className="w-full bg-black/70 border border-red-900/30 backdrop-blur-md rounded-2xl p-8 flex flex-col gap-5 shadow-[0_0_40px_rgba(0,0,0,0.8)]"
+          className="w-full bg-black/60 border border-red-900/30  rounded-2xl p-8 flex flex-col gap-5 shadow-[0_0_40px_rgba(0,0,0,0.8)]"
         >
           {/* Inputs: Placeholder sáng màu đỏ, font kinh dị */}
           <div className="space-y-4">
@@ -164,7 +164,7 @@ export default function SignupPage() {
             onClick={() => router.push(PATHS.SERVER)}
             className={`${fontHorror.className} text-sm text-red-900/80 hover:text-red-600 transition-colors tracking-[0.2em] uppercase`}
           >
-            [ Rời bỏ máy chủ này ]
+             Rời bỏ máy chủ này 
           </button>
         </div>
 

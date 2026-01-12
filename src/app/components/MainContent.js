@@ -115,7 +115,7 @@ export default function MainContent() {
         </div>
 
         {/* Form Container - CHỈNH TRONG SUỐT HƠN Ở ĐÂY */}
-        <div className="w-full bg-black/20 border border-red-900/30 rounded-3xl p-6 sm:p-8 flex flex-col gap-8 shadow-[0_0_40px_rgba(0,0,0,0.8)]">
+        <div className="w-full bg-black/80 border border-red-900/30 rounded-3xl p-6 sm:p-8 flex flex-col gap-8 shadow-[0_0_40px_rgba(0,0,0,0.8)]">
           
           {/* === CREATE ROOM === */}
           <div className="flex flex-col gap-2" >
