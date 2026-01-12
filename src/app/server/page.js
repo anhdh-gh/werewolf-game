@@ -49,7 +49,7 @@ export default function ServerPage() {
       
       {/* 1. Tối ưu Ảnh nền: Dùng Image component thay vì style background-image */}
       <Image
-        src="/image/select_server.jpg"
+        src="/image/select_server_screen.jpg"
         alt="Horror Background"
         fill
         priority
