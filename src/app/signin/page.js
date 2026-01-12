@@ -89,7 +89,7 @@ export default function SigninPage() {
       
       {/* Background Image */}
       <Image
-        src="/image/select_server.png"
+        src="/image/select_server_screen.jpg"
         alt="Horror Background"
         fill
         priority

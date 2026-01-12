@@ -70,7 +70,7 @@ export default function SignupPage() {
       
       {/* 1. Background Image: Rõ nét lấy từ trang Server */}
       <Image
-        src="/image/select_server.png"
+        src="/image/select_server_screen.jpg"
         alt="Horror Background"
         fill
         priority
