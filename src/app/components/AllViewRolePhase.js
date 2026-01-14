@@ -19,6 +19,51 @@ export default function AllViewRolePhase({ roomCode, flow }) {
   const [revealed, setRevealed] = useState(false);
   const audioRef = useRef(null);
 
+
+
+
+  /*===== self-test-start ===== */
+  // ... import như cũ ...
+
+const FAKE_PLAYER = {
+  player_id: 1,
+  username: "Fake Player",
+  role: "WEREWOLF",
+  initial_role: "SEER",
+  is_alive: true,
+  is_connected: true,
+  is_ready: true,
+};
+
+  useEffect(() => {
+    // 🔹 Nếu đang ở chế độ debug (roomCode = "DEBUG") thì dùng fake player, KHÔNG gọi socket
+    if (roomCode === "DEBUG") {
+      setPlayer(FAKE_PLAYER);
+      return;
+    }
+  
+    const socket = getGameSocket();
+    if (!socket) return;
+  
+    const playerId = Number(localStorage.getItem(KEYS.USER_ID));
+    if (!playerId) {
+      router.push(PATHS.SIGN_IN);
+      return;
+    }
+  
+    socket.emit(
+      EVENTS.PLAYER_INFO,
+      { room: { code: roomCode }, player: { ids: [playerId] } },
+      (res) => {
+        if (!res?.data?.players?.length) return;
+        setPlayer(res.data.players[0]);
+      }
+    );
+  }, [roomCode, router]);
+
+  /*===== self-test-end ===== */
+
+
   /* ===== FETCH PLAYER INFO ===== */
   useEffect(() => {
     const socket = getGameSocket();
@@ -77,6 +122,7 @@ export default function AllViewRolePhase({ roomCode, flow }) {
     return <Loading textMsg="Đang triệu hồi linh hồn..." />;
   }
 
+
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-black flex flex-col items-center justify-center px-4 gap-8">
       
@@ -90,7 +136,6 @@ export default function AllViewRolePhase({ roomCode, flow }) {
         className="object-cover opacity-80 contrast-125 saturate-50"
       />
       
-      {/* (ĐÃ XÓA DIV OVERLAY Ở ĐÂY) */}
 
       {/* === CONTENT LAYER === */}
       <div className="relative z-20 flex flex-col items-center gap-10 w-full max-w-md">
