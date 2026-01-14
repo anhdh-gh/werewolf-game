@@ -25,6 +25,7 @@ import EndPhase from "@/components/EndPhase";
 import NightGuardPhase from "@/components/NightGuardPhase";
 import NightSilencedPhase from "@/components/NightSilencedPhase";
 import NightCursedPhase from "@/components/NightCursedPhase";
+import DebugPanel from "@/components/DebugPanel";
 
 export default function RoomContent() {
   const { room_code } = useParams();
@@ -207,4 +208,6 @@ export default function RoomContent() {
 
   /* ===== LOADING ===== */
   return <Loading textMsg={`Đang kết nối tới phòng ${room_code}`} />;
+
+  {process.env.NODE_ENV === 'development' && <DebugPanel />}
 }
