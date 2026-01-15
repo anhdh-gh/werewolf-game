@@ -1,61 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Loading from "@/components/Loading";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Creepster } from "next/font/google";
-import { EVENTS } from "@/constants/events";
-import { getGameSocket } from "@/socket/gameSocket";
-import { KEYS } from "@/constants/keys";
-import { PATHS } from "@/constants/paths";
 
 // Font Ma Mị
 const fontHorror = Creepster({ weight: "400", subsets: ["latin"], display: "swap" });
 
 export default function NightAllSleepPhase({ roomCode, flow }) {
-  const router = useRouter();
   const audioRef = useRef(null);
   
-  const [player, setPlayer] = useState(null);
-
-  /*===== self-test-start (GIỮ NGUYÊN LOGIC) ===== */
-  const FAKE_PLAYER = {
-    player_id: 1,
-    username: "Fake Player",
-    role: "WEREWOLF",
-    initial_role: "WEREWOLF",
-    is_alive: true,
-    is_connected: true,
-    is_ready: true,
-  };
-
-  useEffect(() => {
-    if (roomCode === "DEBUG") {
-      setPlayer(FAKE_PLAYER);
-      return;
-    }
-
-    const socket = getGameSocket();
-    if (!socket) return;
-
-    const playerId = Number(localStorage.getItem(KEYS.USER_ID));
-    if (!playerId) {
-      router.push(PATHS.SIGN_IN);
-      return;
-    }
-
-    socket.emit(
-      EVENTS.PLAYER_INFO,
-      { room: { code: roomCode }, player: { ids: [playerId] } },
-      (res) => {
-        if (!res?.data?.players?.length) return;
-        setPlayer(res.data.players[0]);
-      }
-    );
-  }, [roomCode, router]);
-  /*===== self-test-end ===== */
-
   /* ===== TTS LOGIC (GIỮ NGUYÊN) ===== */
   useEffect(() => {
     if (!flow?.message) return;
