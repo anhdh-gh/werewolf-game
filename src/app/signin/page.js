@@ -3,13 +3,13 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Creepster } from "next/font/google";
+import { Piedra } from "next/font/google";
 import { KEYS } from "@/constants/keys";
 import { PATHS } from "@/constants/paths";
 import { API_PATHS } from "@/constants/paths.api";
 import { useApiFetch } from "@/hooks/useApiFetch";
 
-const fontHorror = Creepster({ weight: "400", subsets: ["latin"], display: "swap" });
+const fontHorror = Piedra({ weight: "400", subsets: ["vietnamese"], display: "swap" });
 
 function parseJwt(token) {
   try {
