@@ -11,10 +11,14 @@ import Loading from "@/components/Loading";
 import CopyableText from "@/components/CopyableText";
 import { useRouter } from "next/navigation";
 import { ACTIONS } from "@/constants/actions";
+import localFont from "next/font/local";
 
-// --- FONTS (Giống ServerPage) ---
-const fontHorror = Creepster({ weight: "400", subsets: ["latin"], display: "swap" });
-const fontBlood = Nosifer({ weight: "400", subsets: ["latin"], display: "swap" });
+const fontHorror = localFont({
+  
+  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
+  display: "swap",
+});
+
 
 export default function DayDiscussionPhase({ roomCode, flow }) {
   const router = useRouter();

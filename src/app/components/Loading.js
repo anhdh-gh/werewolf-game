@@ -1,6 +1,11 @@
-import { Creepster } from "next/font/google";
 
-const fontHorror = Creepster({ weight: "400", subsets: ["latin"], display: "swap" });
+import localFont from "next/font/local";
+const fontHorror = localFont({
+  
+  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
+  display: "swap",
+});
+
 
 export default function Loading({ textMsg }) {
   return (

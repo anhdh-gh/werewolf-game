@@ -10,11 +10,14 @@ import { ACTIONS } from "@/constants/actions";
 import { ROLES } from "@/constants/roles";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Creepster, Nosifer } from "next/font/google";
+import localFont from "next/font/local";
 
 // Font Ma Mị & Máu Me
-const fontHorror = Creepster({ weight: "400", subsets: ["latin"], display: "swap" });
-const fontBlood = Nosifer({ weight: "400", subsets: ["latin"], display: "swap" });
+const fontHorror = localFont({
+  
+  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
+  display: "swap",
+});
 
 export default function NightCursedPhase({ roomCode, flow }) {
   const router = useRouter();

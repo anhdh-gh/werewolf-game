@@ -3,13 +3,17 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Creepster } from "next/font/google";
 import { KEYS } from "@/constants/keys";
 import { PATHS } from "@/constants/paths";
 import { API_PATHS } from "@/constants/paths.api";
 import { useApiFetch } from "@/hooks/useApiFetch";
+import localFont from "next/font/local";
 
-const fontHorror = Creepster({ weight: "400", subsets: ["latin"], display: "swap" });
+const fontHorror = localFont({
+  
+  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
+  display: "swap",
+});
 
 export default function MainContent() {
   const router = useRouter();

@@ -10,6 +10,13 @@ import { KEYS } from "@/constants/keys";
 import { ACTIONS } from "@/constants/actions";
 import { ROLES } from "@/constants/roles";
 import { useRouter } from "next/navigation";
+import localFont from "next/font/local";
+
+const fontHorror = localFont({
+  
+  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
+  display: "swap",
+});
 
 export default function NightGuardPhase({ roomCode, flow }) {
   const router = useRouter();

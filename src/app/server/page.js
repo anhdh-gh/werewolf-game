@@ -3,14 +3,18 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Creepster, Nosifer } from "next/font/google";
+
 import { KEYS } from "@/constants/keys";
 import { PATHS } from "@/constants/paths";
 import { API_PATHS } from "@/constants/paths.api";
+import localFont from "next/font/local";
 
-// Tối ưu Font: Next.js sẽ tự động tải và lưu font này ở server nội bộ
-const fontHorror = Creepster({ weight: "400", subsets: ["latin"], display: "swap" });
-const fontBlood = Nosifer({ weight: "400", subsets: ["latin"], display: "swap" });
+const fontHorror = localFont({
+  
+  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
+  display: "swap",
+});
+
 
 export default function ServerPage() {
   const router = useRouter();

@@ -8,10 +8,14 @@ import { PATHS } from "@/constants/paths";
 import Loading from "@/components/Loading";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Creepster, Nosifer } from "next/font/google";
+import localFont from "next/font/local";
 
-const fontHorror = Creepster({ weight: "400", subsets: ["latin"], display: "swap" });
-const fontBlood = Nosifer({ weight: "400", subsets: ["latin"], display: "swap" });
+
+const fontHorror = localFont({
+  
+  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
+  display: "swap",
+});
 
 // 🛠️ CẤU HÌNH ẢNH ROLE TẠI ĐÂY
 // Bạn chỉ cần thay thế đường dẫn trong dấu ngoặc kép "" thành link ảnh thật của bạn

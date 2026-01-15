@@ -2,12 +2,17 @@
 
 import { useEffect, useRef } from "react";
 import Image from "next/image";
-import { Creepster } from "next/font/google";
+import localFont from "next/font/local";
 import Loading from "@/components/Loading";
 import { useRoom } from "@/contexts/RoomContext";
 
 // --- FONT MA MỊ ---
-const fontHorror = Creepster({ weight: "400", subsets: ["latin"], display: "swap" });
+
+const fontHorror = localFont({
+  
+  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
+  display: "swap",
+});
 
 export default function EndPhase({ roomCode, flow }) {
   const audioRef = useRef(null);
