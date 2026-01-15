@@ -1,16 +1,21 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Image from "next/image";
+import { Creepster } from "next/font/google";
 import Loading from "@/components/Loading";
-import { PATHS } from "@/constants/paths";
 import { useRoom } from "@/contexts/RoomContext";
+
+// --- FONT MA MỊ ---
+const fontHorror = Creepster({ weight: "400", subsets: ["latin"], display: "swap" });
 
 export default function EndPhase({ roomCode, flow }) {
   const audioRef = useRef(null);
   const timerRef = useRef(null);
   const { setPlayers, setGameFlow } = useRoom();
 
-  /* ===== TTS + AUTO REDIRECT ===== */
+
+  
   useEffect(() => {
     if (!flow?.message) return;
 
@@ -39,7 +44,7 @@ export default function EndPhase({ roomCode, flow }) {
     // ===== AUTO BACK TO LOBBY (10s) =====
     timerRef.current = setTimeout(() => {
       setPlayers([]);
-      setGameFlow(null)
+      setGameFlow(null);
     }, 10_000);
 
     // ===== CLEANUP =====
@@ -51,22 +56,64 @@ export default function EndPhase({ roomCode, flow }) {
         clearTimeout(timerRef.current);
       }
     };
-  }, [flow?.message, roomCode]);
+  }, [flow?.message, roomCode, setPlayers, setGameFlow]);
 
   if (!flow?.message) {
-    return <Loading textMsg="Đang chuẩn bị..." />;
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-black">
+        <Loading textMsg="Đang tổng kết..." />
+      </div>
+    );
   }
 
-  /* ===== UI ===== */
+  
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-black text-white px-4">
-      <p className="text-xl font-semibold text-center max-w-md animate-pulse">
-        {flow.message}
-      </p>
+    <div className="relative h-screen w-full overflow-hidden bg-black flex flex-col items-center justify-center px-4">
+      
+      {/* 1. Nền: Dùng lại ảnh cũ nhưng chỉnh màu xám xịt (saturate-0) để tạo cảm giác "Kết thúc/Chết chóc" */}
+      <Image
+        src="/image/select_server_screen.jpg"
+        alt="End Game Background"
+        fill
+        priority
+        className="object-cover opacity-30 contrast-125 saturate-0 pointer-events-none"
+      />
+      
+      {/* 2. Lớp phủ Gradient đen mờ */}
+      <div className="absolute inset-0 bg-gradient-radial from-transparent via-black/60 to-black pointer-events-none z-0" />
 
-      <p className="text-sm text-gray-500">
-        Tự động quay về phòng chờ sau 10 giây...
-      </p>
+      {/* 3. Nội dung chính */}
+      <div className="relative z-10 w-full max-w-2xl flex flex-col items-center gap-10 text-center animate-in fade-in zoom-in duration-1000">
+        
+        {/* Tiêu đề kết quả */}
+        <div className="space-y-4">
+            <h2 className={`${fontHorror.className} text-gray-500 text-2xl tracking-[0.5em] opacity-80 uppercase`}>
+                KẾT CỤC
+            </h2>
+            
+            {/* Tin nhắn kết quả (flow.message) - Hiệu ứng máu đỏ rực */}
+            <h1 className={`${fontHorror.className} text-5xl md:text-7xl text-[#ff0000] drop-shadow-[0_0_30px_rgba(255,0,0,0.6)] leading-tight`}>
+                {flow.message}
+            </h1>
+        </div>
+
+        {/* Decorator Line */}
+        <div className="w-32 h-[2px] bg-gradient-to-r from-transparent via-red-900 to-transparent" />
+
+        {/* Đồng hồ đếm ngược / Thông báo chuyển trang */}
+        <div className="flex flex-col items-center gap-3 opacity-70">
+           <div className="w-8 h-8 rounded-full border-2 border-t-red-600 border-r-transparent border-b-transparent border-l-transparent animate-spin" />
+           
+           <p className="text-sm font-mono text-gray-400 tracking-wider uppercase animate-pulse">
+             Đang tẩy rửa hiện trường...
+             <br/>
+             <span className="text-[10px] opacity-50 normal-case">
+               (Về sảnh sau 10 giây)
+             </span>
+           </p>
+        </div>
+
+      </div>
     </div>
   );
 }

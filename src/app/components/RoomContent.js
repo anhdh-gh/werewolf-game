@@ -207,4 +207,6 @@ export default function RoomContent() {
 
   /* ===== LOADING ===== */
   return <Loading textMsg={`Đang kết nối tới phòng ${room_code}`} />;
+
+
 }

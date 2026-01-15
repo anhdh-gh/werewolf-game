@@ -9,6 +9,8 @@ export default function ProtectedRoute({ children }) {
   const router = useRouter();
   const [allowed, setAllowed] = useState(false);
 
+
+
   useEffect(() => {
     const selected = localStorage.getItem(KEYS.SERVER_SELECTED);
     if (!selected) {
