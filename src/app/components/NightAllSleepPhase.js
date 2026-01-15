@@ -117,13 +117,11 @@ export default function NightAllSleepPhase({ roomCode, flow }) {
         
         {/* MESSAGE */}
         <div className="text-center space-y-4 max-w-lg">
-           {/* 👇 CHỮ ĐỎ KINH DỊ ĐÂY RỒI */}
-           <h2 className={`${fontHorror.className} text-4xl sm:text-5xl text-[#ff0000] drop-shadow-[0_0_20px_rgba(255,0,0,0.6)] tracking-widest animate-pulse`}>
-             ĐÊM TRƯỜNG
-           </h2>
-           <p className="text-red-200/80 font-mono text-sm tracking-widest uppercase border-t border-b border-red-900/30 py-2 bg-black/60 backdrop-blur-sm">
-             {flow.message}
-           </p>
+          
+        <h2 className={`${fontHorror.className} text-4xl sm:text-5xl text-red-500/90 tracking-widest animate-pulse`}>
+  ĐÊM TRƯỜNG
+</h2>
+          
         </div>
 
         {/* ICON "TRĂNG MÁU" (Đã thu nhỏ w-16 h-16) */}
@@ -142,7 +140,7 @@ export default function NightAllSleepPhase({ roomCode, flow }) {
         </div>
 
         {/* 👇 CHỮ ĐỎ DƯỚI CÙNG */}
-        <p className={`${fontHorror.className} mt-2 text-xl text-red-600/80 tracking-widest`}>
+        <p className={`${fontHorror.className} text-red-500/90 text-xl tracking-widest uppercase py-2 bg-transparent`}>
            MỌI NGƯỜI ĐANG NGỦ...
         </p>
       </div>

@@ -25,42 +25,7 @@ export default function NightCursedPhase({ roomCode, flow }) {
 
   const audioRef = useRef(null);
 
-  /*===== self-test-start (GIỮ NGUYÊN LOGIC) ===== */
-  const FAKE_PLAYER = {
-    player_id: 1,
-    username: "Fake Player",
-    role: "WEREWOLF", // Giả lập đã hóa sói
-    initial_role: "CURSED",
-    is_alive: true,
-    is_connected: true,
-    is_ready: true,
-  };
-
-  useEffect(() => {
-    if (roomCode === "DEBUG") {
-      setPlayer(FAKE_PLAYER);
-      return;
-    }
-
-    const socket = getGameSocket();
-    if (!socket) return;
-
-    const playerId = Number(localStorage.getItem(KEYS.USER_ID));
-    if (!playerId) {
-      router.push(PATHS.SIGN_IN);
-      return;
-    }
-
-    socket.emit(
-      EVENTS.PLAYER_INFO,
-      { room: { code: roomCode }, player: { ids: [playerId] } },
-      (res) => {
-        if (!res?.data?.players?.length) return;
-        setPlayer(res.data.players[0]);
-      }
-    );
-  }, [roomCode, router]);
-  /*===== self-test-end ===== */
+ 
 
   /* ===== FETCH SELF PLAYER (GIỮ NGUYÊN LOGIC) ===== */
   useEffect(() => {
@@ -122,9 +87,7 @@ export default function NightCursedPhase({ roomCode, flow }) {
 
   const isWolfNow = player.role.toLowerCase().includes('wolf');
 
-  /* ================================================= */
-  /* 👇 UI PASSIVE VIEW (NGƯỜI KHÁC - MÀN HÌNH NGỦ) 👇 */
-  /* ================================================= */
+  
   if (!isCursedWakeup) {
     return (
       <div className="relative min-h-screen w-full overflow-hidden bg-black flex flex-col items-center justify-center px-4 gap-8">
@@ -149,9 +112,7 @@ export default function NightCursedPhase({ roomCode, flow }) {
     );
   }
 
-  /* ================================================= */
-  /* 👇 UI ACTIVE VIEW (STYLE GIỐNG ALL VIEW ROLE) 👇 */
-  /* ================================================= */
+ 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-black flex flex-col items-center justify-center py-6 px-4">
       
@@ -191,7 +152,7 @@ export default function NightCursedPhase({ roomCode, flow }) {
                     <div className="relative w-22 h-22">
                         {isWolfNow ? (
                             <img 
-                                src="/image/werewolf.png" 
+                                src="/image/wolf.png" 
                                 alt="Werewolf"
                                 className="w-full h-full object-contain"
                             />
