@@ -43,7 +43,7 @@ const FAKE_PLAYER = {
   player_id: 1,
   username: "Fake Player",
   role: "WEREWOLF",
-  initial_role: "SEER",
+  initial_role: "CURSED",
   is_alive: true,
   is_connected: true,
   is_ready: true,
@@ -132,12 +132,13 @@ const FAKE_PLAYER = {
     if (navigator.vibrate) navigator.vibrate(30);
   };
 
-  const roleImageSrc = ROLE_IMAGES[player.initial_role] ? ROLE_IMAGES[player.initial_role] : ROLE_IMAGES.DEFAULT;
 
   if (!player) {
     return <Loading textMsg="Đang triệu hồi linh hồn..." />;
   }
 
+
+  const roleImageSrc = ROLE_IMAGES[player.role] ? ROLE_IMAGES[player.role] : ROLE_IMAGES.DEFAULT;
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-black flex flex-col items-center justify-center px-4 gap-8">
