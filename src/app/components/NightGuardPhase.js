@@ -29,8 +29,8 @@ export default function NightGuardPhase({ roomCode, flow }) {
 const FAKE_PLAYER = {
   player_id: 1,
   username: "Fake Player",
-  role: "SEER",
-  initial_role: "SEER",
+  role: "BODYGUARD",
+  initial_role: "BODYGUARD",
   is_alive: true,
   is_connected: true,
   is_ready: true,

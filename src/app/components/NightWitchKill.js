@@ -28,8 +28,8 @@ export default function NightWitchKill({ roomCode, flow }) {
 const FAKE_PLAYER = {
   player_id: 1,
   username: "Fake Player",
-  role: "SEER",
-  initial_role: "SEER",
+  role: "WITCH",
+  initial_role: "WITCH",
   is_alive: true,
   is_connected: true,
   is_ready: true,
