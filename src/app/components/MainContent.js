@@ -136,8 +136,8 @@ export default function MainContent() {
                     onChange={handleMaxPlayersChange}
                     className={`${fontHorror.className} w-full h-full pl-4 pr-20 bg-black/60 border-2 border-red-900/50 text-red-100 rounded-xl outline-none text-4xl focus:border-red-600 focus:shadow-[0_0_15px_rgba(220,38,38,0.4)] transition-all text-center`}
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-red-600/60 text-xs font-bold font-sans uppercase tracking-widest pointer-events-none">
-                    Players
+                  <span className={`${fontHorror.className} absolute right-4 top-1/2 -translate-y-1/2 text-red-600/60 text-xs font-bold font-sans uppercase tracking-widest pointer-events-none`}>
+                   Người
                   </span>
                 </div>
 
