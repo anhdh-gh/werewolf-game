@@ -35,6 +35,19 @@ const ROLE_IMAGES = {
 
 };
 
+const ROLE_NAME_VN = {
+  WEREWOLF : "MA SÓI",
+  VILLAGER : " DÂN LÀNG",
+  SEER : "TIÊN TRI",
+  GUARD :"BẢO VỆ",
+  WITCH : "PHÙ THUỶ",
+  TANNER :"CHÁN ĐỜI" ,
+  CURSED :"BỊ NGUYỀN",
+  SILENCED :"KẺ BỊ CÂM",
+  GOD :"HÙNG ANH",
+  DEFAULT :"NOTHING"
+}
+
 export default function AllViewRolePhase({ roomCode, flow }) {
   const router = useRouter();
   const [player, setPlayer] = useState();
@@ -103,8 +116,8 @@ export default function AllViewRolePhase({ roomCode, flow }) {
 
   // Lấy đường dẫn ảnh dựa trên Role của người chơi
   // Nếu không tìm thấy role trong list thì lấy ảnh DEFAULT
-  const roleImageSrc = ROLE_IMAGES[player.initial_role] ? ROLE_IMAGES[player.initial_role] : ROLE_IMAGES.DEFAULT;
-
+  const roleImageSrc = ROLE_IMAGES[player.role] ? ROLE_IMAGES[player.role] : ROLE_IMAGES.DEFAULT;
+  const roleNameVN = player.role ? ROLE_NAME_VN[player.role] : ROLE_NAME_VN.DEFAULT; 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-black flex flex-col items-center justify-center px-4 gap-8">
       
@@ -146,7 +159,7 @@ export default function AllViewRolePhase({ roomCode, flow }) {
                     <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/black-scales.png')]"></div>
                     <div className="w-[90%] h-[90%] border border-red-900/30 rounded-xl flex items-center justify-center relative bg-black/40">
                         <span className={`${fontHorror.className} text-4xl text-red-700/80 drop-shadow-md text-center`}>
-                            YOUR<br/>FATE
+                            VAI TRÒ <br/>CỦA BẠN
                         </span>
                     </div>
                     <p className={`${fontHorror.className} absolute bottom-4 text-gray-400 text-sm tracking-widest animate-bounce`}>
@@ -179,7 +192,7 @@ export default function AllViewRolePhase({ roomCode, flow }) {
 
                         {/* Tên Role */}
                         <h1 className={`${fontHorror.className} text-2xl sm:text-3xl text-red-500 text-center drop-shadow-[0_2px_2px_black] uppercase leading-relaxed break-words z-10`}>
-                            {player.initial_role}
+                            {roleNameVN}
                         </h1>
                     </div>
                     {/* 👆 KẾT THÚC PHẦN CHỈNH SỬA */}

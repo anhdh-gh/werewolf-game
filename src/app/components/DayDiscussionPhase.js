@@ -191,9 +191,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
             {flow.message}
           </h2>
           <div className="flex items-center gap-3 text-xs font-mono opacity-60">
-             <span>ROOM: {roomCode}</span>
-             <span>•</span>
-             <span>{player?.username} [{player?.role}]</span>
+             <span>Vai trò của bạn : {player?.role}</span>
           </div>
         </header>
 

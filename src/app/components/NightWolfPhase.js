@@ -201,11 +201,9 @@ export default function NightWolfPhase({ roomCode, flow }) {
             </h2>
           </div>
           <div className="bg-black/40 px-6 py-2 rounded-full border border-red-900/30">
-               <p className={`${fontHorror.className} text-2xl text-red-600`}>
-                 {player?.username}
-               </p>
+              
                <p className="text-xs text-gray-400 font-sans tracking-widest uppercase">
-                 ID: {player?.player_id} | Role: {player?.role}
+                 Vai trò của bạn : {player?.role}
                </p>
           </div>
         </div>
@@ -225,14 +223,11 @@ export default function NightWolfPhase({ roomCode, flow }) {
       {/* HEADER: shrink-0 */}
       <header className="shrink-0 p-4 pt-6 text-center drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
         <h2 className={`${fontHorror.className} text-5xl md:text-6xl text-[#ce2029] tracking-widest mb-2 leading-none drop-shadow-[0_0_15px_rgba(206,32,41,0.6)]`}>
-          {flow.message}
+           Sói muốn cắn ai ?
         </h2>
         <div className="flex justify-center gap-3">
-             <span className="bg-red-900/40 px-3 py-1 rounded border border-red-900/50 text-gray-300 text-xs font-bold font-sans uppercase">
-               Room #{roomCode}
-             </span>
              <span className="bg-red-900/40 px-3 py-1 rounded border border-red-900/50 text-red-200 text-xs font-bold font-sans uppercase">
-               {player?.username} ({player?.role})
+               vai trò của bạn là : Ma Sói
              </span>
         </div>
       </header>
@@ -240,7 +235,7 @@ export default function NightWolfPhase({ roomCode, flow }) {
       {/* BODY: flex-1 + overflow-y-auto */}
       <main className="flex-1 overflow-y-auto p-4 w-full scrollbar-none pb-24">
         <h3 className={`${fontHorror.className} text-3xl text-red-500 mb-4 text-center tracking-wider drop-shadow-[0_2px_2px_black]`}>
-            🐺 CHỌN CON MỒI
+             CHỌN CON MỒI
         </h3>
 
         <div className="space-y-3">

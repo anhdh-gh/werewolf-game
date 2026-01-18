@@ -18,6 +18,19 @@ const fontHorror = localFont({
   display: "swap",
 });
 
+const ROLE_NAME_VN = {
+  WEREWOLF : "MA SÓI",
+  VILLAGER : " DÂN LÀNG",
+  SEER : "TIÊN TRI",
+  GUARD :"BẢO VỆ",
+  WITCH : "PHÙ THUỶ",
+  TANNER :"CHÁN ĐỜI" ,
+  CURSED :"BỊ NGUYỀN",
+  SILENCED :"KẺ BỊ CÂM",
+  GOD :"HÙNG ANH",
+  DEFAULT :"NOTHING"
+}
+
 export default function NightSeerPhase({ roomCode, flow }) {
   const router = useRouter();
   const socket = getGameSocket();
@@ -82,6 +95,8 @@ export default function NightSeerPhase({ roomCode, flow }) {
     return role === ROLES.WEREWOLF ? "🐺 SÓI" : "👤 NGƯỜI";
   };
 
+
+
   /* =========================================
      FIXED LAYOUT WRAPPER
      Sử dụng mô hình Flexbox chuẩn:
@@ -118,6 +133,7 @@ export default function NightSeerPhase({ roomCode, flow }) {
       </div>
     );
   }
+  const roleNameVN = player.role ? ROLE_NAME_VN[player.role] : ROLE_NAME_VN.DEFAULT;
 
   const isSeerWakeup =
     player.role === ROLES.SEER &&
@@ -125,6 +141,8 @@ export default function NightSeerPhase({ roomCode, flow }) {
     player.is_connected &&
     player.is_ready &&
     flow?.event?.action === ACTIONS.WAKEUP;
+
+
 
   /* ===== 2. PASSIVE VIEW (Không phải lượt) ===== */
   if (!isSeerWakeup) {
@@ -138,11 +156,10 @@ export default function NightSeerPhase({ roomCode, flow }) {
             </h2>
           </div>
           <div className="bg-black/40 px-6 py-2 rounded-full border border-red-900/30">
-               <p className={`${fontHorror.className} text-2xl text-red-500`}>
-                 {player?.username}
-               </p>
+               
+               
                <p className="text-xs text-gray-400 font-sans tracking-widest uppercase">
-                 ID: {player?.player_id} | Role: {player?.role}
+                  Vai trò của bạn là  : {roleNameVN}
                </p>
           </div>
         </div>
@@ -159,12 +176,9 @@ export default function NightSeerPhase({ roomCode, flow }) {
           Bạn muốn soi ai 
         </h2>
         <div className="flex justify-center gap-3">
-             <span className="bg-red-900/40 px-3 py-1 rounded border border-red-900/50 text-gray-300 text-xs font-bold font-sans uppercase">
-               Room #{roomCode}
-             </span>
-             <span className="bg-red-900/40 px-3 py-1 rounded border border-red-900/50 text-red-200 text-xs font-bold font-sans uppercase">
-               {player?.username} ({player?.role})
-             </span>
+             <span className="text-xs text-gray-400 font-sans tracking-widest uppercase">
+               Vai trò của bạn: Tiên Tri
+              </span>
         </div>
       </header>
 
