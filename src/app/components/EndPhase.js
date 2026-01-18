@@ -97,9 +97,9 @@ export default function EndPhase({ roomCode, flow }) {
             </h2>
             
             {/* Tin nhắn kết quả (flow.message) - Hiệu ứng máu đỏ rực */}
-            <h1 className={`${fontHorror.className} text-5xl md:text-7xl text-[#ff0000] drop-shadow-[0_0_30px_rgba(255,0,0,0.6)] leading-tight`}>
-                {flow.message}
-            </h1>
+           <h1 className={`${fontHorror.className} text-5xl md:text-7xl text-[#ce2029] drop-shadow-[0_0_30px_rgba(206,32,41,0.8)] leading-tight`}>
+  {flow.message}
+             </h1>
         </div>
 
         {/* Decorator Line */}

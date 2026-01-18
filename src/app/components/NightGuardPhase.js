@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import localFont from "next/font/local";
 import Loading from "@/components/Loading";
-import CopyableText from "@/components/CopyableText";
 import { getGameSocket } from "@/socket/gameSocket";
 import { EVENTS } from "@/constants/events";
 import { PATHS } from "@/constants/paths";
@@ -10,10 +11,9 @@ import { KEYS } from "@/constants/keys";
 import { ACTIONS } from "@/constants/actions";
 import { ROLES } from "@/constants/roles";
 import { useRouter } from "next/navigation";
-import localFont from "next/font/local";
 
+// Font Horror
 const fontHorror = localFont({
-  
   src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
   display: "swap",
 });
@@ -29,11 +29,9 @@ export default function NightGuardPhase({ roomCode, flow }) {
 
   const audioRef = useRef(null);
 
-
   /* ===== FETCH PLAYER INFO ===== */
   useEffect(() => {
     if (!socket) return;
-
     const playerId = Number(localStorage.getItem(KEYS.USER_ID));
     if (!playerId) {
       router.push(PATHS.SIGN_IN);
@@ -41,19 +39,14 @@ export default function NightGuardPhase({ roomCode, flow }) {
     }
 
     // Self player
-    socket.emit(
-      EVENTS.PLAYER_INFO,
-      { room: { code: roomCode }, player: { ids: [playerId] } },
-      (res) => {
-        if (!res?.data?.players?.length) return;
-        setPlayer(res.data.players[0]);
-      }
-    );
+    socket.emit(EVENTS.PLAYER_INFO, { room: { code: roomCode }, player: { ids: [playerId] } }, (res) => {
+      if (!res?.data?.players?.length) return;
+      setPlayer(res.data.players[0]);
+    });
 
-    // All players
+    // All players (Filter logic giữ nguyên)
     socket.emit(EVENTS.PLAYER_INFO, { room: { code: roomCode } }, (res) => {
       if (!res?.data?.players?.length) return;
-
       setPlayersList(
         res.data.players.filter(
           (p) => p.is_alive && p.is_connected && p.is_ready && !p.is_protected
@@ -65,10 +58,8 @@ export default function NightGuardPhase({ roomCode, flow }) {
   /* ===== TTS ===== */
   useEffect(() => {
     if (!flow?.message) return;
-
     if (!audioRef.current) audioRef.current = new Audio();
     const audio = audioRef.current;
-
     const play = async () => {
       try {
         audio.src = `/api/v1/tts?text=${encodeURIComponent(flow.message)}`;
@@ -78,29 +69,32 @@ export default function NightGuardPhase({ roomCode, flow }) {
         console.warn("TTS error:", err?.message);
       }
     };
-
     play();
     return () => audio.pause();
   }, [flow?.message]);
 
-  /* ===== DONE / SKIP ===== */
+  /* ===== ACTIONS ===== */
   const handleDone = () => {
     if (!socket || isLoading) return;
-
     setIsLoading(true);
-
     socket.emit(EVENTS.PLAYER_DONE, {
       room: { code: roomCode },
       current_phase: flow.phase,
     });
   };
 
-  /* ===== PROTECT (VOTE) ===== */
   const handleProtect = (p) => {
     if (!socket || isLoading) return;
+    // Nếu click lại người đã chọn -> bỏ chọn
+    if (selectedPlayer?.player_id === p.player_id) {
+        setSelectedPlayer(null);
+        return;
+    }
 
     setSelectedPlayer(p);
-
+    
+    // Gửi sự kiện vote luôn hoặc đợi bấm nút "Xác nhận" cũng được. 
+    // Theo logic cũ là gửi luôn khi click:
     socket.emit(EVENTS.PLAYER_VOTE, {
       room: { code: roomCode },
       current_phase: flow.phase,
@@ -111,7 +105,28 @@ export default function NightGuardPhase({ roomCode, flow }) {
     });
   };
 
-  /* ===== INITIAL LOADING ===== */
+  // --- BACKGROUND WRAPPER ---
+  const BackgroundWrapper = ({ children }) => (
+    <div className="relative min-h-screen w-full overflow-hidden bg-black flex flex-col items-center justify-center">
+       {/* Background Image */}
+       <Image
+        src="/image/room_screen.jpg"
+        alt="Horror Background"
+        fill
+        priority
+        className="object-cover opacity-100 contrast-125 saturate-110"
+      />
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-black/60 z-10 pointer-events-none" />
+      
+      {/* Content */}
+      <div className="relative z-20 w-full h-full max-w-md flex flex-col flex-1">
+        {children}
+      </div>
+    </div>
+  );
+
+  /* ===== LOADING STATE ===== */
   if (!flow?.message || !player) {
     return <Loading textMsg="Đang chuẩn bị..." />;
   }
@@ -126,92 +141,134 @@ export default function NightGuardPhase({ roomCode, flow }) {
   /* ===== PASSIVE VIEW ===== */
   if (!isGuardWakeup) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-black text-white px-4">
-        <p className="text-lg text-gray-300 text-center max-w-md animate-pulse">
-          {flow.message}
-        </p>
-        <div className="flex flex-col items-center justify-center">
-          <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id}) ({player?.role})</p>
+      <BackgroundWrapper>
+        <div className="flex-1 flex flex-col items-center justify-center px-6 text-center space-y-6">
+          <div className="drop-shadow-[0_0_15px_rgba(0,0,0,1)]">
+            <h2 className={`${fontHorror.className} text-5xl text-gray-300 animate-pulse tracking-widest`}>
+               {flow.message}
+            </h2>
+          </div>
+          <div className="bg-black/40 px-6 py-2 rounded-full border border-red-900/30">
+               <p className={`${fontHorror.className} text-2xl text-green-600`}> {/* Guard dùng màu xanh */}
+                 {player?.username}
+               </p>
+               <p className="text-xs text-gray-400 font-sans tracking-widest uppercase">
+                 ID: {player?.player_id} | Role: {player?.role}
+               </p>
+          </div>
         </div>
-      </div>
+      </BackgroundWrapper>
     );
   }
 
-  /* ===== GUARD VIEW ===== */
+  /* ===== ACTIVE GUARD VIEW ===== */
   return (
-    <div className="relative h-screen flex flex-col bg-black text-white overflow-hidden">
+    <BackgroundWrapper>
       {/* HEADER */}
-      <header className="shrink-0 bg-zinc-900 border-b border-zinc-800 p-4 z-10 shadow-md">
-        <h2 className="text-lg font-bold">{flow.message}</h2>
-        <p className="text-sm text-gray-400">Room #{roomCode}</p>
-        <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id}) ({player?.role})</p>
+      <header className="shrink-0 p-4 pt-8 text-center drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
+        <h2 className={`${fontHorror.className} text-5xl text-[#ce2029] tracking-widest mb-2`}>
+          {flow.message}
+        </h2>
+        <div className="flex justify-center gap-3">
+             <span className="bg-red-900/40 px-3 py-1 rounded border border-red-900/50 text-gray-300 text-xs font-bold font-sans uppercase">
+               Room #{roomCode}
+             </span>
+             <span className="bg-red-900/40 px-3 py-1 rounded border border-red-900/50 text-green-400 text-xs font-bold font-sans uppercase">
+               {player?.username} ({player?.role})
+             </span>
+        </div>
       </header>
 
       {/* BODY */}
-      <main className="flex-1 overflow-y-auto p-4">
-        <p className="text-sm text-gray-400 mb-3">
-          👉 Click vào người bạn muốn{" "}
-          <span className="text-green-400 font-semibold">bảo vệ</span>
-        </p>
+      <main className="flex-1 overflow-y-auto p-4 w-full">
+        <h3 className={`${fontHorror.className} text-3xl text-green-600 mb-4 text-center tracking-wider drop-shadow-[0_2px_2px_black]`}>
+           🛡️ CHỌN NGƯỜI BẢO VỆ
+        </h3>
 
-        <div className="space-y-3 pb-4">
+        <div className="space-y-3 pb-24">
           {playersList.map((p) => {
-            const isSelected = selectedPlayer?.player_id === p.player_id;
-
-            return (
-              <div
+             const isSelected = selectedPlayer?.player_id === p.player_id;
+             return (
+                <div
                 key={p.player_id}
                 onClick={() => handleProtect(p)}
-                className={`w-full flex items-center justify-between rounded-xl px-4 py-3 cursor-pointer transition
-                  ${
-                    isSelected
-                      ? "bg-green-700 border border-green-500"
-                      : "bg-zinc-800 hover:bg-zinc-700"
-                  }
-                  ${isLoading ? "opacity-60 pointer-events-none" : ""}
+                className={`group w-full flex items-center justify-between rounded-xl px-5 py-4 transition-all cursor-pointer shadow-lg active:scale-95 backdrop-blur-sm border
+                    ${isSelected 
+                        ? "bg-green-900/60 border-green-500 shadow-[0_0_15px_rgba(34,197,94,0.3)]" // Style khi được chọn
+                        : "bg-black/70 border-red-900/30 hover:bg-red-950/60 hover:border-red-600" // Style mặc định
+                    }
+                    ${isLoading ? "opacity-60 pointer-events-none" : ""}
                 `}
-              >
-                <div className="flex flex-col gap-1">
-                  <CopyableText label="ID" value={`${p.player_id}${p.player_id === player?.player_id ? ' (Me)' : ''}`} />
-                  <CopyableText label="Name" value={p.username} />
+                >
+                <div className="flex flex-col items-start">
+                    <span className={`${fontHorror.className} text-2xl tracking-wide ${isSelected ? "text-green-100" : "text-gray-200 group-hover:text-red-100"}`}>
+                        {p.username}
+                    </span>
+                    <span className={`text-xs font-sans font-bold ${isSelected ? "text-green-300" : "text-gray-500"}`}>
+                         ID: {p.player_id} {p.player_id === player?.player_id ? '(TÔI)' : ''}
+                    </span>
                 </div>
 
-                <span className="text-green-400 font-bold">🛡️ Bảo vệ</span>
-              </div>
-            );
+                <div className="flex flex-col items-end">
+                    {isSelected ? (
+                         <span className={`${fontHorror.className} text-2xl text-green-400 animate-pulse`}>
+                            ĐANG CHỌN
+                         </span>
+                    ) : (
+                        <span className="text-2xl opacity-20">🛡️</span>
+                    )}
+                </div>
+                </div>
+             );
           })}
         </div>
       </main>
 
       {/* FOOTER */}
-      <footer className="shrink-0 bg-zinc-900 border-t border-zinc-800 p-4 z-10 flex gap-3">
-        {/* 👉 CHỈ HIỆN BỎ QUA KHI CHƯA CHỌN AI */}
-        {!selectedPlayer && (
-          <button
-            disabled={isLoading}
-            onClick={handleDone}
-            className="flex-1 py-3 rounded-xl font-bold bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50"
-          >
-            Bỏ qua
-          </button>
-        )}
+      <footer className="fixed bottom-0 left-0 right-0 p-4 z-30 bg-gradient-to-t from-black via-black/90 to-transparent pb-8">
+        <div className="max-w-md mx-auto flex gap-3">
+          
+          {/* LOGIC NÚT: Nếu chưa chọn ai -> Hiển thị BỎ QUA. Nếu đã chọn -> Hiển thị XÁC NHẬN */}
+          
+          {!selectedPlayer ? (
+              <button
+                disabled={isLoading}
+                onClick={handleDone}
+                className={`w-full py-3 rounded-xl border-2 transition-all shadow-[0_0_20px_rgba(0,0,0,0.8)] ${
+                  isLoading
+                    ? "bg-gray-800 border-gray-700 text-gray-500 cursor-not-allowed"
+                    : "bg-gray-900/80 border-gray-600 text-gray-400 hover:text-white hover:border-white hover:bg-gray-800"
+                }`}
+              >
+                <span className={`${fontHorror.className} text-3xl tracking-widest uppercase`}>
+                   Bỏ qua
+                </span>
+              </button>
+          ) : (
+              <button
+                disabled={isLoading}
+                onClick={handleDone}
+                className={`w-full py-3 rounded-xl border-2 transition-all shadow-[0_0_20px_rgba(0,0,0,0.8)] ${
+                    isLoading
+                      ? "bg-gray-800 border-gray-700 text-gray-500 cursor-not-allowed"
+                      : "bg-green-900/80 border-green-600 text-white hover:bg-green-700 hover:shadow-[0_0_15px_rgba(34,197,94,0.5)]"
+                  }`}
+              >
+                <span className={`${fontHorror.className} text-3xl tracking-widest uppercase`}>
+                   Bảo vệ
+                </span>
+              </button>
+          )}
 
-        {/* ĐÃ XONG – LUÔN CÓ */}
-        <button
-          disabled={isLoading}
-          onClick={handleDone}
-          className="flex-1 py-3 rounded-xl font-bold bg-green-600 hover:bg-green-500 disabled:opacity-50"
-        >
-          Đã xong
-        </button>
+        </div>
       </footer>
 
-      {/* GLOBAL LOADING */}
+      {/* GLOBAL LOADING OVERLAY */}
       {isLoading && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/100">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md">
           <Loading textMsg="Đang xử lý..." />
         </div>
       )}
-    </div>
+    </BackgroundWrapper>
   );
 }

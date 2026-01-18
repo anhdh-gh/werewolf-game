@@ -145,7 +145,7 @@ export default function AllViewRolePhase({ roomCode, flow }) {
                 <div className="absolute inset-0 backface-hidden rounded-2xl bg-[#1a0505] border-4 border-[#3f0e0e] shadow-[0_0_30px_rgba(0,0,0,1)] flex flex-col items-center justify-center overflow-hidden">
                     <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/black-scales.png')]"></div>
                     <div className="w-[90%] h-[90%] border border-red-900/30 rounded-xl flex items-center justify-center relative bg-black/40">
-                        <span className={`${fontBlood.className} text-4xl text-red-700/80 drop-shadow-md text-center`}>
+                        <span className={`${fontHorror.className} text-4xl text-red-700/80 drop-shadow-md text-center`}>
                             YOUR<br/>FATE
                         </span>
                     </div>
@@ -178,7 +178,7 @@ export default function AllViewRolePhase({ roomCode, flow }) {
                         </div>
 
                         {/* Tên Role */}
-                        <h1 className={`${fontBlood.className} text-2xl sm:text-3xl text-red-500 text-center drop-shadow-[0_2px_2px_black] uppercase leading-relaxed break-words z-10`}>
+                        <h1 className={`${fontHorror.className} text-2xl sm:text-3xl text-red-500 text-center drop-shadow-[0_2px_2px_black] uppercase leading-relaxed break-words z-10`}>
                             {player.initial_role}
                         </h1>
                     </div>
