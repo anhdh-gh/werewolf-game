@@ -156,7 +156,7 @@ export default function NightSeerPhase({ roomCode, flow }) {
       {/* HEADER: shrink-0 (Không bị co lại) */}
       <header className="shrink-0 p-4 pt-6 text-center drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
         <h2 className={`${fontHorror.className} text-5xl md:text-6xl text-[#ce2029] tracking-widest mb-2 leading-none drop-shadow-[0_0_15px_rgba(206,32,41,0.6)]`}>
-          {flow.message}
+          Bạn muốn soi ai 
         </h2>
         <div className="flex justify-center gap-3">
              <span className="bg-red-900/40 px-3 py-1 rounded border border-red-900/50 text-gray-300 text-xs font-bold font-sans uppercase">
