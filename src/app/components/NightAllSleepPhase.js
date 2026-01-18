@@ -103,7 +103,7 @@ export default function NightAllSleepPhase({ roomCode, flow }) {
       
       {/* 1. NỀN */}
       <Image
-        src="/image/select_server_screen.jpg"
+        src="/image/night_all_sleep_screen.png"
         alt="Night Background"
         fill
         priority

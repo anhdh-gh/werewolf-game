@@ -29,8 +29,8 @@ export default function NightSilencedPhase({ roomCode, flow }) {
 const FAKE_PLAYER = {
   player_id: 1,
   username: "Fake Player",
-  role: "SEER",
-  initial_role: "SEER",
+  role: "SILENCED",
+  initial_role: "SILENCED",
   is_alive: true,
   is_connected: true,
   is_ready: true,
