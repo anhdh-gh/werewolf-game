@@ -11,6 +11,8 @@ import { KEYS } from "@/constants/keys";
 import { ACTIONS } from "@/constants/actions";
 import { ROLES } from "@/constants/roles";
 import { useRouter } from "next/navigation";
+import { Icon } from '@iconify/react'; 
+
 
 // Font Horror
 const fontHorror = localFont({
@@ -339,7 +341,12 @@ export default function NightWolfPhase({ roomCode, flow }) {
         }}
         className="absolute bottom-6 right-6 z-40 bg-red-900/90  w-14 h-14 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(220,38,38,0.5)] hover:scale-110 transition-transform active:scale-95"
       >
-        <span className="text-2xl filter drop-shadow-md">💬</span>
+        <span className="text-2xl filter drop-shadow-md"><Icon 
+    icon="ri:chat-ai-fill" // Tên icon để trong nháy kép
+    width="28" 
+    height="28" 
+    style={{ color: '#ededed' }} // Bạn có thể chỉnh màu ở đây
+  /></span>
         {hasUnread && (
           <span className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 border-2 border-black rounded-full animate-ping" />
         )}

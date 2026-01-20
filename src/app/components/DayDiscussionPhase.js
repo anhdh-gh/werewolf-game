@@ -12,7 +12,7 @@ import CopyableText from "@/components/CopyableText";
 import { useRouter } from "next/navigation";
 import { ACTIONS } from "@/constants/actions";
 import localFont from "next/font/local";
-
+import { Icon } from '@iconify/react'; 
 const fontHorror = localFont({
   
   src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
@@ -295,9 +295,14 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
               setIsChatOpen(true);
               setHasUnread(false);
             }}
-            className="fixed bottom-24 right-4 bg-red-950/90 border border-red-500 w-14 h-14 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.8)] z-40 flex items-center justify-center hover:scale-110 transition-transform"
+            className="fixed bottom-24 right-4 bg-red-950/90  w-14 h-14 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.8)] z-40 flex items-center justify-center hover:scale-110 transition-transform"
           >
-            <span className="text-2xl">💬</span>
+            <span className="text-2xl"><Icon 
+    icon="ri:chat-ai-fill" // Tên icon để trong nháy kép
+    width="28" 
+    height="28" 
+    style={{ color: '#e4e4e4' }} // Bạn có thể chỉnh màu ở đây
+  /></span>
             {hasUnread && (
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-ping border border-black" />
             )}
@@ -345,7 +350,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
             </div>
 
             {/* Chat Input */}
-            <div className="p-3  bg-black/80 flex gap-2">
+            <div className="p-3 border-t border-red-900/30 bg-black/80 flex gap-2">
               <input
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
