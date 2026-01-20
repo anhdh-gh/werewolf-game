@@ -18,6 +18,19 @@ const fontHorror = localFont({
   display: "swap",
 });
 
+const ROLE_NAME_VN = {
+  WEREWOLF: "MA SÓI",
+  VILLAGER: " DÂN LÀNG",
+  SEER: "TIÊN TRI",
+  GUARD: "BẢO VỆ",
+  WITCH: "PHÙ THUỶ",
+  TANNER: "CHÁN ĐỜI",
+  CURSED: "BỊ NGUYỀN",
+  SILENCED: "KẺ BỊ CÂM",
+  GOD: "HÙNG ANH",
+  DEFAULT: "NOTHING",
+};
+
 export default function NightWitchSave({ roomCode, flow }) {
   const router = useRouter();
   const socket = getGameSocket();
@@ -133,6 +146,10 @@ export default function NightWitchSave({ roomCode, flow }) {
     return <Loading textMsg="Đang kiểm tra người bị hại..." />;
   }
 
+  const roleNameVN = player.role
+    ? ROLE_NAME_VN[player.role]
+    : ROLE_NAME_VN.DEFAULT;
+
   /* ===== CHECK PERMISSION ===== */
   const isWitchWakeup =
     player.role === ROLES.WITCH &&
@@ -153,12 +170,10 @@ export default function NightWitchSave({ roomCode, flow }) {
                {flow.message}
             </h2>
           </div>
-          
-          <div className="p-6 rounded-2xl bg-black/60 border border-emerald-900/30 backdrop-blur-sm shadow-2xl">
-             <div className="text-4xl mb-2">🌿</div>
-             <p className="text-emerald-200/60 text-sm font-light tracking-wide italic">
-               "Sự sống nảy mầm từ cái chết..."
-             </p>
+           <div className="bg-black/40 px-6 py-2 rounded-full border border-red-900/30">
+            <p className="text-xs text-gray-400 font-sans tracking-widest uppercase">
+              Vai trò của bạn : {roleNameVN}
+            </p>
           </div>
         </div>
       </BackgroundWrapper>

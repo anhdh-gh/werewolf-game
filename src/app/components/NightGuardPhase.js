@@ -29,6 +29,18 @@ export default function NightGuardPhase({ roomCode, flow }) {
 
   const audioRef = useRef(null);
 
+  const ROLE_NAME_VN = {
+  WEREWOLF: "MA SÓI",
+  VILLAGER: " DÂN LÀNG",
+  SEER: "TIÊN TRI",
+  GUARD: "BẢO VỆ",
+  WITCH: "PHÙ THUỶ",
+  TANNER: "CHÁN ĐỜI",
+  CURSED: "BỊ NGUYỀN",
+  SILENCED: "KẺ BỊ CÂM",
+  GOD: "HÙNG ANH",
+  DEFAULT: "NOTHING",
+};
   /* ===== FETCH PLAYER INFO ===== */
   useEffect(() => {
     if (!socket) return;
@@ -130,6 +142,7 @@ export default function NightGuardPhase({ roomCode, flow }) {
   if (!flow?.message || !player) {
     return <Loading textMsg="Đang chuẩn bị..." />;
   }
+  const roleNameVN = player.role ? ROLE_NAME_VN[player.role] : ROLE_NAME_VN.DEFAULT;
 
   const isGuardWakeup =
     player.role === ROLES.BODYGUARD &&
@@ -148,13 +161,10 @@ export default function NightGuardPhase({ roomCode, flow }) {
                {flow.message}
             </h2>
           </div>
-          <div className="bg-black/40 px-6 py-2 rounded-full border border-red-900/30">
-               <p className={`${fontHorror.className} text-2xl text-green-600`}> {/* Guard dùng màu xanh */}
-                 {player?.username}
-               </p>
-               <p className="text-xs text-gray-400 font-sans tracking-widest uppercase">
-                 ID: {player?.player_id} | Role: {player?.role}
-               </p>
+           <div className="bg-black/40 px-6 py-2 rounded-full border border-red-900/30">
+            <p className="text-xs text-gray-400 font-sans tracking-widest uppercase">
+              Vai trò của bạn : {roleNameVN}
+            </p>
           </div>
         </div>
       </BackgroundWrapper>

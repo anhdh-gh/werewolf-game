@@ -345,7 +345,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
             </div>
 
             {/* Chat Input */}
-            <div className="p-3 border-t border-red-900/30 bg-black/80 flex gap-2">
+            <div className="p-3  bg-black/80 flex gap-2">
               <input
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}

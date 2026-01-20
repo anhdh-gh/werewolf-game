@@ -29,6 +29,18 @@ export default function NightWitchKill({ roomCode, flow }) {
 
   const audioRef = useRef(null);
 
+  const ROLE_NAME_VN = {
+  WEREWOLF: "MA SÓI",
+  VILLAGER: " DÂN LÀNG",
+  SEER: "TIÊN TRI",
+  GUARD: "BẢO VỆ",
+  WITCH: "PHÙ THUỶ",
+  TANNER: "CHÁN ĐỜI",
+  CURSED: "BỊ NGUYỀN",
+  SILENCED: "KẺ BỊ CÂM",
+  GOD: "HÙNG ANH",
+  DEFAULT: "NOTHING",
+};
   /* ===== FETCH PLAYER INFO ===== */
   useEffect(() => {
     if (!socket) return;
@@ -143,6 +155,8 @@ export default function NightWitchKill({ roomCode, flow }) {
   if (!flow?.message || !player) {
     return <Loading textMsg="Đang pha chế thuốc độc..." />;
   }
+    const roleNameVN = player.role ? ROLE_NAME_VN[player.role] : ROLE_NAME_VN.DEFAULT;
+
 
   /* ===== CHECK PERMISSION ===== */
   const isWitchWakeup =
@@ -165,11 +179,10 @@ export default function NightWitchKill({ roomCode, flow }) {
             </h2>
           </div>
           
-          <div className="p-6 rounded-2xl bg-black/60 border border-purple-900/30 backdrop-blur-sm shadow-2xl">
-             <div className="text-4xl mb-2">🧪</div>
-             <p className="text-purple-200/60 text-sm font-light tracking-wide italic">
-               "Sống hay chết, quyền nằm trong tay ngươi..."
-             </p>
+           <div className="bg-black/40 px-6 py-2 rounded-full border border-red-900/30">
+            <p className="text-xs text-gray-400 font-sans tracking-widest uppercase">
+              Vai trò của bạn : {roleNameVN}
+            </p>
           </div>
         </div>
       </BackgroundWrapper>

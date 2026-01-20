@@ -31,7 +31,18 @@ export default function NightSilencedPhase({ roomCode, flow }) {
   const audioRef = useRef(null);
 
 
-
+const ROLE_NAME_VN = {
+  WEREWOLF: "MA SÓI",
+  VILLAGER: " DÂN LÀNG",
+  SEER: "TIÊN TRI",
+  GUARD: "BẢO VỆ",
+  WITCH: "PHÙ THUỶ",
+  TANNER: "CHÁN ĐỜI",
+  CURSED: "BỊ NGUYỀN",
+  SILENCED: "KẺ BỊ CÂM",
+  GOD: "HÙNG ANH",
+  DEFAULT: "NOTHING",
+};
 
   /* ===== FETCH PLAYER INFO ===== */
   useEffect(() => {
@@ -119,9 +130,10 @@ export default function NightSilencedPhase({ roomCode, flow }) {
     return <Loading textMsg="Đang chuẩn bị..." />;
   }
 
-  /**
-   * ⭐ Silencer chỉ tương tác khi WAKEUP
-   */
+const roleNameVN = player.role ? ROLE_NAME_VN[player.role] : ROLE_NAME_VN.DEFAULT;
+
+
+
   const isSilencerWakeup =
     player.role === ROLES.SILENCED &&
     player.is_alive &&
@@ -136,9 +148,11 @@ export default function NightSilencedPhase({ roomCode, flow }) {
         <p className="text-lg text-gray-300 text-center max-w-md animate-pulse">
           {flow.message}
         </p>
-        <div className="flex flex-col items-center justify-center">
-          <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id}) ({player?.role})</p>
-        </div>
+         <div className="bg-black/40 px-6 py-2 rounded-full border border-red-900/30">
+            <p className="text-xs text-gray-400 font-sans tracking-widest uppercase">
+              Vai trò của bạn : {roleNameVN}
+            </p>
+          </div>
       </div>
     );
   }

@@ -28,7 +28,18 @@ export default function NightCursedPhase({ roomCode, flow }) {
 
   const audioRef = useRef(null);
 
- 
+ const ROLE_NAME_VN = {
+  WEREWOLF: "MA SÓI",
+  VILLAGER: " DÂN LÀNG",
+  SEER: "TIÊN TRI",
+  GUARD: "BẢO VỆ",
+  WITCH: "PHÙ THUỶ",
+  TANNER: "CHÁN ĐỜI",
+  CURSED: "BỊ NGUYỀN",
+  SILENCED: "KẺ BỊ CÂM",
+  GOD: "HÙNG ANH",
+  DEFAULT: "NOTHING",
+};
 
   /* ===== FETCH SELF PLAYER (GIỮ NGUYÊN LOGIC) ===== */
   useEffect(() => {
@@ -81,6 +92,9 @@ export default function NightCursedPhase({ roomCode, flow }) {
     return <Loading textMsg="Đang triệu hồi..." />;
   }
 
+    const roleNameVN = player.role ? ROLE_NAME_VN[player.role] : ROLE_NAME_VN.DEFAULT;
+
+
   const isCursedWakeup =
     player.initial_role === ROLES.CURSED &&
     player.is_alive &&
@@ -107,9 +121,11 @@ export default function NightCursedPhase({ roomCode, flow }) {
            <h2 className={`${fontHorror.className} text-4xl text-gray-500 tracking-widest text-center`}>
              {flow.message}
            </h2>
-           <div className="text-gray-600 font-mono text-sm uppercase tracking-widest border border-gray-800 px-4 py-2 rounded-full bg-black/50">
-             {player?.username} (ID: {player?.player_id})
-           </div>
+           <div className="bg-black/40 px-6 py-2 rounded-full border border-red-900/30">
+            <p className="text-xs text-gray-400 font-sans tracking-widest uppercase">
+              Vai trò của bạn : {roleNameVN}
+            </p>
+          </div>
         </div>
       </div>
     );
