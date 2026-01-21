@@ -10,22 +10,87 @@ import { ACTIONS } from "@/constants/actions";
 import { ROLES } from "@/constants/roles";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Creepster, Nosifer } from "next/font/google";
+import localFont from "next/font/local";
+
+
+
 
 // Font Ma Mị & Máu Me
-const fontHorror = Creepster({ weight: "400", subsets: ["latin"], display: "swap" });
-const fontBlood = Nosifer({ weight: "400", subsets: ["latin"], display: "swap" });
+const fontHorror = localFont({
+  
+  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
+  display: "swap",
+});
 
 export default function NightCursedPhase({ roomCode, flow }) {
   const router = useRouter();
   const socket = getGameSocket();
-
   const [player, setPlayer] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-
   const audioRef = useRef(null);
 
- 
+/*===== self-test-start ===== */
+  useEffect(() => {
+    // 1. CHẾ ĐỘ DEBUG: Lấy dữ liệu từ props 'flow' truyền vào
+    if (roomCode === "DEBUG") {
+      // Lấy danh sách từ flow.data.players (có sẵn trong UITestPage)
+      const mockPlayers = flow?.data?.players || [];
+      
+      const currentPlayer = mockPlayers.find(p => p.player_id === 1) || FAKE_PLAYER;
+       
+      
+      setPlayer(currentPlayer);
+      
+      return;
+    }
+  
+    // 2. CHẾ ĐỘ CHẠY THẬT: Gọi Socket
+    const socket = getGameSocket();
+    if (!socket) return;
+  
+    const playerId = Number(localStorage.getItem(KEYS.USER_ID));
+    if (!playerId) {
+      router.push(PATHS.SIGN_IN);
+      return;
+    }
+  
+    // Emit lấy thông tin bản thân
+    socket.emit(
+      EVENTS.PLAYER_INFO,
+      { room: { code: roomCode }, player: { ids: [playerId] } },
+      (res) => {
+        if (res?.data?.players?.length) {
+          setPlayer(res.data.players[0]);
+        }
+      }
+    );
+
+    // Emit lấy danh sách người chơi để hiển thị list soi
+    socket.emit(
+      EVENTS.PLAYER_INFO, 
+      { room: { code: roomCode } }, 
+      (res) => {
+        if (res?.data?.players) {
+          setPlayersList(res.data.players.filter((p) => p.is_alive && p.is_connected && p.is_ready));
+        }
+      }
+    );
+  }, [roomCode, router, flow]); // Thêm flow vào dependency để nó cập nhật khi bạn đổi data bên file test
+/*===== self-test-end ===== */
+
+
+ const ROLE_NAME_VN = {
+  WEREWOLF: "MA SÓI",
+  VILLAGER: " DÂN LÀNG",
+  SEER: "TIÊN TRI",
+  BODYGUARD: "BẢO VỆ",
+  WITCH: "PHÙ THUỶ",
+  TANNER: "CHÁN ĐỜI",
+  CURSED: "BỊ NGUYỀN",
+  SILENCED: "KẺ BỊ CÂM",
+  GOD: "HÙNG ANH",
+  DEFAULT: "NOTHING",
+};
 
   /* ===== FETCH SELF PLAYER (GIỮ NGUYÊN LOGIC) ===== */
   useEffect(() => {
@@ -78,6 +143,9 @@ export default function NightCursedPhase({ roomCode, flow }) {
     return <Loading textMsg="Đang triệu hồi..." />;
   }
 
+    const roleNameVN = player.role ? ROLE_NAME_VN[player.role] : ROLE_NAME_VN.DEFAULT;
+
+
   const isCursedWakeup =
     player.initial_role === ROLES.CURSED &&
     player.is_alive &&
@@ -104,9 +172,11 @@ export default function NightCursedPhase({ roomCode, flow }) {
            <h2 className={`${fontHorror.className} text-4xl text-gray-500 tracking-widest text-center`}>
              {flow.message}
            </h2>
-           <div className="text-gray-600 font-mono text-sm uppercase tracking-widest border border-gray-800 px-4 py-2 rounded-full bg-black/50">
-             {player?.username} (ID: {player?.player_id})
-           </div>
+           <div className="bg-black/40 px-6 py-2 rounded-full border border-red-900/30">
+            <p className="text-xs text-gray-400 font-sans tracking-widest uppercase">
+              Vai trò của bạn : {roleNameVN}
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -166,7 +236,7 @@ export default function NightCursedPhase({ roomCode, flow }) {
                     </div>
 
                     {/* Tên Role */}
-                    <h1 className={`${fontBlood.className} text-3xl text-red-500 text-center drop-shadow-[0_2px_2px_black] uppercase leading-relaxed break-words`}>
+                    <h1 className={`${fontHorror.className} text-3xl text-red-500 text-center drop-shadow-[0_2px_2px_black] uppercase leading-relaxed break-words`}>
                         {player.role.replace(/_/g, " ")}
                     </h1>
                 </div>

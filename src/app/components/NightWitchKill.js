@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import localFont from "next/font/local";
 import Loading from "@/components/Loading";
-import CopyableText from "@/components/CopyableText";
 import { getGameSocket } from "@/socket/gameSocket";
 import { EVENTS } from "@/constants/events";
 import { PATHS } from "@/constants/paths";
@@ -10,6 +11,25 @@ import { KEYS } from "@/constants/keys";
 import { ACTIONS } from "@/constants/actions";
 import { ROLES } from "@/constants/roles";
 import { useRouter } from "next/navigation";
+
+// Font Horror
+const fontHorror = localFont({
+  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf",
+  display: "swap",
+});
+
+const ROLE_NAME_VN = {
+  WEREWOLF: "MA SÓI",
+  VILLAGER: " DÂN LÀNG",
+  SEER: "TIÊN TRI",
+  BODYGUARD: "BẢO VỆ",
+  WITCH: "PHÙ THUỶ",
+  TANNER: "CHÁN ĐỜI",
+  CURSED: "BỊ NGUYỀN",
+  SILENCED: "KẺ BỊ CÂM",
+  GOD: "HÙNG ANH",
+  DEFAULT: "NOTHING",
+};
 
 export default function NightWitchKill({ roomCode, flow }) {
   const router = useRouter();
@@ -19,49 +39,79 @@ export default function NightWitchKill({ roomCode, flow }) {
   const [playersList, setPlayersList] = useState([]);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-
   const audioRef = useRef(null);
 
+  /*===== self-test-start ===== */
+  useEffect(() => {
+    if (roomCode === "DEBUG") {
+      const mockPlayers = flow?.data?.players || [];
+      const currentPlayer = mockPlayers.find(p => p.player_id === 1) || {};
+      setPlayer(currentPlayer);
+      setPlayersList(mockPlayers.filter(p => p.is_alive && p.is_connected && p.is_ready));
+      return;
+    }
+  
+    const socket = getGameSocket();
+    if (!socket) return;
+  
+    const playerId = Number(localStorage.getItem(KEYS.USER_ID));
+    if (!playerId) {
+      router.push(PATHS.SIGN_IN);
+      return;
+    }
+  
+    socket.emit(
+      EVENTS.PLAYER_INFO,
+      { room: { code: roomCode }, player: { ids: [playerId] } },
+      (res) => {
+        if (res?.data?.players?.length) {
+          setPlayer(res.data.players[0]);
+        }
+      }
+    );
+
+    socket.emit(
+      EVENTS.PLAYER_INFO, 
+      { room: { code: roomCode } }, 
+      (res) => {
+        if (res?.data?.players) {
+          setPlayersList(res.data.players.filter((p) => p.is_alive && p.is_connected && p.is_ready));
+        }
+      }
+    );
+  }, [roomCode, router, flow]); 
+/*===== self-test-end ===== */ 
 
   /* ===== FETCH PLAYER INFO ===== */
   useEffect(() => {
     if (!socket) return;
-
     const playerId = Number(localStorage.getItem(KEYS.USER_ID));
     if (!playerId) {
       router.push(PATHS.SIGN_IN);
       return;
     }
 
-    // self
     socket.emit(
       EVENTS.PLAYER_INFO,
       { room: { code: roomCode }, player: { ids: [playerId] } },
       (res) => {
-        if (!res?.data?.players?.length) return;
-        setPlayer(res.data.players[0]);
+        if (res?.data?.players?.length) {
+          setPlayer(res.data.players[0]);
+        }
       }
     );
 
-    // all players
     socket.emit(EVENTS.PLAYER_INFO, { room: { code: roomCode } }, (res) => {
       if (!res?.data?.players?.length) return;
-
-      setPlayersList(
-        res.data.players.filter(
-          (p) => p.is_alive && p.is_connected && p.is_ready
-        )
-      );
+      setPlayersList(res.data.players.filter((p) => p.is_alive && p.is_connected && p.is_ready));
     });
   }, [roomCode, socket, router]);
 
   /* ===== TTS ===== */
   useEffect(() => {
     if (!flow?.message) return;
-
     if (!audioRef.current) audioRef.current = new Audio();
     const audio = audioRef.current;
-
     const play = async () => {
       try {
         audio.src = `/api/v1/tts?text=${encodeURIComponent(flow.message)}`;
@@ -71,45 +121,66 @@ export default function NightWitchKill({ roomCode, flow }) {
         console.warn("TTS error:", err?.message);
       }
     };
-
     play();
     return () => audio.pause();
   }, [flow?.message]);
 
-  /* ===== DONE ===== */
+  const canPoison = Number(player?.witch_poison) > 0;
+
+  /* ===== ACTIONS ===== */
   const handleDone = () => {
     if (!socket || isLoading) return;
-
     setIsLoading(true);
-
     socket.emit(EVENTS.PLAYER_DONE, {
       room: { code: roomCode },
       current_phase: flow.phase,
     });
   };
 
-  /* ===== KILL (VOTE) ===== */
-  const handleVote = (p) => {
+  const handleVote = (target) => {
     if (!socket || isLoading || !canPoison) return;
-
-    setSelectedPlayer(p);
-
+    if (selectedPlayer?.player_id === target.player_id) {
+        setSelectedPlayer(null);
+        return;
+    }
+    setSelectedPlayer(target);
     socket.emit(EVENTS.PLAYER_VOTE, {
       room: { code: roomCode },
       current_phase: flow.phase,
-      target: {
-        id: p.player_id,
-        username: p.username,
-      },
+      target: { id: target.player_id, username: target.username },
     });
   };
 
-  /* ===== INITIAL LOADING ===== */
-  if (!flow?.message || !player) {
-    return <Loading textMsg="Đang chuẩn bị..." />;
-  }
+  /* ===== COMPONENTS ===== */
+  const BackgroundWrapper = ({ children }) => (
+    <div className="relative min-h-screen w-full overflow-hidden bg-black text-gray-200 font-sans selection:bg-purple-900 selection:text-white">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0">
+        <Image
+          src="/image/room_screen.jpg"
+          alt="Night Background"
+          fill
+          priority
+          className="object-cover opacity-60 contrast-125 brightness-75 grayscale-[0.3]"
+        />
+        {/* Lớp phủ Tím ma mị cho Phù Thủy */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-purple-950/20 to-black/90 mix-blend-multiply" />
+      </div>
 
-  /* ===== WITCH WAKEUP CHECK ===== */
+      {/* Main Content */}
+      <div className="relative z-10 flex flex-col h-full min-h-screen max-w-md mx-auto bg-black/20 backdrop-blur-[2px]">
+        {children}
+      </div>
+    </div>
+  );
+
+  /* ===== LOADING STATE ===== */
+  if (!flow?.message || !player) {
+    return <Loading textMsg="Đang pha chế thuốc độc..." />;
+  }
+  const roleNameVN = player.role ? ROLE_NAME_VN[player.role] : ROLE_NAME_VN.DEFAULT;
+
+  /* ===== CHECK PERMISSION ===== */
   const isWitchWakeup =
     player.role === ROLES.WITCH &&
     player.is_alive &&
@@ -117,110 +188,137 @@ export default function NightWitchKill({ roomCode, flow }) {
     player.is_ready &&
     flow?.event?.action === ACTIONS.WAKEUP;
 
+  const hasSelected = !!selectedPlayer;
+
+  /* ===== VIEW: PASSIVE ===== */
   if (!isWitchWakeup) {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-black text-white px-4">
-        <p className="text-lg text-gray-300 animate-pulse">
-          {flow.message}
-        </p>
-        <div className="flex flex-col items-center justify-center">
-          <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id}) ({player?.role})</p>
+      <BackgroundWrapper>
+        <div className="flex-1 flex flex-col items-center justify-center px-8 text-center space-y-8 animate-in fade-in duration-1000">
+          <div className="relative drop-shadow-[0_0_15px_rgba(168,85,247,0.4)]">
+            <h2 className={`${fontHorror.className} text-5xl text-gray-300 tracking-widest leading-tight`}>
+               {flow.message}
+            </h2>
+          </div>
+           <div className="bg-black/40 px-6 py-2 rounded-full border border-red-900/30">
+            <p className="text-xs text-gray-400 font-sans tracking-widest uppercase">
+              Vai trò của bạn : {roleNameVN}
+            </p>
+          </div>
         </div>
-      </div>
+      </BackgroundWrapper>
     );
   }
 
-  /* ===== LOGIC POISON ===== */
-  const canPoison = Number(player.witch_poison) > 0;
-  const hasSelected = !!selectedPlayer;
-
-  /* ===== VIEW ===== */
+  /* ===== VIEW: ACTIVE WITCH ===== */
   return (
-    <div className="relative h-screen flex flex-col bg-black text-white">
-      {/* HEADER */}
-      <header className="bg-zinc-900 border-b border-zinc-800 p-4">
-        <h2 className="text-lg font-bold">{flow.message}</h2>
-        <p className="text-sm text-gray-400">Room #{roomCode}</p>
-        <p className="text-sm text-gray-500">{player?.username} (ID: {player?.player_id}) ({player?.role})</p>
+    <BackgroundWrapper>
+      {/* --- HEADER --- */}
+      <header className="shrink-0 p-4 pt-6 text-center drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
+        <h2 className={`${fontHorror.className} text-5xl md:text-6xl text-purple-500 tracking-widest mb-2 leading-none drop-shadow-[0_0_15px_rgba(168,85,247,0.6)]`}>
+          Bạn muốn giết ai?
+        </h2>
+        <div className="flex justify-center gap-3">
+          <span className="text-xs text-gray-400 font-sans tracking-widest uppercase">
+            vai trò của bạn là : phù thuỷ | Còn: {player.witch_poison} bình
+          </span>
+        </div>
       </header>
 
-      {/* BODY */}
-      <main className="flex-1 overflow-y-auto p-4">
+      {/* --- BODY: PLAYER LIST (UPDATED LAYOUT) --- */}
+      <main className="flex-1 overflow-y-auto px-4 pb-12 scrollbar-hide w-full flex flex-col items-center">
+        
+        {/* Warning Banner if No Poison */}
         {!canPoison && (
-          <p className="text-yellow-400 mb-3 italic">
-            ⚠️ Bạn đã dùng hết bình độc.
-          </p>
+            <div className="w-full mb-4 bg-zinc-900/80 border border-zinc-700 p-3 rounded-xl flex items-center justify-center gap-2 backdrop-blur-md">
+                <span className="text-xl">🚫</span>
+                <span className="text-gray-400 text-xs font-bold uppercase tracking-wide">Đã hết thuốc độc</span>
+            </div>
         )}
 
-        {canPoison && (
-          <p className="text-sm text-gray-400 mb-3">
-            👉 Click vào người bạn muốn{" "}
-            <span className="text-red-400 font-semibold">giết</span>
-          </p>
-        )}
+        <div className="w-full space-y-3">
+             <h3 className={`${fontHorror.className} text-3xl text-red-500 mb-4 text-center tracking-wider drop-shadow-[0_2px_2px_black]`}>
+                CHỌN MỤC TIÊU
+            </h3>
 
-        <div className="space-y-3">
           {playersList.map((p) => {
-            const isSelected =
-              selectedPlayer?.player_id === p.player_id;
+            const isSelected = selectedPlayer?.player_id === p.player_id;
+            const isSelf = p.player_id === player?.player_id;
 
             return (
               <div
                 key={p.player_id}
                 onClick={() => handleVote(p)}
-                className={`flex justify-between items-center px-4 py-3 rounded-xl transition
-                  ${canPoison ? "cursor-pointer" : "opacity-50"}
-                  ${
-                    isSelected
-                      ? "bg-red-700 border border-red-500"
-                      : "bg-zinc-800 hover:bg-zinc-700"
-                  }
-                  ${isLoading ? "pointer-events-none opacity-60" : ""}
+                className={`group w-full flex items-center justify-between rounded-xl px-5 py-4 transition-all shadow-lg active:scale-95 backdrop-blur-sm border
+                   ${!canPoison 
+                      ? "opacity-50 grayscale bg-black/40 border-zinc-800 cursor-not-allowed" 
+                      : isSelected
+                        ? "bg-purple-900/60 border-purple-500 shadow-[0_0_15px_rgba(168,85,247,0.4)] cursor-pointer" // Selected (Purple)
+                        : "bg-black/70 border-purple-900/30 hover:bg-purple-950/60 hover:border-purple-600 cursor-pointer" // Normal
+                   }
                 `}
               >
-                <div className="flex flex-col gap-1">
-                  <CopyableText label="ID" value={`${p.player_id}${p.player_id === player?.player_id ? ' (Me)' : ''}`} />
-                  <CopyableText label="Name" value={p.username} />
+                {/* Name Top, ID Bottom */}
+                <div className="flex flex-col items-start relative z-10">
+                  <span className={`${fontHorror.className} text-2xl tracking-wide ${isSelected ? "text-purple-100" : "text-gray-200 group-hover:text-purple-100"}`}>
+                    {p.username}
+                  </span>
+                  <span className={`text-xs font-sans font-bold ${isSelected ? "text-purple-300" : "text-gray-500"}`}>
+                    ID: {p.player_id} {isSelf && "(Bạn)"}
+                  </span>
                 </div>
 
-                <span className="text-red-400 font-bold">☠️ Giết</span>
+                {/* Status Icon */}
+                <div className="flex flex-col items-end relative z-10">
+                  {isSelected ? (
+                    <span className={`${fontHorror.className} text-2xl text-purple-400 animate-pulse`}>
+                      MỤC TIÊU
+                    </span>
+                  ) : (
+                    <span className="text-2xl opacity-60 grayscale group-hover:grayscale-0 transition-all">☠️</span>
+                  )}
+                </div>
+
+                 {/* Pulse Animation */}
+                 {!isSelected && <div className="absolute inset-0 bg-purple-900/5 animate-[pulse_3s_ease-in-out_infinite] rounded-xl z-0" />}
               </div>
             );
           })}
+
+          {/* --- BUTTON SECTION (MOVED HERE - END OF LIST) --- */}
+          <div className="pt-8 pb-4">
+            {hasSelected && (
+                <div className="text-center animate-bounce mb-2">
+                    <span className="text-xs text-purple-400 font-bold uppercase tracking-widest">
+                        Gieo rắc độc lên: {selectedPlayer.username}
+                    </span>
+                </div>
+            )}
+            <button
+              disabled={isLoading}
+              onClick={handleDone}
+              className={`w-full py-4 rounded-xl border-2 transition-all shadow-[0_0_20px_rgba(0,0,0,0.8)] ${
+                isLoading
+                  ? "bg-zinc-800 border-zinc-700 text-zinc-500 cursor-not-allowed"
+                  : hasSelected
+                    ? "bg-purple-900/80 border-purple-600 text-white hover:bg-purple-700 hover:shadow-[0_0_20px_rgba(168,85,247,0.6)]" // Kill button
+                    : "bg-gray-900/80 border-gray-600 text-gray-400 hover:text-white hover:border-white" // Skip button
+              }`}
+            >
+              <span className={`${fontHorror.className} text-3xl tracking-widest uppercase`}>
+                {isLoading ? "ĐANG NIỆM CHÚ..." : hasSelected ? "GIEO RẮC CÁI CHẾT" : canPoison ? "BỎ QUA" : "KHÔNG THỂ DÙNG"}
+              </span>
+            </button>
+          </div>
         </div>
       </main>
 
-      {/* FOOTER */}
-      <footer className="bg-zinc-900 border-t border-zinc-800 p-4 flex gap-3">
-        {/* BỎ QUA – CHỈ KHI CHƯA CHỌN AI */}
-        {!hasSelected && (
-          <button
-            disabled={isLoading}
-            onClick={handleDone}
-            className="flex-1 py-3 rounded-xl font-bold bg-zinc-700 hover:bg-zinc-600"
-          >
-            Bỏ qua
-          </button>
-        )}
-
-        {/* ĐÃ XONG */}
-        {(canPoison || hasSelected) && (
-          <button
-            disabled={isLoading}
-            onClick={handleDone}
-            className="flex-1 py-3 rounded-xl font-bold bg-red-600 hover:bg-red-500"
-          >
-            Đã xong
-          </button>
-        )}
-      </footer>
-
-      {/* LOADING */}
+      {/* --- GLOBAL LOADING OVERLAY --- */}
       {isLoading && (
-        <div className="fixed inset-0 bg-black/100 flex items-center justify-center">
-          <Loading textMsg="Đang xử lý..." />
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center">
+             <Loading textMsg="Đang thực hiện..." />
         </div>
       )}
-    </div>
+    </BackgroundWrapper>
   );
 }

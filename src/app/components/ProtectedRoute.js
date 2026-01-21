@@ -4,6 +4,13 @@ import { useRouter } from "next/navigation";
 import { KEYS } from "@/constants/keys";
 import { PATHS } from "@/constants/paths";
 import Loading from "@/components/Loading"
+import localFont from "next/font/local";
+
+const fontHorror = localFont({
+  
+  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
+  display: "swap",
+});
 
 export default function ProtectedRoute({ children }) {
   const router = useRouter();

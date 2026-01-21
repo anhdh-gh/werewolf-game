@@ -26,6 +26,10 @@ import NightGuardPhase from "@/components/NightGuardPhase";
 import NightSilencedPhase from "@/components/NightSilencedPhase";
 import NightCursedPhase from "@/components/NightCursedPhase";
 
+  
+ 
+
+
 export default function RoomContent() {
   const { room_code } = useParams();
   const router = useRouter();

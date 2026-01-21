@@ -11,10 +11,14 @@ import Loading from "@/components/Loading";
 import CopyableText from "@/components/CopyableText";
 import { useRouter } from "next/navigation";
 import { ACTIONS } from "@/constants/actions";
+import localFont from "next/font/local";
+import { Icon } from '@iconify/react'; 
+const fontHorror = localFont({
+  
+  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
+  display: "swap",
+});
 
-// --- FONTS (Giống ServerPage) ---
-const fontHorror = Creepster({ weight: "400", subsets: ["latin"], display: "swap" });
-const fontBlood = Nosifer({ weight: "400", subsets: ["latin"], display: "swap" });
 
 export default function DayDiscussionPhase({ roomCode, flow }) {
   const router = useRouter();
@@ -34,6 +38,47 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
   const chatEndRef = useRef(null);
 
   const audioRef = useRef(null);
+
+/*===== self-test-start ===== */
+  // ... import như cũ ...
+
+const FAKE_PLAYER = {
+  player_id: 1,
+  username: "Fake Player",
+  role: "WITCH",
+  initial_role: "WITCH",
+  is_alive: true,
+  is_connected: true,
+  is_ready: true,
+};
+
+  useEffect(() => {
+    // 🔹 Nếu đang ở chế độ debug (roomCode = "DEBUG") thì dùng fake player, KHÔNG gọi socket
+    if (roomCode === "DEBUG") {
+      setPlayer(FAKE_PLAYER);
+      return;
+    }
+  
+    const socket = getGameSocket();
+    if (!socket) return;
+  
+    const playerId = Number(localStorage.getItem(KEYS.USER_ID));
+    if (!playerId) {
+      router.push(PATHS.SIGN_IN);
+      return;
+    }
+  
+    socket.emit(
+      EVENTS.PLAYER_INFO,
+      { room: { code: roomCode }, player: { ids: [playerId] } },
+      (res) => {
+        if (!res?.data?.players?.length) return;
+        setPlayer(res.data.players[0]);
+      }
+    );
+  }, [roomCode, router]);
+
+  /*===== self-test-end ===== */
 
 
   /* ===== LOGIC GIỮ NGUYÊN (FETCH SELF PLAYER) ===== */
@@ -187,9 +232,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
             {flow.message}
           </h2>
           <div className="flex items-center gap-3 text-xs font-mono opacity-60">
-             <span>ROOM: {roomCode}</span>
-             <span>•</span>
-             <span>{player?.username} [{player?.role}]</span>
+             <span>Vai trò của bạn : {player?.role}</span>
           </div>
         </header>
 
@@ -293,9 +336,14 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
               setIsChatOpen(true);
               setHasUnread(false);
             }}
-            className="fixed bottom-24 right-4 bg-red-950/90 border border-red-500 w-14 h-14 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.8)] z-40 flex items-center justify-center hover:scale-110 transition-transform"
+            className="fixed bottom-24 right-4 bg-red-950/90  w-14 h-14 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.8)] z-40 flex items-center justify-center hover:scale-110 transition-transform"
           >
-            <span className="text-2xl">💬</span>
+            <span className="text-2xl"><Icon 
+    icon="ri:chat-ai-fill" // Tên icon để trong nháy kép
+    width="28" 
+    height="28" 
+    style={{ color: '#e4e4e4' }} // Bạn có thể chỉnh màu ở đây
+  /></span>
             {hasUnread && (
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full animate-ping border border-black" />
             )}

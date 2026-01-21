@@ -8,10 +8,15 @@ import Loading from "@/components/Loading";
 import { PATHS } from "@/constants/paths";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Creepster } from "next/font/google";
+import localFont from "next/font/local";
 
-// 1. Setup Font Horror
-const fontHorror = Creepster({ weight: "400", subsets: ["latin"], display: "swap" });
+const fontHorror = localFont({
+  
+  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
+  display: "swap",
+});
+
+
 
 export default function LobbyRoom({ roomCode }) {
   const socket = getGameSocket();

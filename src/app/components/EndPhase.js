@@ -2,12 +2,17 @@
 
 import { useEffect, useRef } from "react";
 import Image from "next/image";
-import { Creepster } from "next/font/google";
+import localFont from "next/font/local";
 import Loading from "@/components/Loading";
 import { useRoom } from "@/contexts/RoomContext";
 
 // --- FONT MA MỊ ---
-const fontHorror = Creepster({ weight: "400", subsets: ["latin"], display: "swap" });
+
+const fontHorror = localFont({
+  
+  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
+  display: "swap",
+});
 
 export default function EndPhase({ roomCode, flow }) {
   const audioRef = useRef(null);
@@ -92,9 +97,9 @@ export default function EndPhase({ roomCode, flow }) {
             </h2>
             
             {/* Tin nhắn kết quả (flow.message) - Hiệu ứng máu đỏ rực */}
-            <h1 className={`${fontHorror.className} text-5xl md:text-7xl text-[#ff0000] drop-shadow-[0_0_30px_rgba(255,0,0,0.6)] leading-tight`}>
-                {flow.message}
-            </h1>
+           <h1 className={`${fontHorror.className} text-5xl md:text-7xl text-[#ce2029] drop-shadow-[0_0_30px_rgba(206,32,41,0.8)] leading-tight`}>
+  {flow.message}
+             </h1>
         </div>
 
         {/* Decorator Line */}

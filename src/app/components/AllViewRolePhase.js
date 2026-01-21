@@ -8,10 +8,14 @@ import { PATHS } from "@/constants/paths";
 import Loading from "@/components/Loading";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Creepster, Nosifer } from "next/font/google";
+import localFont from "next/font/local";
 
-const fontHorror = Creepster({ weight: "400", subsets: ["latin"], display: "swap" });
-const fontBlood = Nosifer({ weight: "400", subsets: ["latin"], display: "swap" });
+
+const fontHorror = localFont({
+  
+  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
+  display: "swap",
+});
 
 // 🛠️ CẤU HÌNH ẢNH ROLE TẠI ĐÂY
 // Bạn chỉ cần thay thế đường dẫn trong dấu ngoặc kép "" thành link ảnh thật của bạn
@@ -20,7 +24,7 @@ const ROLE_IMAGES = {
   WEREWOLF: "/image/werewolf.png", // Thay link ảnh Sói vào đây 
   VILLAGER: "/image/villager.png", // Thay link ảnh Dân vào đây
   SEER: "/image/seer.png",         // Thay link ảnh Tiên tri
-  GUARD: "/image/guardian.png",       // Thay link ảnh Bảo vệ
+  BODYGUARD: "/image/guardian.png",       // Thay link ảnh Bảo vệ
   WITCH: "/image/witch.png",       // Thay link ảnh Phù thủy
   TANNER: "/image/tanner.png",     // Chán đời
   CURSED: "/image/cursed.png",     // Bị nguyền rủa
@@ -30,6 +34,19 @@ const ROLE_IMAGES = {
  
 
 };
+
+const ROLE_NAME_VN = {
+  WEREWOLF : "MA SÓI",
+  VILLAGER : " DÂN LÀNG",
+  SEER : "TIÊN TRI",
+  GUARD :"BẢO VỆ",
+  WITCH : "PHÙ THUỶ",
+  TANNER :"CHÁN ĐỜI" ,
+  CURSED :"BỊ NGUYỀN",
+  SILENCED :"KẺ BỊ CÂM",
+  GOD :"HÙNG ANH",
+  DEFAULT :"NOTHING"
+}
 
 export default function AllViewRolePhase({ roomCode, flow }) {
   const router = useRouter();
@@ -99,8 +116,8 @@ export default function AllViewRolePhase({ roomCode, flow }) {
 
   // Lấy đường dẫn ảnh dựa trên Role của người chơi
   // Nếu không tìm thấy role trong list thì lấy ảnh DEFAULT
-  const roleImageSrc = ROLE_IMAGES[player.initial_role] ? ROLE_IMAGES[player.initial_role] : ROLE_IMAGES.DEFAULT;
-
+  const roleImageSrc = ROLE_IMAGES[player.role] ? ROLE_IMAGES[player.role] : ROLE_IMAGES.DEFAULT;
+  const roleNameVN = player.role ? ROLE_NAME_VN[player.role] : ROLE_NAME_VN.DEFAULT; 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-black flex flex-col items-center justify-center px-4 gap-8">
       
@@ -141,8 +158,8 @@ export default function AllViewRolePhase({ roomCode, flow }) {
                 <div className="absolute inset-0 backface-hidden rounded-2xl bg-[#1a0505] border-4 border-[#3f0e0e] shadow-[0_0_30px_rgba(0,0,0,1)] flex flex-col items-center justify-center overflow-hidden">
                     <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/black-scales.png')]"></div>
                     <div className="w-[90%] h-[90%] border border-red-900/30 rounded-xl flex items-center justify-center relative bg-black/40">
-                        <span className={`${fontBlood.className} text-4xl text-red-700/80 drop-shadow-md text-center`}>
-                            YOUR<br/>FATE
+                        <span className={`${fontHorror.className} text-4xl text-red-700/80 drop-shadow-md text-center`}>
+                            VAI TRÒ <br/>CỦA BẠN
                         </span>
                     </div>
                     <p className={`${fontHorror.className} absolute bottom-4 text-gray-400 text-sm tracking-widest animate-bounce`}>
@@ -174,8 +191,8 @@ export default function AllViewRolePhase({ roomCode, flow }) {
                         </div>
 
                         {/* Tên Role */}
-                        <h1 className={`${fontBlood.className} text-2xl sm:text-3xl text-red-500 text-center drop-shadow-[0_2px_2px_black] uppercase leading-relaxed break-words z-10`}>
-                            {player.initial_role}
+                        <h1 className={`${fontHorror.className} text-2xl sm:text-3xl text-red-500 text-center drop-shadow-[0_2px_2px_black] uppercase leading-relaxed break-words z-10`}>
+                            {roleNameVN}
                         </h1>
                     </div>
                     {/* 👆 KẾT THÚC PHẦN CHỈNH SỬA */}
