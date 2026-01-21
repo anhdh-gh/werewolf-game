@@ -22,11 +22,11 @@ const ROLE_NAME_VN = {
   WEREWOLF: "MA SÓI",
   VILLAGER: " DÂN LÀNG",
   SEER: "TIÊN TRI",
-  BODYGUARD: "BẢO VỆ",
+  GUARD: "BẢO VỆ",
   WITCH: "PHÙ THUỶ",
   TANNER: "CHÁN ĐỜI",
   CURSED: "BỊ NGUYỀN",
-  SILENCED: "KẺ BỊ CÂM", // Hoặc tên role thực hiện hành động này
+  SILENCED: "KẺ BỊ CÂM", 
   GOD: "HÙNG ANH",
   DEFAULT: "NOTHING",
 };
@@ -193,7 +193,7 @@ export default function NightSilencedPhase({ roomCode, flow }) {
 
   /* ===== CHECK PERMISSION ===== */
   const isSilencerWakeup =
-    player.role === ROLES.SILENCED && // Lưu ý: ROLES.SILENCED ở đây là vai trò thực hiện hành động
+    player.role === ROLES.SILENCED && 
     player.is_alive &&
     player.is_connected &&
     player.is_ready &&
@@ -239,9 +239,12 @@ export default function NightSilencedPhase({ roomCode, flow }) {
       {/* --- BODY: LIST & BUTTON --- */}
       <main className="flex-1 overflow-y-auto px-4 pb-12 scrollbar-hide w-full flex flex-col items-center">
         
-        <div className="w-full space-y-3">
-            <h3 className={`${fontHorror.className} text-center text-indigo-400 text-3xl uppercase tracking-widest mb-4 drop-shadow-[0_2px_4px_black]`}>
-                CHỌN MỤC TIÊU
+        {/* Tăng khoảng cách giữa các item (space-y-4) */}
+        <div className="w-full space-y-4"> 
+            
+            {/* Chữ CHỌN MỤC TIÊU chuyển thành màu ĐỎ */}
+            <h3 className={`${fontHorror.className} text-center text-red-500 text-3xl uppercase tracking-widest mb-4 drop-shadow-[0_2px_4px_black]`}>
+                CHỌN MỤC TIÊU 
             </h3>
 
             {playersList.map((p) => {
@@ -252,10 +255,11 @@ export default function NightSilencedPhase({ roomCode, flow }) {
                 <div
                     key={p.player_id}
                     onClick={() => handleSilence(p)}
-                    className={`group w-full flex items-center justify-between rounded-xl px-5 py-4 transition-all shadow-lg active:scale-95 backdrop-blur-sm border
+                    // BỎ VIỀN (border), chỉ giữ hiệu ứng nền
+                    className={`group w-full flex items-center justify-between rounded-xl px-5 py-4 transition-all shadow-lg active:scale-95 backdrop-blur-sm
                         ${isSelected 
-                            ? "bg-indigo-900/60 border-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.4)] cursor-pointer" // Selected
-                            : "bg-black/70 border-indigo-900/30 hover:bg-indigo-950/60 hover:border-indigo-600 cursor-pointer" // Normal
+                            ? "bg-indigo-900/60 shadow-[0_0_15px_rgba(99,102,241,0.4)] cursor-pointer" // Selected (No border)
+                            : "bg-black/70 hover:bg-indigo-950/60 cursor-pointer" // Normal (No border)
                         }
                     `}
                 >

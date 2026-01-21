@@ -23,7 +23,7 @@ export default function UITestPage(){
   
   const TEST_PHASE = PHASES.NIGHT_SILENCED; 
 
-  const TEST_ROLE = ROLES.BODYGUARD;
+  const TEST_ROLE = ROLES.SILENCED;
  
   const [phase] = useState(TEST_PHASE);
   const [role] = useState(TEST_ROLE);
