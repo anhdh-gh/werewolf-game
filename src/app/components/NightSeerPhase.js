@@ -12,14 +12,46 @@ import { ACTIONS } from "@/constants/actions";
 import { ROLES } from "@/constants/roles";
 import { useRouter } from "next/navigation";
 
+
+
+
+// Khởi tạo font Horror
+const fontHorror = localFont({
+  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf",
+  display: "swap",
+});
+
+const ROLE_NAME_VN = {
+  WEREWOLF : "MA SÓI",
+  VILLAGER : " DÂN LÀNG",
+  SEER : "TIÊN TRI",
+  GUARD :"BẢO VỆ",
+  WITCH : "PHÙ THUỶ",
+  TANNER :"CHÁN ĐỜI" ,
+  CURSED :"BỊ NGUYỀN",
+  SILENCED :"KẺ BỊ CÂM",
+  GOD :"HÙNG ANH",
+  DEFAULT :"NOTHING"
+}
+
+export default function NightSeerPhase({ roomCode, flow }) {
+  const router = useRouter();
+  const socket = getGameSocket();
+
+  const [player, setPlayer] = useState(null);
+  const [playersList, setPlayersList] = useState([]);
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const audioRef = useRef(null);
+
 /*===== self-test-start ===== */
   // ... import như cũ ...
 
 const FAKE_PLAYER = {
   player_id: 1,
   username: "Fake Player",
-  role: "WITCH",
-  initial_role: "WITCH",
+  role: "SEER",
+  initial_role: "SEER",
   is_alive: true,
   is_connected: true,
   is_ready: true,
@@ -52,37 +84,6 @@ const FAKE_PLAYER = {
   }, [roomCode, router]);
 
   /*===== self-test-end ===== */
-
-
-// Khởi tạo font Horror
-const fontHorror = localFont({
-  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf",
-  display: "swap",
-});
-
-const ROLE_NAME_VN = {
-  WEREWOLF : "MA SÓI",
-  VILLAGER : " DÂN LÀNG",
-  SEER : "TIÊN TRI",
-  GUARD :"BẢO VỆ",
-  WITCH : "PHÙ THUỶ",
-  TANNER :"CHÁN ĐỜI" ,
-  CURSED :"BỊ NGUYỀN",
-  SILENCED :"KẺ BỊ CÂM",
-  GOD :"HÙNG ANH",
-  DEFAULT :"NOTHING"
-}
-
-export default function NightSeerPhase({ roomCode, flow }) {
-  const router = useRouter();
-  const socket = getGameSocket();
-
-  const [player, setPlayer] = useState(null);
-  const [playersList, setPlayersList] = useState([]);
-  const [selectedPlayer, setSelectedPlayer] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const audioRef = useRef(null);
 
   /* ===== FETCH PLAYER INFO ===== */
   useEffect(() => {

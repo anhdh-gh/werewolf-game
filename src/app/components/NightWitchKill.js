@@ -12,7 +12,25 @@ import { ACTIONS } from "@/constants/actions";
 import { ROLES } from "@/constants/roles";
 import { useRouter } from "next/navigation";
 
-/*===== self-test-start ===== */
+
+
+// Font Horror
+const fontHorror = localFont({
+  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf",
+  display: "swap",
+});
+
+export default function NightWitchKill({ roomCode, flow }) {
+  const router = useRouter();
+  const socket = getGameSocket();
+
+  const [player, setPlayer] = useState(null);
+  const [playersList, setPlayersList] = useState([]);
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const audioRef = useRef(null);
+
+ /*===== self-test-start ===== */
   // ... import như cũ ...
 
 const FAKE_PLAYER = {
@@ -51,24 +69,7 @@ const FAKE_PLAYER = {
     );
   }, [roomCode, router]);
 
-  /*===== self-test-end ===== */
-
-// Font Horror
-const fontHorror = localFont({
-  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf",
-  display: "swap",
-});
-
-export default function NightWitchKill({ roomCode, flow }) {
-  const router = useRouter();
-  const socket = getGameSocket();
-
-  const [player, setPlayer] = useState(null);
-  const [playersList, setPlayersList] = useState([]);
-  const [selectedPlayer, setSelectedPlayer] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const audioRef = useRef(null);
+  /*===== self-test-end ===== */ 
 
   const ROLE_NAME_VN = {
   WEREWOLF: "MA SÓI",

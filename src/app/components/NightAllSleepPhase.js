@@ -5,7 +5,20 @@ import Loading from "@/components/Loading";
 import Image from "next/image";
 import localFont from "next/font/local";
 
-/*===== self-test-start ===== */
+
+
+
+// Font Ma Mị
+const fontHorror = localFont({
+  
+  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
+  display: "swap",
+});
+
+export default function NightAllSleepPhase({ roomCode, flow }) {
+  const audioRef = useRef(null);
+
+  /*===== self-test-start ===== */
   // ... import như cũ ...
 
 const FAKE_PLAYER = {
@@ -45,17 +58,6 @@ const FAKE_PLAYER = {
   }, [roomCode, router]);
 
   /*===== self-test-end ===== */
-
-
-// Font Ma Mị
-const fontHorror = localFont({
-  
-  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
-  display: "swap",
-});
-
-export default function NightAllSleepPhase({ roomCode, flow }) {
-  const audioRef = useRef(null);
   
   /* ===== TTS LOGIC (GIỮ NGUYÊN) ===== */
   useEffect(() => {

@@ -12,7 +12,27 @@ import { ROLES } from "@/constants/roles";
 import { useRouter } from "next/navigation";
 import localFont from "next/font/local";
 
-/*===== self-test-start ===== */
+
+
+const fontHorror = localFont({
+  
+  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
+  display: "swap",
+});
+
+
+export default function NightSilencedPhase({ roomCode, flow }) {
+  const router = useRouter();
+  const socket = getGameSocket();
+
+  const [player, setPlayer] = useState(null);
+  const [playersList, setPlayersList] = useState([]);
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const audioRef = useRef(null);
+
+
+ /*===== self-test-start ===== */
   // ... import như cũ ...
 
 const FAKE_PLAYER = {
@@ -51,26 +71,7 @@ const FAKE_PLAYER = {
     );
   }, [roomCode, router]);
 
-  /*===== self-test-end ===== */
-
-const fontHorror = localFont({
-  
-  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
-  display: "swap",
-});
-
-
-export default function NightSilencedPhase({ roomCode, flow }) {
-  const router = useRouter();
-  const socket = getGameSocket();
-
-  const [player, setPlayer] = useState(null);
-  const [playersList, setPlayersList] = useState([]);
-  const [selectedPlayer, setSelectedPlayer] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const audioRef = useRef(null);
-
+  /*===== self-test-end ===== */ 
 
 const ROLE_NAME_VN = {
   WEREWOLF: "MA SÓI",

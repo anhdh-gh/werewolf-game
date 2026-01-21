@@ -14,46 +14,7 @@ import { useRouter } from "next/navigation";
 import { Icon } from '@iconify/react'; 
 
 
-/*===== self-test-start ===== */
-  // ... import như cũ ...
 
-const FAKE_PLAYER = {
-  player_id: 1,
-  username: "Fake Player",
-  role: "WITCH",
-  initial_role: "WITCH",
-  is_alive: true,
-  is_connected: true,
-  is_ready: true,
-};
-
-  useEffect(() => {
-    // 🔹 Nếu đang ở chế độ debug (roomCode = "DEBUG") thì dùng fake player, KHÔNG gọi socket
-    if (roomCode === "DEBUG") {
-      setPlayer(FAKE_PLAYER);
-      return;
-    }
-  
-    const socket = getGameSocket();
-    if (!socket) return;
-  
-    const playerId = Number(localStorage.getItem(KEYS.USER_ID));
-    if (!playerId) {
-      router.push(PATHS.SIGN_IN);
-      return;
-    }
-  
-    socket.emit(
-      EVENTS.PLAYER_INFO,
-      { room: { code: roomCode }, player: { ids: [playerId] } },
-      (res) => {
-        if (!res?.data?.players?.length) return;
-        setPlayer(res.data.players[0]);
-      }
-    );
-  }, [roomCode, router]);
-
-  /*===== self-test-end ===== */
 
 // Font Horror
 const fontHorror = localFont({
@@ -114,9 +75,48 @@ export default function NightWolfPhase({ roomCode, flow }) {
   const [chatInput, setChatInput] = useState("");
   const [hasUnread, setHasUnread] = useState(false);
   const chatEndRef = useRef(null);
-
-  /* ===== TTS ===== */
   const audioRef = useRef(null);
+
+ /*===== self-test-start ===== */
+  // ... import như cũ ...
+
+const FAKE_PLAYER = {
+  player_id: 1,
+  username: "Fake Player",
+  role: "WEREWOLF",
+  initial_role: "WEREWOLF",
+  is_alive: true,
+  is_connected: true,
+  is_ready: true,
+};
+
+  useEffect(() => {
+    // 🔹 Nếu đang ở chế độ debug (roomCode = "DEBUG") thì dùng fake player, KHÔNG gọi socket
+    if (roomCode === "DEBUG") {
+      setPlayer(FAKE_PLAYER);
+      return;
+    }
+  
+    const socket = getGameSocket();
+    if (!socket) return;
+  
+    const playerId = Number(localStorage.getItem(KEYS.USER_ID));
+    if (!playerId) {
+      router.push(PATHS.SIGN_IN);
+      return;
+    }
+  
+    socket.emit(
+      EVENTS.PLAYER_INFO,
+      { room: { code: roomCode }, player: { ids: [playerId] } },
+      (res) => {
+        if (!res?.data?.players?.length) return;
+        setPlayer(res.data.players[0]);
+      }
+    );
+  }, [roomCode, router]);
+
+  /*===== self-test-end ===== */ 
 
   /* ===== FETCH PLAYER ===== */
   useEffect(() => {

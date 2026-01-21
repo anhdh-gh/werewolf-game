@@ -13,6 +13,22 @@ import Image from "next/image";
 import localFont from "next/font/local";
 
 
+
+
+// Font Ma Mị & Máu Me
+const fontHorror = localFont({
+  
+  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
+  display: "swap",
+});
+
+export default function NightCursedPhase({ roomCode, flow }) {
+  const router = useRouter();
+  const socket = getGameSocket();
+  const [player, setPlayer] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const audioRef = useRef(null);
+
 /*===== self-test-start ===== */
   // ... import như cũ ...
 
@@ -54,21 +70,6 @@ const FAKE_PLAYER = {
 
   /*===== self-test-end ===== */
 
-// Font Ma Mị & Máu Me
-const fontHorror = localFont({
-  
-  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
-  display: "swap",
-});
-
-export default function NightCursedPhase({ roomCode, flow }) {
-  const router = useRouter();
-  const socket = getGameSocket();
-
-  const [player, setPlayer] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const audioRef = useRef(null);
 
  const ROLE_NAME_VN = {
   WEREWOLF: "MA SÓI",
