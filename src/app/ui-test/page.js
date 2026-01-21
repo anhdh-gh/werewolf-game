@@ -21,7 +21,7 @@ import EndPhase from "@/components/EndPhase";
 
 export default function UITestPage(){
   
-  const TEST_PHASE = PHASES.NIGHT_WITCH_SAVE; 
+  const TEST_PHASE = PHASES.NIGHT_WITCH_KILL; 
 
   const TEST_ROLE = ROLES.WITCH;
  
