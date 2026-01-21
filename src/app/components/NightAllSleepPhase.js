@@ -19,44 +19,52 @@ export default function NightAllSleepPhase({ roomCode, flow }) {
   const audioRef = useRef(null);
 
   /*===== self-test-start ===== */
-  // ... import như cũ ...
-
-const FAKE_PLAYER = {
-  player_id: 1,
-  username: "Fake Player",
-  role: "WITCH",
-  initial_role: "WITCH",
-  is_alive: true,
-  is_connected: true,
-  is_ready: true,
-};
-
-  useEffect(() => {
-    // 🔹 Nếu đang ở chế độ debug (roomCode = "DEBUG") thì dùng fake player, KHÔNG gọi socket
-    if (roomCode === "DEBUG") {
-      setPlayer(FAKE_PLAYER);
-      return;
-    }
-  
-    const socket = getGameSocket();
-    if (!socket) return;
-  
-    const playerId = Number(localStorage.getItem(KEYS.USER_ID));
-    if (!playerId) {
-      router.push(PATHS.SIGN_IN);
-      return;
-    }
-  
-    socket.emit(
-      EVENTS.PLAYER_INFO,
-      { room: { code: roomCode }, player: { ids: [playerId] } },
-      (res) => {
-        if (!res?.data?.players?.length) return;
-        setPlayer(res.data.players[0]);
+    useEffect(() => {
+      // 1. CHẾ ĐỘ DEBUG: Lấy dữ liệu từ props 'flow' truyền vào
+      if (roomCode === "DEBUG") {
+        // Lấy danh sách từ flow.data.players (có sẵn trong UITestPage)
+        const mockPlayers = flow?.data?.players || [];
+        
+        const currentPlayer = mockPlayers.find(p => p.player_id === 1) || FAKE_PLAYER;
+         
+        
+        setPlayer(currentPlayer);
+        setPlayersList(mockPlayers.filter(p => p.is_alive && p.is_connected && p.is_ready));
+        return;
       }
-    );
-  }, [roomCode, router]);
-
+    
+      // 2. CHẾ ĐỘ CHẠY THẬT: Gọi Socket
+      const socket = getGameSocket();
+      if (!socket) return;
+    
+      const playerId = Number(localStorage.getItem(KEYS.USER_ID));
+      if (!playerId) {
+        router.push(PATHS.SIGN_IN);
+        return;
+      }
+    
+      // Emit lấy thông tin bản thân
+      socket.emit(
+        EVENTS.PLAYER_INFO,
+        { room: { code: roomCode }, player: { ids: [playerId] } },
+        (res) => {
+          if (res?.data?.players?.length) {
+            setPlayer(res.data.players[0]);
+          }
+        }
+      );
+  
+      // Emit lấy danh sách người chơi để hiển thị list soi
+      socket.emit(
+        EVENTS.PLAYER_INFO, 
+        { room: { code: roomCode } }, 
+        (res) => {
+          if (res?.data?.players) {
+            setPlayersList(res.data.players.filter((p) => p.is_alive && p.is_connected && p.is_ready));
+          }
+        }
+      );
+    }, [roomCode, router, flow]); // Thêm flow vào dependency để nó cập nhật khi bạn đổi data bên file test
   /*===== self-test-end ===== */
   
   /* ===== TTS LOGIC (GIỮ NGUYÊN) ===== */

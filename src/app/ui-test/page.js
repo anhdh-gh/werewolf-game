@@ -19,18 +19,12 @@ import NightAllSleepPhase from "@/components/NightAllSleepPhase";
 import DayDiscussionPhase from "@/components/DayDiscussionPhase";
 import EndPhase from "@/components/EndPhase";
 
-export default function UITestPage() {
-  /* ============================================================
-     ⚙️ SETUP: SỬA TRỰC TIẾP Ở ĐÂY ĐỂ ĐỔI MÀN HÌNH TEST
-     ============================================================ */
-  // 1. Chọn Phase muốn hiển thị (Ví dụ: PHASES.NIGHT_WOLF, PHASES.DAY_DISCUSSION...)
-  const TEST_PHASE = PHASES.NIGHT_WOLF; 
+export default function UITestPage(){
+  
+  const TEST_PHASE = PHASES.NIGHT_GUARD; 
 
-  // 2. Chọn Role của bản thân (Ví dụ: ROLES.WEREWOLF, ROLES.SEER...)
-  const TEST_ROLE = ROLES.WEREWOLF;
-  /* ============================================================ */
-
-  // State giữ nguyên nhưng lấy giá trị từ config bên trên
+  const TEST_ROLE = ROLES.BODYGUARD;
+ 
   const [phase] = useState(TEST_PHASE);
   const [role] = useState(TEST_ROLE);
 
@@ -69,7 +63,7 @@ export default function UITestPage() {
     },
     {
       player_id: 3,
-      username: "Đồng đội Sói",
+      username: "FAKE_PLAYER",
       role: ROLES.WEREWOLF,
       initial_role: ROLES.WEREWOLF,
       is_alive: true,

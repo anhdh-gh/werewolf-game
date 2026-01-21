@@ -30,25 +30,21 @@ export default function NightCursedPhase({ roomCode, flow }) {
   const audioRef = useRef(null);
 
 /*===== self-test-start ===== */
-  // ... import như cũ ...
-
-const FAKE_PLAYER = {
-  player_id: 1,
-  username: "Fake Player",
-  role: "WITCH",
-  initial_role: "WITCH",
-  is_alive: true,
-  is_connected: true,
-  is_ready: true,
-};
-
   useEffect(() => {
-    // 🔹 Nếu đang ở chế độ debug (roomCode = "DEBUG") thì dùng fake player, KHÔNG gọi socket
+    // 1. CHẾ ĐỘ DEBUG: Lấy dữ liệu từ props 'flow' truyền vào
     if (roomCode === "DEBUG") {
-      setPlayer(FAKE_PLAYER);
+      // Lấy danh sách từ flow.data.players (có sẵn trong UITestPage)
+      const mockPlayers = flow?.data?.players || [];
+      
+      const currentPlayer = mockPlayers.find(p => p.player_id === 1) || FAKE_PLAYER;
+       
+      
+      setPlayer(currentPlayer);
+      setPlayersList(mockPlayers.filter(p => p.is_alive && p.is_connected && p.is_ready));
       return;
     }
   
+    // 2. CHẾ ĐỘ CHẠY THẬT: Gọi Socket
     const socket = getGameSocket();
     if (!socket) return;
   
@@ -58,17 +54,29 @@ const FAKE_PLAYER = {
       return;
     }
   
+    // Emit lấy thông tin bản thân
     socket.emit(
       EVENTS.PLAYER_INFO,
       { room: { code: roomCode }, player: { ids: [playerId] } },
       (res) => {
-        if (!res?.data?.players?.length) return;
-        setPlayer(res.data.players[0]);
+        if (res?.data?.players?.length) {
+          setPlayer(res.data.players[0]);
+        }
       }
     );
-  }, [roomCode, router]);
 
-  /*===== self-test-end ===== */
+    // Emit lấy danh sách người chơi để hiển thị list soi
+    socket.emit(
+      EVENTS.PLAYER_INFO, 
+      { room: { code: roomCode } }, 
+      (res) => {
+        if (res?.data?.players) {
+          setPlayersList(res.data.players.filter((p) => p.is_alive && p.is_connected && p.is_ready));
+        }
+      }
+    );
+  }, [roomCode, router, flow]); // Thêm flow vào dependency để nó cập nhật khi bạn đổi data bên file test
+/*===== self-test-end ===== */
 
 
  const ROLE_NAME_VN = {
