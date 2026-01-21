@@ -40,7 +40,7 @@ export default function NightCursedPhase({ roomCode, flow }) {
        
       
       setPlayer(currentPlayer);
-      setPlayersList(mockPlayers.filter(p => p.is_alive && p.is_connected && p.is_ready));
+      
       return;
     }
   
@@ -236,7 +236,7 @@ export default function NightCursedPhase({ roomCode, flow }) {
                     </div>
 
                     {/* Tên Role */}
-                    <h1 className={`${fontBlood.className} text-3xl text-red-500 text-center drop-shadow-[0_2px_2px_black] uppercase leading-relaxed break-words`}>
+                    <h1 className={`${fontHorror.className} text-3xl text-red-500 text-center drop-shadow-[0_2px_2px_black] uppercase leading-relaxed break-words`}>
                         {player.role.replace(/_/g, " ")}
                     </h1>
                 </div>
