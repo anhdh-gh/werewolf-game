@@ -24,7 +24,7 @@ const ROLE_IMAGES = {
   WEREWOLF: "/image/werewolf.png", // Thay link ảnh Sói vào đây 
   VILLAGER: "/image/villager.png", // Thay link ảnh Dân vào đây
   SEER: "/image/seer.png",         // Thay link ảnh Tiên tri
-  GUARD: "/image/guardian.png",       // Thay link ảnh Bảo vệ
+  BODYGUARD: "/image/guardian.png",       // Thay link ảnh Bảo vệ
   WITCH: "/image/witch.png",       // Thay link ảnh Phù thủy
   TANNER: "/image/tanner.png",     // Chán đời
   CURSED: "/image/cursed.png",     // Bị nguyền rủa

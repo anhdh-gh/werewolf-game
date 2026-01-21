@@ -22,7 +22,7 @@ const ROLE_NAME_VN = {
   WEREWOLF: "MA SÓI",
   VILLAGER: " DÂN LÀNG",
   SEER: "TIÊN TRI",
-  GUARD: "BẢO VỆ",
+  BODYGUARD: "BẢO VỆ",
   WITCH: "PHÙ THUỶ",
   TANNER: "CHÁN ĐỜI",
   CURSED: "BỊ NGUYỀN",

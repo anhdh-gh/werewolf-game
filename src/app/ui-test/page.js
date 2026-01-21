@@ -21,9 +21,9 @@ import EndPhase from "@/components/EndPhase";
 
 export default function UITestPage(){
   
-  const TEST_PHASE = PHASES.NIGHT_WITCH_KILL; 
+  const TEST_PHASE = PHASES.NIGHT_SILENCED; 
 
-  const TEST_ROLE = ROLES.WITCH;
+  const TEST_ROLE = ROLES.BODYGUARD;
  
   const [phase] = useState(TEST_PHASE);
   const [role] = useState(TEST_ROLE);
