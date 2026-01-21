@@ -111,7 +111,7 @@ export default function SignupPage() {
               onChange={handleChange}
               placeholder="ĐỊA CHỈ EMAIL..."
               required
-              className={`${fontHorror.className} w-full p-4 rounded-xl bg-black/50 border border-red-900/20 text-red-100 placeholder-red-400 outline-none focus:border-red-600 focus:shadow-[0_0_15px_rgba(153,0,0,0.3)] transition-all text-xl tracking-widest`}
+              className= "w-full p-4 rounded-xl bg-black/50 border border-red-900/20 text-red-100 placeholder-red-300 outline-none focus:border-red-600 focus:shadow-[0_0_15px_rgba(153,0,0,0.3)] transition-all text-base tracking-widest" 
             />
             
             <input
@@ -120,7 +120,7 @@ export default function SignupPage() {
               onChange={handleChange}
               placeholder="TÊN NGƯỜI DÙNG..."
               required
-              className={`${fontHorror.className} w-full p-4 rounded-xl bg-black/50 border border-red-900/20 text-red-100 placeholder-red-400 outline-none focus:border-red-600 focus:shadow-[0_0_15px_rgba(153,0,0,0.3)] transition-all text-xl tracking-widest`}
+              className= "w-full p-4 rounded-xl bg-black/50 border border-red-900/20 text-red-100 placeholder-red-300 outline-none focus:border-red-600 focus:shadow-[0_0_15px_rgba(153,0,0,0.3)] transition-all text-base tracking-widest" 
             />
 
             <input
@@ -130,7 +130,7 @@ export default function SignupPage() {
               onChange={handleChange}
               placeholder="MẬT MÃ..."
               required
-              className={`${fontHorror.className} w-full p-4 rounded-xl bg-black/50 border border-red-900/20 text-red-100 placeholder-red-400 outline-none focus:border-red-600 focus:shadow-[0_0_15px_rgba(153,0,0,0.3)] transition-all text-xl tracking-widest`}
+              className= " w-full p-4 rounded-xl bg-black/50 border border-red-900/20 text-red-100 placeholder-red-300 outline-none focus:border-red-600 focus:shadow-[0_0_15px_rgba(153,0,0,0.3)] transition-all text-base tracking-widest"
             />
           </div>
 

@@ -134,7 +134,7 @@
                       inputMode="numeric"
                       value={maxPlayers}
                       onChange={handleMaxPlayersChange}
-                      className={`${fontHorror.className} w-full h-full pl-4 pr-20 bg-black/60 border-2 border-red-900/50 text-red-100 rounded-xl outline-none text-4xl focus:border-red-600 focus:shadow-[0_0_15px_rgba(220,38,38,0.4)] transition-all text-center`}
+                      className="w-full p-4 rounded-xl bg-black/50 border border-red-900/20 text-red-100 placeholder-red-300 outline-none focus:border-red-600 focus:shadow-[0_0_15px_rgba(153,0,0,0.3)] transition-all text-base tracking-widest"
                     />
                     <span className={`${fontHorror.className} absolute right-4 top-1/2 -translate-y-1/2 text-red-600/60 text-xs font-bold font-sans uppercase tracking-widest pointer-events-none`}>
                     Người
@@ -164,7 +164,7 @@
                     placeholder="MÃ SỐ"
                     value={roomCode}
                     onChange={(e) => setRoomCode(e.target.value)}
-                    className={`${fontHorror.className} flex-1 min-w-0 h-full px-4 bg-black/60 border-2 border-gray-800 text-gray-200 placeholder-gray-700 rounded-xl outline-none text-2xl focus:border-red-500 transition-all text-center uppercase tracking-widest`}
+                    className= "w-full p-4 rounded-xl bg-black/50 border border-red-900/20 text-red-100 placeholder-red-300 outline-none focus:border-red-600 focus:shadow-[0_0_15px_rgba(153,0,0,0.3)] transition-all text-base tracking-widest" 
                   />
 
                   <button

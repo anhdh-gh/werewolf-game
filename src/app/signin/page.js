@@ -132,7 +132,7 @@ export default function SigninPage(){
                     placeholder="Tên đăng nhập..."
                     required
                     // Đã thêm fontHorror, chỉnh màu placeholder sáng lên (red-400), tăng size chữ (text-xl)
-                    className={`${fontHorror.className} w-full p-4 rounded-xl bg-black/50 border border-red-900/20 text-red-100 placeholder-red-400 outline-none focus:border-red-600 focus:shadow-[0_0_15px_rgba(153,0,0,0.2)] transition-all duration-300 text-xl tracking-widest`}
+                    className="w-full p-4 rounded-xl bg-black/50 border border-red-900/20 text-red-100 placeholder-red-300 outline-none focus:border-red-600 focus:shadow-[0_0_15px_rgba(153,0,0,0.3)] transition-all text-base tracking-widest" 
                 />
             </div>
             
@@ -145,7 +145,7 @@ export default function SigninPage(){
                     placeholder="Mật khẩu..."
                     required
                     // Tương tự cho password
-                    className={`${fontHorror.className} w-full p-4 rounded-xl bg-black/50 border border-red-900/20 text-red-100 placeholder-red-400 outline-none focus:border-red-600 focus:shadow-[0_0_15px_rgba(153,0,0,0.2)] transition-all duration-300 text-xl tracking-widest`}
+                    className="w-full p-4 rounded-xl bg-black/50 border border-red-900/20 text-red-100 placeholder-red-300 outline-none focus:border-red-600 focus:shadow-[0_0_15px_rgba(153,0,0,0.3)] transition-all text-base tracking-widest"
                 />
             </div>
           </div>
