@@ -11,7 +11,7 @@ import { ACTIONS } from "@/constants/actions";
 import { ROLES } from "@/constants/roles";
 import { useRouter } from "next/navigation";
 
-export default function NightWolfPhase({ roomCode, flow }) {
+export default function NightWolfPhase({ roomCode, flow }){
   const router = useRouter();
   const socket = getGameSocket();
 
