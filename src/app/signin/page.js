@@ -120,7 +120,7 @@ export default function SigninPage(){
         {/* Form Container */}
         <form
           onSubmit={handleSubmit}
-          className="w-full bg-black/60 border border-red-900/30  rounded-2xl p-8 flex flex-col gap-6 shadow-[0_0_30px_rgba(0,0,0,0.8)]"
+          className="w-full bg-black/100 border border-red-900/30  rounded-2xl p-8 flex flex-col gap-6 shadow-[0_0_30px_rgba(0,0,0,0.8)]"
         >
           {/* Inputs */}
           <div className="space-y-4">
