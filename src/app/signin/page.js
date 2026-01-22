@@ -10,9 +10,9 @@ import { API_PATHS } from "@/constants/paths.api";
 import { useApiFetch } from "@/hooks/useApiFetch";
 
 const fontHorror = localFont({
-  
-  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
+  src: "../../../public/fonts/Fz-Gypsy-Curse.ttf",
   display: "swap",
+  variable: "--font-horror",
 });
 
 function parseJwt(token) {
@@ -31,14 +31,13 @@ function parseJwt(token) {
   }
 }
 
-export default function SigninPage(){
+export default function SigninPage() {
   const router = useRouter();
   const [server, setServer] = useState(null);
   const [form, setForm] = useState({ username: "", password: "" });
   const [loading, setLoading] = useState(false);
   const apiFetch = useApiFetch();
 
-  // Logic giữ nguyên
   useEffect(() => {
     if (typeof window !== "undefined") {
       localStorage.removeItem(KEYS.ACCESS_TOKEN);
@@ -61,7 +60,6 @@ export default function SigninPage(){
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!server) return;
-
     setLoading(true);
 
     try {
@@ -89,8 +87,18 @@ export default function SigninPage(){
   if (!server) return null;
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-black flex items-center justify-center px-4">
+    <div className={`${fontHorror.variable} relative min-h-screen w-full overflow-hidden bg-black flex items-center justify-center px-4`}>
       
+      {/* Style ép font horror và màu đỏ cho placeholder */}
+      <style>{`
+        .input-horror-placeholder::placeholder {
+          font-family: var(--font-horror);
+          color: #ff0000 !important; 
+          opacity: 0.7; 
+          letter-spacing: 0.15em;
+        }
+      `}</style>
+
       {/* Background Image */}
       <Image
         src="/image/select_server_screen.jpg"
@@ -108,11 +116,10 @@ export default function SigninPage(){
         
         {/* Header Title */}
         <div className="text-center w-full mb-2">
-           <h1 className={`${fontHorror.className} text-5xl text-[#990000] mb-2 drop-shadow-[0_0_15px_rgba(255,0,0,0.4)] tracking-widest`}>
+           <h1 className={`${fontHorror.className} text-5xl text-red-600 mb-2 drop-shadow-[0_0_15px_rgba(255,0,0,0.4)] tracking-widest`}>
              ĐĂNG NHẬP
            </h1>
-           {/* Đã sửa font chữ Server */}
-           <p className={`${fontHorror.className} text-red-500/90 text-xl tracking-widest uppercase border-b border-red-900/30 pb-2 inline-block`}>
+           <p className={`${fontHorror.className} text-red-600 text-xl tracking-widest uppercase border-b border-red-900/30 pb-2 inline-block`}>
              Máy chủ: {server.name}
            </p>
         </div>
@@ -120,7 +127,7 @@ export default function SigninPage(){
         {/* Form Container */}
         <form
           onSubmit={handleSubmit}
-          className="w-full bg-black/100 border border-red-900/30  rounded-2xl p-8 flex flex-col gap-6 shadow-[0_0_30px_rgba(0,0,0,0.8)]"
+          className="w-full bg-black/60 border border-red-900/30 rounded-2xl p-8 flex flex-col gap-6 shadow-[0_0_30px_rgba(0,0,0,0.8)]"
         >
           {/* Inputs */}
           <div className="space-y-4">
@@ -131,8 +138,8 @@ export default function SigninPage(){
                     onChange={handleChange}
                     placeholder="Tên đăng nhập..."
                     required
-                    // Đã thêm fontHorror, chỉnh màu placeholder sáng lên (red-400), tăng size chữ (text-xl)
-                    className="w-full p-4 rounded-xl bg-black/10 border border-red-900/20 text-red-100 placeholder-red-300 outline-none focus:border-red-600 focus:shadow-[0_0_15px_rgba(153,0,0,0.3)] transition-all text-base tracking-widest" 
+                    /* SỬA QUAN TRỌNG: Thêm dấu ! trước border-2 và border-white để ghi đè CSS global */
+                    className="input-horror-placeholder font-sans w-full p-4 rounded-xl !border-2 !border-white text-red-600 outline-none shadow-[0_4px_10px_rgba(0,0,0,0.5)] focus:!border-white focus:bg-zinc-900/80 focus:shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all text-base tracking-widest" 
                 />
             </div>
             
@@ -144,8 +151,8 @@ export default function SigninPage(){
                     onChange={handleChange}
                     placeholder="Mật khẩu..."
                     required
-                    // Tương tự cho password
-                    className="w-full p-4 rounded-xl bg-black/50 border border-red-900/20 text-red-100 placeholder-red-300 outline-none focus:border-red-600 focus:shadow-[0_0_15px_rgba(153,0,0,0.3)] transition-all text-base tracking-widest"
+                    /* SỬA QUAN TRỌNG: Thêm dấu ! trước border-2 và border-white */
+                    className="input-horror-placeholder font-sans w-full p-4 rounded-xl !border-2 !border-white text-red-600 outline-none shadow-[0_4px_10px_rgba(0,0,0,0.5)] focus:!border-white focus:bg-zinc-900/80 focus:shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all text-base tracking-widest"
                 />
             </div>
           </div>
@@ -154,9 +161,9 @@ export default function SigninPage(){
           <button
             type="submit"
             disabled={loading}
-            className="relative w-full py-4 mt-2 rounded-2xl text-red-100 bg-[#7f1d1d] hover:bg-red-700 border-2 border-red-900 transition-all overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
+            className="relative w-full py-4 mt-2 rounded-2xl bg-red-500/40 hover:bg-red-500 border-2 border-red-900 transition-all overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span className={`${fontHorror.className} relative z-10 text-3xl drop-shadow-[2px_2px_2px_black] tracking-wider`}>
+            <span className={`${fontHorror.className} text-red-600 relative z-10 text-3xl drop-shadow-[2px_2px_2px_black] tracking-wider`}>
               {loading ? "ĐANG VÀO..." : "XÁC NHẬN"}
             </span>
             
@@ -174,15 +181,14 @@ export default function SigninPage(){
         <div className="w-full flex flex-col items-center gap-3">
           <button
             onClick={() => router.push(PATHS.SIGN_UP)}
-            className={`${fontHorror.className} text-red-800 text-lg hover:text-red-500 transition-colors tracking-widest`}
+            className={`${fontHorror.className} text-lg text-red-600 hover:text-red-500 transition-colors tracking-widest`}
           >
             Chưa có xác?... Đăng ký
           </button>
 
           <button
             onClick={() => router.push(PATHS.SERVER)}
-            // Đã sửa font chữ nút quay lại
-            className={`${fontHorror.className} text-sm text-red-900/80 hover:text-red-500 tracking-widest uppercase transition-colors`}
+            className={`${fontHorror.className} text-sm text-red-600 hover:text-red-500 tracking-widest uppercase transition-colors`}
           >
              Quay lại chọn máy chủ 
           </button>

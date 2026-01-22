@@ -461,4 +461,47 @@ body {
   animation: blood-flow 3s infinite;
 }
 
+/* ... (Code cũ của bạn ở trên) */
 
+/* ========================================
+  WEREWOLF INPUT FIELDS (Thêm mới)
+  ========================================
+*/
+.werewolf-input {
+  width: 100%;
+  padding: 1rem; /* p-4 */
+  border-radius: 0.75rem; /* rounded-xl */
+  background-color: rgba(24, 24, 27, 0.5); /* bg-zinc-900/50 */
+  
+  /* Cấu hình viền trắng như bạn yêu cầu */
+  border: 2px solid #ffffff; 
+  
+  color: #dc2626; /* text-red-600 */
+  font-family: sans-serif; /* font-sans */
+  letter-spacing: 0.05em; /* tracking-widest */
+  outline: none;
+  transition: all 0.3s ease-in-out;
+  
+  /* Bóng đổ nhẹ mặc định */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Hiệu ứng khi bấm vào (Focus) */
+.werewolf-input:focus {
+  background-color: rgba(24, 24, 27, 0.8); /* bg-zinc-900/80 */
+  border-color: #ffffff;
+  
+  /* Hiệu ứng phát sáng trắng mờ ảo */
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.3), 
+              inset 0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+/* Cấu hình riêng cho Placeholder (Chữ mờ) */
+.werewolf-input::placeholder {
+  /* Dùng biến font horror bạn đã khai báo trong Next.js */
+  font-family: var(--font-horror), serif; 
+  color: #ff0000;
+  opacity: 0.7;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
