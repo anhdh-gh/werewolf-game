@@ -139,7 +139,7 @@ export default function SigninPage() {
                     placeholder="Tên đăng nhập..."
                     required
                     /* SỬA QUAN TRỌNG: Thêm dấu ! trước border-2 và border-white để ghi đè CSS global */
-                    className="input-horror-placeholder font-sans w-full p-4 rounded-xl !border-2 !border-white text-red-600 outline-none shadow-[0_4px_10px_rgba(0,0,0,0.5)] focus:!border-white focus:bg-zinc-900/80 focus:shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all text-base tracking-widest" 
+                    className="input-horror-placeholder font-sans w-full p-4 rounded-xl !border !border-white text-red-600 outline-none shadow-[0_4px_10px_rgba(0,0,0,0.5)] focus:!border-white focus:bg-zinc-900/80 focus:shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all text-base tracking-widest" 
                 />
             </div>
             
@@ -152,7 +152,7 @@ export default function SigninPage() {
                     placeholder="Mật khẩu..."
                     required
                     /* SỬA QUAN TRỌNG: Thêm dấu ! trước border-2 và border-white */
-                    className="input-horror-placeholder font-sans w-full p-4 rounded-xl !border-2 !border-white text-red-600 outline-none shadow-[0_4px_10px_rgba(0,0,0,0.5)] focus:!border-white focus:bg-zinc-900/80 focus:shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all text-base tracking-widest"
+                    className="input-horror-placeholder font-sans w-full p-4 rounded-xl !border !border-white text-red-600 outline-none shadow-[0_4px_10px_rgba(0,0,0,0.5)] focus:!border-white focus:bg-zinc-900/80 focus:shadow-[0_0_15px_rgba(255,255,255,0.3)] transition-all text-base tracking-widest"
                 />
             </div>
           </div>
@@ -163,9 +163,9 @@ export default function SigninPage() {
             disabled={loading}
             className="relative w-full py-4 mt-2 rounded-2xl bg-red-500/40 hover:bg-red-500 border-2 border-red-900 transition-all overflow-hidden group disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span className={`${fontHorror.className} text-red-600 relative z-10 text-3xl drop-shadow-[2px_2px_2px_black] tracking-wider`}>
-              {loading ? "ĐANG VÀO..." : "XÁC NHẬN"}
-            </span>
+            <span className={`${fontHorror.className} text-white relative z-10 text-3xl drop-shadow-[2px_2px_2px_black] tracking-wider`}>
+                {loading ? "ĐANG VÀO..." : "XÁC NHẬN"}
+              </span>
             
             {!loading && (
                 <>

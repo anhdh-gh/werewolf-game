@@ -474,9 +474,9 @@ body {
   background-color: rgba(24, 24, 27, 0.5); /* bg-zinc-900/50 */
   
   /* Cấu hình viền trắng như bạn yêu cầu */
-  border: 2px solid #ffffff; 
+  border: 2px solid #0f0f0f; 
   
-  color: #dc2626; /* text-red-600 */
+  color: #f51515; /* text-red-600 */
   font-family: sans-serif; /* font-sans */
   letter-spacing: 0.05em; /* tracking-widest */
   outline: none;
