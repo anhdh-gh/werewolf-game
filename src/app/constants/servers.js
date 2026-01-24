@@ -5,13 +5,15 @@ export const SERVERS = [
     name: "Trái Đất",
     api: "https://werewolf-s1.anhdh.net",
     ws: "wss://werewolf-s1.anhdh.net",
+    api_ip: "http://206.189.91.156:3000",
+    ws_ip: "ws://206.189.91.156:3000",
   },
   {
     id: "MARS",
     index: 2,
     name: "Sao hỏa",
-    api: "https://werewolf-s2.anhdh.net",
-    ws: "wss://werewolf-s2.anhdh.net",
+    api_ip: "http://152.42.200.4:3000",
+    ws_ip: "ws://152.42.200.4:3000",
   },
   // {
   //   id: "LOCAL",
