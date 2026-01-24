@@ -12,6 +12,8 @@ export const SERVERS = [
     id: "MARS",
     index: 2,
     name: "Sao hỏa",
+    api: "https://werewolf-s2.anhdh.net",
+    ws: "wss://werewolf-s2.anhdh.net",
     api_ip: "http://152.42.200.4:3000",
     ws_ip: "ws://152.42.200.4:3000",
   },
