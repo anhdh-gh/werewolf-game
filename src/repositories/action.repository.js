@@ -34,33 +34,33 @@ const ActionRepository = {
     },
 
     async isPhaseCompleted(roomCode, phase, role = null) {
-        if (!roomCode || !phase) {
-            return false;
-        }
+        if (!roomCode || !phase) return false;
 
         const [rows] = await pool.query(
             `
                 SELECT
+                  CASE WHEN
                     (
-                        SELECT COUNT(*)
-                        FROM actions a
-                        WHERE a.room_code = ?
-                          AND a.phase = ?
+                      SELECT COUNT(*)
+                      FROM actions a
+                      WHERE a.room_code = ?
+                        AND a.phase = ?
                     ) >=
                     (
-                        SELECT COUNT(*)
-                        FROM players p
-                        WHERE p.room_code = ?
-                          AND (? IS NULL OR p.role = ?)
-                          AND p.is_alive = TRUE
-                          AND p.is_ready = TRUE
-                          AND p.is_connected = TRUE
-                    ) AS is_completed
-            `,
+                      SELECT COUNT(*)
+                      FROM players p
+                      WHERE p.room_code = ?
+                        AND (? IS NULL OR p.role = ?)
+                        AND p.is_alive = TRUE
+                        AND p.is_ready = TRUE
+                        AND p.is_connected = TRUE
+                    )
+                  THEN 1 ELSE 0 END AS is_completed
+                `,
             [roomCode, phase, roomCode, role, role]
         );
 
-        return rows[0]?.is_completed === 1;
+        return Number(rows[0]?.is_completed) === 1;
     }
 };
 

@@ -193,15 +193,14 @@ const RoomRepository = {
     async isFull(roomCode, maxPlayers) {
         const [rows] = await pool.query(
             `
-                SELECT COUNT(*) >= ? AS is_full
+                SELECT CASE WHEN COUNT(*) >= ? THEN 1 ELSE 0 END AS is_full
                 FROM players
                 WHERE room_code = ?
-                  AND is_connected = TRUE
-            `,
+                AND is_connected = TRUE`,
             [maxPlayers, roomCode]
         );
 
-        return Boolean(rows[0].is_full);
+        return rows[0].is_full === 1;
     },
 
     async findStartGame() {

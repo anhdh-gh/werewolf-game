@@ -196,7 +196,7 @@ const PlayerRepository = {
             [roomCode, role]
         );
 
-        return rows[0].num;
+        return Number(rows[0].num);
     },
 
     async countRoleRemainAlive(roomCode, roles) {
@@ -213,7 +213,7 @@ const PlayerRepository = {
             [roomCode, roles]
         );
 
-        return rows[0].num;
+        return Number(rows[0].num);
     },
 
     async updatePlayers(list) {
