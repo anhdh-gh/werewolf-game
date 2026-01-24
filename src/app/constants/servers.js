@@ -13,11 +13,11 @@ export const SERVERS = [
     api: "https://werewolf-s2.anhdh.net",
     ws: "wss://werewolf-s2.anhdh.net",
   },
-  {
-    id: "LOCAL",
-    index: 3,
-    name: "Local",
-    api: "http://localhost:3000",
-    ws: "ws://localhost:3000",
-  },
+  // {
+  //   id: "LOCAL",
+  //   index: 3,
+  //   name: "Local",
+  //   api: "http://localhost:3000",
+  //   ws: "ws://localhost:3000",
+  // },
 ];
