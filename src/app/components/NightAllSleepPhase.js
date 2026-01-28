@@ -19,52 +19,52 @@ export default function NightAllSleepPhase({ roomCode, flow }) {
   const audioRef = useRef(null);
 
   /*===== self-test-start ===== */
-    useEffect(() => {
-      // 1. CHẾ ĐỘ DEBUG: Lấy dữ liệu từ props 'flow' truyền vào
-      if (roomCode === "DEBUG") {
-        // Lấy danh sách từ flow.data.players (có sẵn trong UITestPage)
-        const mockPlayers = flow?.data?.players || [];
+    // useEffect(() => {
+    //   // 1. CHẾ ĐỘ DEBUG: Lấy dữ liệu từ props 'flow' truyền vào
+    //   if (roomCode === "DEBUG") {
+    //     // Lấy danh sách từ flow.data.players (có sẵn trong UITestPage)
+    //     const mockPlayers = flow?.data?.players || [];
         
-        const currentPlayer = mockPlayers.find(p => p.player_id === 1) || FAKE_PLAYER;
+    //     const currentPlayer = mockPlayers.find(p => p.player_id === 1) || FAKE_PLAYER;
          
         
-        setPlayer(currentPlayer);
-        setPlayersList(mockPlayers.filter(p => p.is_alive && p.is_connected && p.is_ready));
-        return;
-      }
+    //     setPlayer(currentPlayer);
+    //     setPlayersList(mockPlayers.filter(p => p.is_alive && p.is_connected && p.is_ready));
+    //     return;
+    //   }
     
-      // 2. CHẾ ĐỘ CHẠY THẬT: Gọi Socket
-      const socket = getGameSocket();
-      if (!socket) return;
+    //   // 2. CHẾ ĐỘ CHẠY THẬT: Gọi Socket
+    //   const socket = getGameSocket();
+    //   if (!socket) return;
     
-      const playerId = Number(localStorage.getItem(KEYS.USER_ID));
-      if (!playerId) {
-        router.push(PATHS.SIGN_IN);
-        return;
-      }
+    //   const playerId = Number(localStorage.getItem(KEYS.USER_ID));
+    //   if (!playerId) {
+    //     router.push(PATHS.SIGN_IN);
+    //     return;
+    //   }
     
-      // Emit lấy thông tin bản thân
-      socket.emit(
-        EVENTS.PLAYER_INFO,
-        { room: { code: roomCode }, player: { ids: [playerId] } },
-        (res) => {
-          if (res?.data?.players?.length) {
-            setPlayer(res.data.players[0]);
-          }
-        }
-      );
+    //   // Emit lấy thông tin bản thân
+    //   socket.emit(
+    //     EVENTS.PLAYER_INFO,
+    //     { room: { code: roomCode }, player: { ids: [playerId] } },
+    //     (res) => {
+    //       if (res?.data?.players?.length) {
+    //         setPlayer(res.data.players[0]);
+    //       }
+    //     }
+    //   );
   
-      // Emit lấy danh sách người chơi để hiển thị list soi
-      socket.emit(
-        EVENTS.PLAYER_INFO, 
-        { room: { code: roomCode } }, 
-        (res) => {
-          if (res?.data?.players) {
-            setPlayersList(res.data.players.filter((p) => p.is_alive && p.is_connected && p.is_ready));
-          }
-        }
-      );
-    }, [roomCode, router, flow]); // Thêm flow vào dependency để nó cập nhật khi bạn đổi data bên file test
+    //   // Emit lấy danh sách người chơi để hiển thị list soi
+    //   socket.emit(
+    //     EVENTS.PLAYER_INFO, 
+    //     { room: { code: roomCode } }, 
+    //     (res) => {
+    //       if (res?.data?.players) {
+    //         setPlayersList(res.data.players.filter((p) => p.is_alive && p.is_connected && p.is_ready));
+    //       }
+    //     }
+    //   );
+    // }, [roomCode, router, flow]); // Thêm flow vào dependency để nó cập nhật khi bạn đổi data bên file test
   /*===== self-test-end ===== */
   
   /* ===== TTS LOGIC (GIỮ NGUYÊN) ===== */
