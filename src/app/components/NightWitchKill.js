@@ -11,7 +11,7 @@ import { KEYS } from "@/constants/keys";
 import { ACTIONS } from "@/constants/actions";
 import { ROLES } from "@/constants/roles";
 import { useRouter } from "next/navigation";
-
+import useKeepScreenOn from '../hooks/useKeepScreenOn';
 // Font Horror
 const fontHorror = localFont({
   src: "../../../public/fonts/Fz-Gypsy-Curse.ttf",
@@ -41,6 +41,8 @@ export default function NightWitchKill({ roomCode, flow }) {
   const [isLoading, setIsLoading] = useState(false);
   const audioRef = useRef(null);
 
+
+ useKeepScreenOn(); 
   /*===== self-test-start ===== */
   useEffect(() => {
     if (roomCode === "DEBUG") {

@@ -11,7 +11,7 @@ import { KEYS } from "@/constants/keys";
 import { ACTIONS } from "@/constants/actions";
 import { ROLES } from "@/constants/roles";
 import { useRouter } from "next/navigation";
-
+import useKeepScreenOn from '../hooks/useKeepScreenOn';
 
 
 
@@ -43,6 +43,9 @@ export default function NightSeerPhase({ roomCode, flow }) {
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const audioRef = useRef(null);
+
+useKeepScreenOn();
+
 
 /*===== self-test-start ===== */
   useEffect(() => {

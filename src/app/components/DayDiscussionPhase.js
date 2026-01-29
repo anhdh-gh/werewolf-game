@@ -13,11 +13,14 @@ import { useRouter } from "next/navigation";
 import { ACTIONS } from "@/constants/actions";
 import localFont from "next/font/local";
 import { Icon } from '@iconify/react'; 
+import useKeepScreenOn from '../hooks/useKeepScreenOn';
 const fontHorror = localFont({
   
   src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
   display: "swap",
 });
+
+useKeepScreenOn();
 
 
 export default function DayDiscussionPhase({ roomCode, flow }) {

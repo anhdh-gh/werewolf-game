@@ -9,6 +9,7 @@ import { PATHS } from "@/constants/paths";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import localFont from "next/font/local";
+import useKeepScreenOn from '../hooks/useKeepScreenOn';
 
 const fontHorror = localFont({
   
@@ -32,6 +33,8 @@ export default function LobbyRoom({ roomCode }) {
   const [copied, setCopied] = useState(false);
 
   const fetchedPlayersRef = useRef(false);
+
+  useKeepScreenOn();
 
   /* ===== LOAD ROOM INFO ===== */
   useEffect(() => {

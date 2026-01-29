@@ -11,7 +11,7 @@ import { KEYS } from "@/constants/keys";
 import { ACTIONS } from "@/constants/actions";
 import { ROLES } from "@/constants/roles";
 import { useRouter } from "next/navigation";
-
+import useKeepScreenOn from '../hooks/useKeepScreenOn';
 // Font Horror
 const fontHorror = localFont({
   src: "../../../public/fonts/Fz-Gypsy-Curse.ttf",
@@ -32,6 +32,8 @@ export default function NightGuardPhase({ roomCode, flow }) {
   // Giả lập FAKE_PLAYER để tránh lỗi undefined khi debug
   const FAKE_PLAYER = { player_id: 1, username: "Fake Guard", role: "BODYGUARD", is_alive: true, is_connected: true, is_ready: true };
 
+
+  useKeepScreenOn();
   useEffect(() => {
     // 1. CHẾ ĐỘ DEBUG
     if (roomCode === "DEBUG") {

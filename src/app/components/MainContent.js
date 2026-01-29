@@ -8,6 +8,7 @@
   import { API_PATHS } from "@/constants/paths.api";
   import { useApiFetch } from "@/hooks/useApiFetch";
   import localFont from "next/font/local";
+  import useKeepScreenOn from '../hooks/useKeepScreenOn';
 
   const fontHorror = localFont({
     
@@ -24,6 +25,8 @@
     const [maxPlayers, setMaxPlayers] = useState(4);
     const [loadingCreate, setLoadingCreate] = useState(false);
     const [loadingJoin, setLoadingJoin] = useState(false);
+
+    useKeepScreenOn();
 
     useEffect(() => {
       const name = localStorage.getItem(KEYS.USERNAME);

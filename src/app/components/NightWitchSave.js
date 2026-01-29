@@ -12,13 +12,15 @@ import { ACTIONS } from "@/constants/actions";
 import { ROLES } from "@/constants/roles";
 import { useRouter } from "next/navigation";
 import { Icon } from '@iconify/react';
-
+import useKeepScreenOn from '../hooks/useKeepScreenOn';
 
 // Font Horror
 const fontHorror = localFont({
   src: "../../../public/fonts/Fz-Gypsy-Curse.ttf",
   display: "swap",
 });
+
+useKeepScreenOn();
 
 const ROLE_NAME_VN = {
   WEREWOLF: "MA SÓI",
