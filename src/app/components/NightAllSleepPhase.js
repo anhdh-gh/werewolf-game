@@ -5,10 +5,6 @@ import Loading from "@/components/Loading";
 import Image from "next/image";
 import localFont from "next/font/local";
 
-
-
-
-
 // Font Ma Mị
 const fontHorror = localFont({
   
