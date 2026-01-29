@@ -25,7 +25,7 @@ import EndPhase from "@/components/EndPhase";
 import NightGuardPhase from "@/components/NightGuardPhase";
 import NightSilencedPhase from "@/components/NightSilencedPhase";
 import NightCursedPhase from "@/components/NightCursedPhase";
-
+import useKeepScreenOn from '../hooks/useKeepScreenOn';
   
  
 
@@ -38,6 +38,7 @@ export default function RoomContent() {
   const [isLoading, setIsLoading] = useState(true); // New loading state
   const { gameFlow, setPlayers, setGameFlow } = useRoom();
 
+ useKeepScreenOn(); 
   useEffect(() => {
     console.log("RoomContent mounted");
     console.log("Initial isLoading:", isLoading);

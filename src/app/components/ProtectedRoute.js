@@ -5,7 +5,7 @@ import { KEYS } from "@/constants/keys";
 import { PATHS } from "@/constants/paths";
 import Loading from "@/components/Loading"
 import localFont from "next/font/local";
-
+import useKeepScreenOn from '../hooks/useKeepScreenOn';
 const fontHorror = localFont({
   
   src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
@@ -16,7 +16,7 @@ export default function ProtectedRoute({ children }) {
   const router = useRouter();
   const [allowed, setAllowed] = useState(false);
 
-
+useKeepScreenOn();
 
   useEffect(() => {
     const selected = localStorage.getItem(KEYS.SERVER_SELECTED);

@@ -11,7 +11,7 @@ import { ROLES } from "@/constants/roles";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import localFont from "next/font/local";
-
+import useKeepScreenOn from '../hooks/useKeepScreenOn';
 
 
 
@@ -28,6 +28,9 @@ export default function NightCursedPhase({ roomCode, flow }) {
   const [player, setPlayer] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const audioRef = useRef(null);
+
+
+  useKeepScreenOn();
 
 /*===== self-test-start ===== */
   useEffect(() => {

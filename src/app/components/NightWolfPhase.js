@@ -12,7 +12,7 @@ import { ACTIONS } from "@/constants/actions";
 import { ROLES } from "@/constants/roles";
 import { useRouter } from "next/navigation";
 import { Icon } from '@iconify/react'; 
-
+import useKeepScreenOn from '../hooks/useKeepScreenOn';
 
 
 
@@ -21,6 +21,8 @@ const fontHorror = localFont({
   src: "../../../public/fonts/Fz-Gypsy-Curse.ttf",
   display: "swap",
 });
+
+useKeepScreenOn();
 
 /* =========================================
      FIXED LAYOUT WRAPPER (ĐƯA RA NGOÀI ĐỂ SỬA LỖI FOCUS)

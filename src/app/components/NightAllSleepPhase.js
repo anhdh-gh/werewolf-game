@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import Loading from "@/components/Loading";
 import Image from "next/image";
 import localFont from "next/font/local";
+import useKeepScreenOn from '../hooks/useKeepScreenOn';
 
 // Font Ma Mị
 const fontHorror = localFont({
@@ -15,6 +16,8 @@ const fontHorror = localFont({
 export default function NightAllSleepPhase({ roomCode, flow }) {
   const audioRef = useRef(null);
   const router = useRouter();
+
+  useKeepScreenOn();
 
   /*===== self-test-start ===== */
     useEffect(() => {
