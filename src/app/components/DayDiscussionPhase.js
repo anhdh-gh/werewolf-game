@@ -20,7 +20,7 @@ const fontHorror = localFont({
   display: "swap",
 });
 
-useKeepScreenOn();
+
 
 
 export default function DayDiscussionPhase({ roomCode, flow }) {
@@ -41,6 +41,8 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
   const chatEndRef = useRef(null);
 
   const audioRef = useRef(null);
+
+  useKeepScreenOn();
 
 /*===== self-test-start ===== */
   // ... import như cũ ...
