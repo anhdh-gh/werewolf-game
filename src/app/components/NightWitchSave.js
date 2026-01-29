@@ -45,6 +45,8 @@ export default function NightWitchSave({ roomCode, flow }) {
   const [isLoading, setIsLoading] = useState(false);
   const audioRef = useRef(null);
 
+  useKeepScreenOn();
+
   /*===== self-test-start ===== */
   useEffect(() => {
     // 1. CHẾ ĐỘ DEBUG
