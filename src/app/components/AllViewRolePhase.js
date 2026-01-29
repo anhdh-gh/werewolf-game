@@ -18,7 +18,7 @@ const fontHorror = localFont({
   display: "swap",
 });
 
-useKeepScreenOn();
+
 
 // 🛠️ CẤU HÌNH ẢNH ROLE TẠI ĐÂY
 // Bạn chỉ cần thay thế đường dẫn trong dấu ngoặc kép "" thành link ảnh thật của bạn
@@ -57,7 +57,7 @@ export default function AllViewRolePhase({ roomCode, flow }) {
   const [revealed, setRevealed] = useState(false);
   const audioRef = useRef(null);
 
-  
+  useKeepScreenOn();
 
   /* ===== FETCH PLAYER INFO (Logic cũ giữ nguyên) ===== */
   useEffect(() => {

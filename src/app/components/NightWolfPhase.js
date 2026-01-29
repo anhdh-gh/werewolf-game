@@ -22,7 +22,7 @@ const fontHorror = localFont({
   display: "swap",
 });
 
-useKeepScreenOn();
+
 
 /* =========================================
      FIXED LAYOUT WRAPPER (ĐƯA RA NGOÀI ĐỂ SỬA LỖI FOCUS)
@@ -78,6 +78,8 @@ export default function NightWolfPhase({ roomCode, flow }) {
   const [hasUnread, setHasUnread] = useState(false);
   const chatEndRef = useRef(null);
   const audioRef = useRef(null);
+
+  useKeepScreenOn();
 
  /*===== self-test-start ===== */
   useEffect(() => {
