@@ -20,7 +20,7 @@ const fontHorror = localFont({
   display: "swap",
 });
 
-useKeepScreenOn();
+
 
 const ROLE_NAME_VN = {
   WEREWOLF: "MA SÓI",
@@ -45,8 +45,7 @@ export default function NightWitchSave({ roomCode, flow }) {
   const [isLoading, setIsLoading] = useState(false);
   const audioRef = useRef(null);
 
-  useKeepScreenOn();
-
+useKeepScreenOn();
   /*===== self-test-start ===== */
   useEffect(() => {
     // 1. CHẾ ĐỘ DEBUG
