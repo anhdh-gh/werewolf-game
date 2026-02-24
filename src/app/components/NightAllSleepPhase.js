@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef,useRouter } from "react";
+import { useEffect, useRef } from "react";
 import Loading from "@/components/Loading";
 import Image from "next/image";
 import localFont from "next/font/local";
