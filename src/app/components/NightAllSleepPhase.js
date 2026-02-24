@@ -5,6 +5,7 @@ import Loading from "@/components/Loading";
 import Image from "next/image";
 import localFont from "next/font/local";
 import useKeepScreenOn from '../hooks/useKeepScreenOn';
+import { useRouter } from "next/navigation";
 
 // Font Ma Mị
 const fontHorror = localFont({
