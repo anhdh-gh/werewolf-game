@@ -6,6 +6,7 @@ import Image from "next/image";
 import localFont from "next/font/local";
 import useKeepScreenOn from '../hooks/useKeepScreenOn';
 import { useRouter } from "next/navigation";
+import { getGameSocket } from "@/socket/gameSocket";
 
 // Font Ma Mị
 const fontHorror = localFont({
