@@ -11,7 +11,7 @@ import { EVENTS } from "@/constants/events";
 import { PATHS } from "@/constants/paths";
 import { PHASES } from "@/constants/phases";
 import { ERRORS } from "@/constants/errors";
-import { LoadingOverlay } from "@/components/Loading";
+import Loading from "@/components/Loading"
 import LobbyRoom from "@/components/LobbyRoom";
 import AllViewRolePhase from "@/components/AllViewRolePhase";
 import NightAllSleepPhase from "@/components/NightAllSleepPhase";
@@ -147,7 +147,7 @@ export default function RoomContent() {
 
   if (isLoading) {
     console.log("Rendering LoadingOverlay");
-    return <LoadingOverlay textMsg="Đang xử lý..." />;
+    return <Loading textMsg="Đang xử lý..." />;
   }
 
   /* ===== LOBBY ===== */
