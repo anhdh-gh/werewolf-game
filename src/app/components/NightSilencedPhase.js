@@ -339,7 +339,7 @@ export default function NightSilencedPhase({ roomCode, flow }) {
 
       {/* --- GLOBAL LOADING OVERLAY --- */}
       {isLoading && (
-        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center">
+        <div className="fixed inset-0 z-[100] w-screen h-[100dvh] bg-black/95 backdrop-blur-xl flex items-center justify-center">
              <Loading textMsg="Đang thực hiện..." />
         </div>
       )}

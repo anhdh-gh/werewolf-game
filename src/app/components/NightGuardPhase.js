@@ -285,7 +285,7 @@ export default function NightGuardPhase({ roomCode, flow }) {
 
       {/* GLOBAL LOADING OVERLAY */}
       {isLoading && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md">
+        <div className="fixed inset-0 z-[100] w-screen h-[100dvh] bg-black/95 backdrop-blur-xl flex items-center justify-center">
           <Loading textMsg="Đang xử lý..." />
         </div>
       )}
