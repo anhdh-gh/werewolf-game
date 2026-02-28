@@ -200,6 +200,7 @@ export default function RoomContent() {
     return <NightCursedPhase roomCode={room_code} flow={gameFlow} />;
   }
 
+  
   /* ===== DAY_DISCUSSION ===== */
   if (connected && gameFlow?.phase === PHASES.DAY_DISCUSSION) {
     return <DayDiscussionPhase roomCode={room_code} flow={gameFlow} />;
