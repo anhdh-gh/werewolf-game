@@ -10,6 +10,8 @@
   import localFont from "next/font/local";
   import useKeepScreenOn from '../hooks/useKeepScreenOn';
 
+
+
   const fontHorror = localFont({
     
     src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 

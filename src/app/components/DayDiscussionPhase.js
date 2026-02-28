@@ -335,7 +335,7 @@ const FAKE_PLAYER = {
         )}
 
         {/* CHAT BUTTON (Floating) */}
-        {canInteract && !player?.is_muted && (
+        {canInteract && (
           <button
             onClick={() => {
               setIsChatOpen(true);
@@ -356,7 +356,7 @@ const FAKE_PLAYER = {
         )}
 
         {/* CHAT MODAL (Overlay) */}
-        {isChatOpen && (
+        {isChatOpen  && (
           <div className="fixed inset-0 z-50 bg-black/95 flex flex-col backdrop-blur-sm animate-in fade-in duration-200">
             {/* Chat Header */}
             <header className="p-4 border-b border-red-900/30 flex justify-between items-center bg-red-950/20">
@@ -398,6 +398,7 @@ const FAKE_PLAYER = {
             {/* Chat Input */}
             <div className="p-3 border-t border-red-900/30 bg-black/80 flex gap-2">
               <input
+                disabled = {player.is_muted}
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
@@ -407,6 +408,7 @@ const FAKE_PLAYER = {
               <button
                 onClick={handleSendChat}
                 className="bg-[#7f1d1d] text-white px-5 rounded-xl border border-red-900 hover:bg-red-800 transition-colors font-bold"
+                disabled = {player.is_muted}
               >
                 Gửi
               </button>
@@ -417,7 +419,7 @@ const FAKE_PLAYER = {
         {/* Loading Overlay */}
         {isLoading && (
           <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md flex items-center justify-center">
-            <Loading textMsg="Đang hiến tế..." />
+            <Loading textMsg= {`BẠN ĐÃ VOTE ${selectedPlayer.player_id} HÃY ĐỢI NHỮNG NGƯỜI KHÁC VOTE XONG`} />
           </div>
         )}
       </div>

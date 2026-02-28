@@ -225,7 +225,7 @@ export default function NightCursedPhase({ roomCode, flow }) {
                     <div className="relative w-22 h-22">
                         {isWolfNow ? (
                             <img 
-                                src="/image/wolf.png" 
+                                src="\image\werewolf.png" 
                                 alt="Werewolf"
                                 className="w-full h-full object-contain"
                             />
@@ -240,7 +240,7 @@ export default function NightCursedPhase({ roomCode, flow }) {
 
                     {/* Tên Role */}
                     <h1 className={`${fontHorror.className} text-3xl text-red-500 text-center drop-shadow-[0_2px_2px_black] uppercase leading-relaxed break-words`}>
-                        {player.role.replace(/_/g, " ")}
+                        {ROLE_NAME_VN}
                     </h1>
                 </div>
 

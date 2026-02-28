@@ -10,6 +10,8 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import localFont from "next/font/local";
 import useKeepScreenOn from '../hooks/useKeepScreenOn';
+import { KEYS } from "@/constants/keys";
+
 
 const fontHorror = localFont({
   
@@ -78,12 +80,14 @@ export default function LobbyRoom({ roomCode }) {
     setTimeout(() => setCopied(false), 1500);
   };
 
+
   const handleReady = () => {
     if (loadingReady) return;
     setLoadingReady(true);
     socket.emit(EVENTS.PLAYER_READY, { room: { code: roomCode } }, () => {
-      setLoadingReady(false);
+      setLoadingReady(true);
     });
+      console.log(`tên của bạn là :${localStorage.getItem(KEYS.USERNAME)}`);
   };
 
   const handleLeave = () => {
@@ -119,6 +123,8 @@ export default function LobbyRoom({ roomCode }) {
           <p className={`${fontHorror.className} text-xl text-red-500/80 tracking-[0.2em]`}>
             PHÒNG CHỜ
           </p>
+          <p className="text-xs text-gray-400 font-sans tracking-widest uppercase">
+            tên của bạn: {localStorage.getItem(KEYS.USERNAME)}</p>
           
           {/* Khu vực Click to Copy */}
           <div 
@@ -226,13 +232,12 @@ export default function LobbyRoom({ roomCode }) {
         <footer className="w-full pt-4 pb-6 flex gap-4 mt-auto border-t border-red-900/30">
           {/* Nút Sẵn Sàng */}
           <button
-            disabled={loadingReady}
             onClick={handleReady}
             className="flex-1 relative py-4 rounded-xl bg-[#7f1d1d] hover:bg-red-700 border-2 border-red-950 transition-all active:scale-95 disabled:opacity-50 disabled:grayscale group overflow-hidden shadow-[0_0_20px_rgba(0,0,0,0.5)]"
           >
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
               <span className={`${fontHorror.className} relative z-10 text-3xl text-white tracking-[0.15em] drop-shadow-md`}>
-                {loadingReady ? "..." : "SẴN SÀNG"}
+                {loadingReady? "đã sẵn sàng" : "sẵn sàng"}
               </span>
               {/* Hiệu ứng giọt máu */}
               {!loadingReady && (
