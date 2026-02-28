@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+
 import Loading from "@/components/Loading";
 import { getGameSocket } from "@/socket/gameSocket";
 import { EVENTS } from "@/constants/events";
