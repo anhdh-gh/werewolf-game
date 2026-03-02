@@ -20,7 +20,18 @@ const fontHorror = localFont({
   display: "swap",
 });
 
-
+const ROLE_NAME_VN = {
+  WEREWOLF : "MA SÓI",
+  VILLAGER : " DÂN LÀNG",
+  SEER : "TIÊN TRI",
+  GUARD :"BẢO VỆ",
+  WITCH : "PHÙ THUỶ",
+  TANNER :"CHÁN ĐỜI" ,
+  CURSED :"BỊ NGUYỀN",
+  SILENCED :"KẺ BỊ CÂM",
+  GOD :"HÙNG ANH",
+  DEFAULT :"NOTHING"
+}
 
 
 export default function DayDiscussionPhase({ roomCode, flow }) {
@@ -170,6 +181,12 @@ const FAKE_PLAYER = {
     player.is_connected &&
     player.is_ready &&
     flow?.event?.action === ACTIONS.VOTE;
+  // canReadMessages là đã chết những vẫn xem được tin nhắn
+  const canReadMessages =
+    player.is_connected &&
+    player.is_ready ;
+  
+  const canNotChat = !player.is_alive || player.is_muted;
 
   const loadPlayersForVote = () => {
     socket.emit(EVENTS.PLAYER_INFO, { room: { code: roomCode } }, (res) => {
@@ -215,6 +232,8 @@ const FAKE_PLAYER = {
     ? flow.data.players
     : [];
 
+
+  const roleNameVN = player.role ?   ROLE_NAME_VN[player.role] : ROLE_NAME_VN.DEFAULT
   /* ===== UI UPDATE STARTS HERE ===== */
   return (
     <div className="relative h-screen w-full overflow-hidden bg-black flex flex-col">
@@ -237,7 +256,7 @@ const FAKE_PLAYER = {
             {flow.message}
           </h2>
           <div className="flex items-center gap-3 text-xs font-mono opacity-60">
-             <span>Vai trò của bạn : {player?.role}</span>
+             <span>Vai trò của bạn : {roleNameVN}</span>
           </div>
         </header>
 
@@ -300,7 +319,7 @@ const FAKE_PLAYER = {
         </main>
 
         {/* FOOTER ACTIONS */}
-        {canInteract && (
+        {player.is_alive ? (
           <footer className="p-4 pb-6 bg-gradient-to-t from-black via-black/90 to-transparent flex gap-3">
             {!isVoting ? (
               <button
@@ -332,10 +351,22 @@ const FAKE_PLAYER = {
               </>
             )}
           </footer>
-        )}
+        ):
+          <footer className="p-6 pb-10 w-full bg-gradient-to-t from-black via-black/95 to-transparent flex flex-col items-center justify-center gap-2">
+    {/* Dòng chữ chính nổi bật */}
+    <span className={`${fontHorror.className} relative z-10 text-5xl text-red-600 tracking-[0.2em] uppercase drop-shadow-[0_0_20px_rgba(220,38,38,0.9)] animate-pulse`}>
+        BẠN ĐÃ CHẾT
+    </span>
+    
+    {/* Dòng chữ phụ nhỏ mờ ảo ở dưới */}
+    <span className="text-gray-500 text-xs font-mono opacity-70 tracking-wider">
+        Hãy lặng im và theo dõi những kẻ còn sống...
+    </span>
+          </footer>
+        }
 
         {/* CHAT BUTTON (Floating) */}
-        {canInteract && (
+        {canReadMessages && (
           <button
             onClick={() => {
               setIsChatOpen(true);
@@ -398,7 +429,7 @@ const FAKE_PLAYER = {
             {/* Chat Input */}
             <div className="p-3 border-t border-red-900/30 bg-black/80 flex gap-2">
               <input
-                disabled = {player.is_muted}
+                disabled = {canNotChat }
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
@@ -408,7 +439,7 @@ const FAKE_PLAYER = {
               <button
                 onClick={handleSendChat}
                 className="bg-[#7f1d1d] text-white px-5 rounded-xl border border-red-900 hover:bg-red-800 transition-colors font-bold"
-                disabled = {player.is_muted}
+                disabled = {canNotChat}
               >
                 Gửi
               </button>
@@ -419,7 +450,7 @@ const FAKE_PLAYER = {
         {/* Loading Overlay */}
         {isLoading && (
           <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md flex items-center justify-center">
-            <Loading textMsg= {`BẠN ĐÃ VOTE ${selectedPlayer.player_id} HÃY ĐỢI NHỮNG NGƯỜI KHÁC VOTE XONG`} />
+            <Loading textMsg= {`BẠN ĐÃ VOTE ${selectedPlayer.username} HÃY ĐỢI NHỮNG NGƯỜI KHÁC VOTE XONG`} />
           </div>
         )}
       </div>

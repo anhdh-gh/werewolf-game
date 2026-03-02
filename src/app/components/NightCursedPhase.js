@@ -158,6 +158,7 @@ export default function NightCursedPhase({ roomCode, flow }) {
     flow?.event?.action === ACTIONS.WAKEUP;
 
   const isWolfNow = player.role.toLowerCase().includes('wolf');
+ 
 
   
   if (!isCursedWakeup) {
@@ -241,7 +242,7 @@ export default function NightCursedPhase({ roomCode, flow }) {
 
                     {/* Tên Role */}
                     <h1 className={`${fontHorror.className} text-3xl text-red-500 text-center drop-shadow-[0_2px_2px_black] uppercase leading-relaxed break-words`}>
-                        {ROLE_NAME_VN}
+                        {roleNameVN}
                     </h1>
                 </div>
 
