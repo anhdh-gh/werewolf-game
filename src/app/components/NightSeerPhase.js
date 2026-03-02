@@ -217,7 +217,7 @@ useKeepScreenOn();
                
                
                <p className="text-xs text-gray-400 font-sans tracking-widest uppercase" onClick={handleShowRole}>
-                  Vai trò của bạn là  : {showRole ? {roleNameVN} : "***************"}
+                  Vai trò của bạn là  : {showRole ? roleNameVN : "***************"}
                </p>
           </div>
         </div>

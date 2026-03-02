@@ -184,7 +184,7 @@ export default function NightCursedPhase({ roomCode, flow }) {
            </h2>
            <div className="bg-black/40 px-6 py-2 rounded-full border border-red-900/30">
             <p className="text-xs text-gray-400 font-sans tracking-widest uppercase" onClick={handleShowRole}>
-              Vai trò của bạn : {setShowRole ? {roleNameVN} : "***********"}
+              Vai trò của bạn : {setShowRole ? roleNameVN : "***********"}
             </p>
           </div>
         </div>
@@ -221,7 +221,7 @@ export default function NightCursedPhase({ roomCode, flow }) {
                 {/* -- PHẦN TRÊN: TIÊU ĐỀ -- */}
                 <div className="text-center w-full mt-2">
                     <span className={`${fontHorror.className} text-gray-400 text-xl tracking-widest block mb-1`} onClick = {handleShowRole}>
-                        VAI TRÒ HIỆN TẠI : {showRole ? {roleNameVN} : "************"}
+                        VAI TRÒ HIỆN TẠI : {showRole ? roleNameVN : "************"}
                     </span>
                     <div className="h-[1px] w-12 bg-red-600 mx-auto"></div>
                 </div>

@@ -187,7 +187,7 @@ export default function NightGuardPhase({ roomCode, flow }) {
           </div>
           <div className="bg-black/40 px-6 py-2 rounded-full border border-red-900/30">
             <p className="text-xs text-gray-400 font-sans tracking-widest uppercase" onClick={handleShowRole}>
-              Vai trò của bạn : {showRole ? {roleNameVN} : "*************"}
+              Vai trò của bạn : {showRole ? roleNameVN : "*************"}
             </p>
           </div>
         </div>
@@ -205,7 +205,7 @@ export default function NightGuardPhase({ roomCode, flow }) {
         </h2>
          <div className="flex justify-center gap-3">
           <span className="text-xs text-gray-400 font-sans tracking-widest uppercase" onClick={handleShowRole}>
-            vai trò của bạn là : {showRole ? {roleNameVN} : "**************"}
+            vai trò của bạn là : {showRole ? roleNameVN : "**************"}
           </span>
         </div>
       </header>
