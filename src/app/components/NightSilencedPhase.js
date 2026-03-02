@@ -237,7 +237,7 @@ export default function NightSilencedPhase({ roomCode, flow }) {
         </h2>
         <div className="flex justify-center gap-3">
           <span className="text-xs text-gray-400 font-sans tracking-widest uppercase" onClick={handleShowRole}>
-            vai trò của bạn là : {roleNameVN}
+            vai trò của bạn là : {showRole ? roleNameVN : "*************"}
           </span>
         </div>
       </header>
