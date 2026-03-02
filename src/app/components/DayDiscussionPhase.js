@@ -43,6 +43,7 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [isVoting, setIsVoting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showRole, setShowRole] = useState(false)
 
   /* ===== CHAT ===== */
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -219,6 +220,10 @@ const FAKE_PLAYER = {
     });
   };
 
+  const handleShowRole = () =>{
+    setShowRole(!showRole);
+  }
+
   const handleSendChat = () => {
     if (!chatInput.trim()) return;
     socket.emit(EVENTS.PLAYER_CHAT, {
@@ -256,7 +261,7 @@ const FAKE_PLAYER = {
             {flow.message}
           </h2>
           <div className="flex items-center gap-3 text-xs font-mono opacity-60">
-             <span onC>Vai trò của bạn : {roleNameVN}</span>
+             <span onClick = {handleShowRole}>vai trò của bạn là :{showRole ? roleNameVN : "***********"}</span>
           </div>
         </header>
 

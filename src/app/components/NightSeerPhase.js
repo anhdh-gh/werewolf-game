@@ -43,6 +43,7 @@ export default function NightSeerPhase({ roomCode, flow }) {
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const audioRef = useRef(null);
+  const [showRole, setShowRole] = useState(false);
 
 useKeepScreenOn();
 
@@ -144,6 +145,9 @@ useKeepScreenOn();
     });
     setSelectedPlayer(null);
   };
+   const handleShowRole = () =>{
+    setShowRole(!showRole);
+  }
 
   const getSeerResultLabel = (role) => {
     return role === ROLES.WEREWOLF ? "🐺 SÓI" : "👤 NGƯỜI";
@@ -212,8 +216,8 @@ useKeepScreenOn();
           <div className="bg-black/40 px-6 py-2 rounded-full border border-red-900/30">
                
                
-               <p className="text-xs text-gray-400 font-sans tracking-widest uppercase">
-                  Vai trò của bạn là  : {roleNameVN}
+               <p className="text-xs text-gray-400 font-sans tracking-widest uppercase" onClick={handleShowRole}>
+                  Vai trò của bạn là  : {showRole ? {roleNameVN} : "***************"}
                </p>
           </div>
         </div>
@@ -230,8 +234,8 @@ useKeepScreenOn();
           Bạn muốn soi ai? 
         </h2>
         <div className="flex justify-center gap-3">
-             <span className="text-xs text-gray-400 font-sans tracking-widest uppercase">
-               Vai trò của bạn: Tiên Tri
+             <span className="text-xs text-gray-400 font-sans tracking-widest uppercase" onClick={handleShowRole}>
+               Vai trò của bạn: {showRole ? roleNameVN :"************"}
               </span>
         </div>
       </header>
