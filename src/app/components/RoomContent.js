@@ -209,6 +209,8 @@ export default function RoomContent() {
   /* ===== END ===== */
   if (connected && gameFlow?.phase === PHASES.END) {
     return <EndPhase roomCode={room_code} flow={gameFlow} />;
+        
+    
   }
 
   /* ===== LOADING ===== */
