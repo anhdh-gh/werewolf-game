@@ -450,7 +450,7 @@ const FAKE_PLAYER = {
         {/* Loading Overlay */}
         {isLoading && (
           <div className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-md flex items-center justify-center">
-            <Loading textMsg= {`BẠN ĐÃ VOTE ${selectedPlayer.username} HÃY ĐỢI NHỮNG NGƯỜI KHÁC VOTE XONG`} />
+            <Loading textMsg= {` HÃY ĐỢI NHỮNG NGƯỜI KHÁC VOTE...`} />
           </div>
         )}
       </div>
