@@ -29,6 +29,7 @@ export default function NightCursedPhase({ roomCode, flow }) {
   const [player, setPlayer] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const audioRef = useRef(null);
+  const [showRole,setShowRole] = useState(false);
 
 
   useKeepScreenOn();
@@ -142,6 +143,10 @@ export default function NightCursedPhase({ roomCode, flow }) {
     });
   };
 
+  const handleShowRole = () =>{
+    setShowRole(!showRole);
+  }
+
   /* ===== INITIAL LOADING ===== */
   if (!flow?.message || !player) {
     return <Loading textMsg="Đang triệu hồi..." />;
@@ -178,8 +183,8 @@ export default function NightCursedPhase({ roomCode, flow }) {
              {flow.message}
            </h2>
            <div className="bg-black/40 px-6 py-2 rounded-full border border-red-900/30">
-            <p className="text-xs text-gray-400 font-sans tracking-widest uppercase">
-              Vai trò của bạn : {roleNameVN}
+            <p className="text-xs text-gray-400 font-sans tracking-widest uppercase" onClick={handleShowRole}>
+              Vai trò của bạn : {setShowRole ? {roleNameVN} : "***********"}
             </p>
           </div>
         </div>
@@ -215,8 +220,8 @@ export default function NightCursedPhase({ roomCode, flow }) {
                 
                 {/* -- PHẦN TRÊN: TIÊU ĐỀ -- */}
                 <div className="text-center w-full mt-2">
-                    <span className={`${fontHorror.className} text-gray-400 text-xl tracking-widest block mb-1`}>
-                        VAI TRÒ HIỆN TẠI
+                    <span className={`${fontHorror.className} text-gray-400 text-xl tracking-widest block mb-1`} onClick = {handleShowRole}>
+                        VAI TRÒ HIỆN TẠI : {showRole ? {roleNameVN} : "************"}
                     </span>
                     <div className="h-[1px] w-12 bg-red-600 mx-auto"></div>
                 </div>

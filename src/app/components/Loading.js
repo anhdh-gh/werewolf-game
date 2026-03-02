@@ -11,6 +11,7 @@ const fontHorror = localFont({
 export default function Loading({ textMsg }) {
 
   useKeepScreenOn();
+  
   return (
     <div className="flex min-h-screen items-center justify-center bg-black px-4">
       <div className="flex flex-col items-center gap-4 text-center">
