@@ -256,7 +256,7 @@ const FAKE_PLAYER = {
             {flow.message}
           </h2>
           <div className="flex items-center gap-3 text-xs font-mono opacity-60">
-             <span>Vai trò của bạn : {roleNameVN}</span>
+             <span onC>Vai trò của bạn : {roleNameVN}</span>
           </div>
         </header>
 
