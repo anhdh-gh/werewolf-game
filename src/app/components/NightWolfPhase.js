@@ -13,7 +13,7 @@ import { ROLES } from "@/constants/roles";
 import { useRouter } from "next/navigation";
 import { Icon } from '@iconify/react'; 
 import useKeepScreenOn from '../hooks/useKeepScreenOn';
-
+import RoleDisplay from "./RoleDisplay";
 
 
 // Font Horror
@@ -70,8 +70,6 @@ export default function NightWolfPhase({ roomCode, flow }) {
   const [playersList, setPlayersList] = useState([]);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [showRole,setShowRole] = useState(false);
-
   /* ===== CHAT STATE ===== */
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
@@ -243,10 +241,6 @@ export default function NightWolfPhase({ roomCode, flow }) {
     });
   };
 
-   const handleShowRole = () =>{
-    setShowRole(!showRole);
-  }
-
   const handleSendChat = () => {
     if (!chatInput.trim()) return;
     socket.emit(EVENTS.PLAYER_CHAT, {
@@ -279,8 +273,8 @@ export default function NightWolfPhase({ roomCode, flow }) {
             </h2>
           </div>
           <div className="bg-black/40 px-6 py-2 rounded-full border border-red-900/30">
-            <p className="text-xs text-gray-400 font-sans tracking-widest uppercase" onClick={handleShowRole}>
-              Vai trò của bạn : {showRole ? roleNameVN : "**********"}
+            <p className="text-xs text-gray-400 font-sans tracking-widest uppercase">
+             <RoleDisplay roleNameVN={roleNameVN}></RoleDisplay>
             </p>
           </div>
         </div>
@@ -305,8 +299,8 @@ export default function NightWolfPhase({ roomCode, flow }) {
           Sói muốn cắn ai?
         </h2>
         <div className="flex justify-center gap-3">
-          <span className="text-xs text-gray-400 font-sans tracking-widest uppercase" onClick={handleShowRole}>
-            vai trò của bạn là : {showRole ? roleNameVN : "************"}
+          <span className="text-xs text-gray-400 font-sans tracking-widest uppercase">
+           <RoleDisplay roleNameVN={roleNameVN}></RoleDisplay>
           </span>
         </div>
       </header>

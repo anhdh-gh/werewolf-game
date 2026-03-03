@@ -14,6 +14,7 @@ import { ACTIONS } from "@/constants/actions";
 import localFont from "next/font/local";
 import { Icon } from '@iconify/react'; 
 import useKeepScreenOn from '../hooks/useKeepScreenOn';
+import RoleDisplay from "./RoleDisplay";
 const fontHorror = localFont({
   
   src: "../../../public/fonts/Fz-Gypsy-Curse.ttf", 
@@ -43,7 +44,6 @@ export default function DayDiscussionPhase({ roomCode, flow }) {
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [isVoting, setIsVoting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showRole, setShowRole] = useState(false)
 
   /* ===== CHAT ===== */
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -176,12 +176,6 @@ const FAKE_PLAYER = {
     );
   }
 
-  /* ===== LOGIC GIỮ NGUYÊN (INTERACTION) ===== */
-  const canInteract =
-    player.is_alive &&
-    player.is_connected &&
-    player.is_ready &&
-    flow?.event?.action === ACTIONS.VOTE;
   // canReadMessages là đã chết những vẫn xem được tin nhắn
   const canReadMessages =
     player.is_connected &&
@@ -220,10 +214,6 @@ const FAKE_PLAYER = {
     });
   };
 
-  const handleShowRole = () =>{
-    setShowRole(!showRole);
-  }
-
   const handleSendChat = () => {
     if (!chatInput.trim()) return;
     socket.emit(EVENTS.PLAYER_CHAT, {
@@ -261,7 +251,7 @@ const FAKE_PLAYER = {
             {flow.message}
           </h2>
           <div className="flex items-center gap-3 text-xs font-mono opacity-60">
-             <span onClick = {handleShowRole}>vai trò của bạn là :{showRole ? roleNameVN : "***********"}</span>
+             <RoleDisplay roleNameVN={roleNameVN}></RoleDisplay>
           </div>
         </header>
 

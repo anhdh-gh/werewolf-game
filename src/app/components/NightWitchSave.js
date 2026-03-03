@@ -13,6 +13,7 @@ import { ROLES } from "@/constants/roles";
 import { useRouter } from "next/navigation";
 import { Icon } from '@iconify/react';
 import useKeepScreenOn from '../hooks/useKeepScreenOn';
+import RoleDisplay from "./RoleDisplay";
 
 // Font Horror
 const fontHorror = localFont({
@@ -44,8 +45,6 @@ export default function NightWitchSave({ roomCode, flow }) {
   const [playersList, setPlayersList] = useState([]); 
   const [isLoading, setIsLoading] = useState(false);
   const audioRef = useRef(null);
-  const [showRole , setShowRole] = useState(false);
-
 useKeepScreenOn();
   /*===== self-test-start ===== */
   useEffect(() => {
@@ -144,10 +143,7 @@ useKeepScreenOn();
       current_phase: flow.phase,
     });
   };
-   const handleShowRole = () =>{
-    setShowRole(!showRole);
-  }
-
+ 
   const handleSave = (target) => {
     if (!socket || isLoading || !canHeal) return;
 
@@ -221,8 +217,8 @@ useKeepScreenOn();
             </h2>
           </div>
            <div className="bg-black/40 px-6 py-2 rounded-full border border-red-900/30">
-            <p className="text-xs text-gray-400 font-sans tracking-widest uppercase" onClick={handleShowRole}>
-              Vai trò của bạn : {showRole ? roleNameVN : "*************"}
+            <p className="text-xs text-gray-400 font-sans tracking-widest uppercase" >
+            <RoleDisplay roleNameVN={roleNameVN}></RoleDisplay>
             </p>
           </div>
         </div>
@@ -241,8 +237,8 @@ useKeepScreenOn();
           Bạn muốn cứu ai?
         </h2>
         <div className="flex justify-center gap-3">
-          <span className="text-xs text-gray-400 font-sans tracking-widest uppercase" onClick={handleShowRole}>
-            vai trò của bạn là : {showRole ? roleNameVN : "************"}
+          <span className="text-xs text-gray-400 font-sans tracking-widest uppercase">
+           <RoleDisplay roleNameVN={roleNameVN}></RoleDisplay>
           </span>
         </div>
       </header>
