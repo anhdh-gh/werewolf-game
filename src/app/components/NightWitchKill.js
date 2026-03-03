@@ -12,6 +12,7 @@ import { ACTIONS } from "@/constants/actions";
 import { ROLES } from "@/constants/roles";
 import { useRouter } from "next/navigation";
 import useKeepScreenOn from '../hooks/useKeepScreenOn';
+import RoleDisplay from "./RoleDisplay";
 // Font Horror
 const fontHorror = localFont({
   src: "../../../public/fonts/Fz-Gypsy-Curse.ttf",
@@ -40,7 +41,6 @@ export default function NightWitchKill({ roomCode, flow }) {
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const audioRef = useRef(null);
-  const [showRole,setShowRole] = useState(false);
 
 
  useKeepScreenOn(); 
@@ -153,9 +153,6 @@ export default function NightWitchKill({ roomCode, flow }) {
       target: { id: target.player_id, username: target.username },
     });
   };
-   const handleShowRole = () =>{
-    setShowRole(!showRole);
-  }
 
   /* ===== COMPONENTS ===== */
   const BackgroundWrapper = ({ children }) => (
@@ -207,8 +204,8 @@ export default function NightWitchKill({ roomCode, flow }) {
             </h2>
           </div>
            <div className="bg-black/40 px-6 py-2 rounded-full border border-red-900/30">
-            <p className="text-xs text-gray-400 font-sans tracking-widest uppercase" onClick={handleShowRole}>
-              Vai trò của bạn : {showRole ? roleNameVN : "************"}
+            <p className="text-xs text-gray-400 font-sans tracking-widest uppercase">
+              <RoleDisplay roleNameVN={roleNameVN}></RoleDisplay>
             </p>
           </div>
         </div>
@@ -225,8 +222,8 @@ export default function NightWitchKill({ roomCode, flow }) {
           Bạn muốn giết ai?
         </h2>
         <div className="flex justify-center gap-3">
-          <span className="text-xs text-gray-400 font-sans tracking-widest uppercase" onClick={handleShowRole}>
-            vai trò của bạn là : {showRole ? roleNameVN: "************"} | Còn: {player.witch_poison} bình
+          <span className="text-xs text-gray-400 font-sans tracking-widest uppercase">
+            <RoleDisplay roleNameVN={roleNameVN}></RoleDisplay> | Còn: {player.witch_poison} bình
           </span>
         </div>
       </header>
