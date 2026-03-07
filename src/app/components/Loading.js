@@ -8,6 +8,7 @@ const fontHorror = localFont({
 });
 
 
+
 export default function Loading({ textMsg }) {
 
   useKeepScreenOn();
