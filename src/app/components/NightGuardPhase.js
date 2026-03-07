@@ -36,36 +36,18 @@ export default function NightGuardPhase({ roomCode, flow }) {
 
   useKeepScreenOn();
   useEffect(() => {
-    // 1. CHẾ ĐỘ DEBUG
-    if (roomCode === "DEBUG") {
-      const mockPlayers = flow?.data?.players || [];
-      const currentPlayer = mockPlayers.find(p => p.player_id === 1) || FAKE_PLAYER;
-      
-      setPlayer(currentPlayer);
-      setPlayersList(mockPlayers.filter(p => p.is_alive && p.is_connected && p.is_ready));
-      return;
-    }
+    // 1. CHẾ ĐỘ DEBUG: chỉ dùng dữ liệu mock từ flow, KHÔNG gọi socket thực
+    if (roomCode !== "DEBUG") return;
 
-    // 2. CHẾ ĐỘ CHẠY THẬT
-    const socket = getGameSocket();
-    if (!socket) return;
+    const mockPlayers = flow?.data?.players || [];
+    const currentPlayer =
+      mockPlayers.find((p) => p.player_id === 1) || FAKE_PLAYER;
 
-    const playerId = Number(localStorage.getItem(KEYS.USER_ID));
-    if (!playerId) {
-      router.push(PATHS.SIGN_IN);
-      return;
-    }
-
-    socket.emit(EVENTS.PLAYER_INFO, { room: { code: roomCode }, player: { ids: [playerId] } }, (res) => {
-      if (res?.data?.players?.length) setPlayer(res.data.players[0]);
-    });
-
-    socket.emit(EVENTS.PLAYER_INFO, { room: { code: roomCode } }, (res) => {
-      if (res?.data?.players) {
-        setPlayersList(res.data.players.filter((p) => p.is_alive && p.is_connected && p.is_ready));
-      }
-    });
-  }, [roomCode, router, flow]);
+    setPlayer(currentPlayer);
+    setPlayersList(
+      mockPlayers.filter((p) => p.is_alive && p.is_connected && p.is_ready)
+    );
+  }, [roomCode, flow]);
   /*===== self-test-end ===== */
 
   const ROLE_NAME_VN = {
@@ -83,6 +65,9 @@ export default function NightGuardPhase({ roomCode, flow }) {
 
   /* ===== FETCH PLAYER INFO (Real Logic) ===== */
   useEffect(() => {
+    // Bỏ qua khi đang ở chế độ DEBUG (UI test)
+    if (roomCode === "DEBUG") return;
+
     if (!socket) return;
     const playerId = Number(localStorage.getItem(KEYS.USER_ID));
     if (!playerId) {

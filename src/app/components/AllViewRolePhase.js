@@ -42,7 +42,7 @@ const ROLE_NAME_VN = {
   WEREWOLF : "MA SÓI",
   VILLAGER : " DÂN LÀNG",
   SEER : "TIÊN TRI",
-  GUARD :"BẢO VỆ",
+  BODYGUARD :"BẢO VỆ",
   WITCH : "PHÙ THUỶ",
   TANNER :"CHÁN ĐỜI" ,
   CURSED :"BỊ NGUYỀN",
@@ -75,34 +75,17 @@ const FAKE_PLAYER = {
 
   useEffect(() => {
     // 🔹 Nếu đang ở chế độ debug (roomCode = "DEBUG") thì dùng fake player, KHÔNG gọi socket
-    if (roomCode === "DEBUG") {
-      setPlayer(FAKE_PLAYER);
-      return;
-    }
-  
-    const socket = getGameSocket();
-    if (!socket) return;
-  
-    const playerId = Number(localStorage.getItem(KEYS.USER_ID));
-    if (!playerId) {
-      router.push(PATHS.SIGN_IN);
-      return;
-    }
-  
-    socket.emit(
-      EVENTS.PLAYER_INFO,
-      { room: { code: roomCode }, player: { ids: [playerId] } },
-      (res) => {
-        if (!res?.data?.players?.length) return;
-        setPlayer(res.data.players[0]);
-      }
-    );
-  }, [roomCode, router]);
+    if (roomCode !== "DEBUG") return;
+    setPlayer(FAKE_PLAYER);
+  }, [roomCode]);
 
   /*===== self-test-end ===== */
 
   /* ===== FETCH PLAYER INFO (Logic cũ giữ nguyên) ===== */
   useEffect(() => {
+    // Bỏ qua gọi socket khi đang chạy ở chế độ DEBUG (UI test)
+    if (roomCode === "DEBUG") return;
+
     const socket = getGameSocket();
     if (!socket) return;
     const playerId = Number(localStorage.getItem(KEYS.USER_ID));
@@ -127,7 +110,7 @@ const FAKE_PLAYER = {
 
     const playAudio = async () => {
       try {
-        const url = `/api/v1/tts?text=${encodeURIComponent(flow.message)}`;
+        const url = `/api/v1/tts?text=${encodeURIComponent(flow?.message || "")}`;
         audio.src = url;
         audio.load();
         await audio.play();
@@ -155,7 +138,7 @@ const FAKE_PLAYER = {
     if (navigator.vibrate) navigator.vibrate(30);
   };
 
-  if (!player) {
+  if (!flow?.message || !player) {
     return <Loading textMsg="Đang triệu hồi linh hồn..." />;
   }
 
@@ -188,7 +171,7 @@ const FAKE_PLAYER = {
     
     {/* LỜI NHẮN - ĐÃ ĐỒNG BỘ MÀU VÀ STYLE */}
     <p className={`${fontHorror.className} text-xl sm:text-2xl text-red-100 drop-shadow-[0_2px_10px_rgba(220,38,38,0.8)] tracking-widest bg-transparent px-4 py-2`}>
-        "{flow.message}"
+        "{flow?.message || ""}"
     </p>
 </div>
         </div>

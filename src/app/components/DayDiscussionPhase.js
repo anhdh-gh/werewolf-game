@@ -25,7 +25,7 @@ const ROLE_NAME_VN = {
   WEREWOLF : "MA SÓI",
   VILLAGER : " DÂN LÀNG",
   SEER : "TIÊN TRI",
-  GUARD :"BẢO VỆ",
+  BODYGUARD :"BẢO VỆ",
   WITCH : "PHÙ THUỶ",
   TANNER :"CHÁN ĐỜI" ,
   CURSED :"BỊ NGUYỀN",
@@ -71,35 +71,18 @@ const FAKE_PLAYER = {
 
   useEffect(() => {
     // 🔹 Nếu đang ở chế độ debug (roomCode = "DEBUG") thì dùng fake player, KHÔNG gọi socket
-    if (roomCode === "DEBUG") {
-      setPlayer(FAKE_PLAYER);
-      return;
-    }
-  
-    const socket = getGameSocket();
-    if (!socket) return;
-  
-    const playerId = Number(localStorage.getItem(KEYS.USER_ID));
-    if (!playerId) {
-      router.push(PATHS.SIGN_IN);
-      return;
-    }
-  
-    socket.emit(
-      EVENTS.PLAYER_INFO,
-      { room: { code: roomCode }, player: { ids: [playerId] } },
-      (res) => {
-        if (!res?.data?.players?.length) return;
-        setPlayer(res.data.players[0]);
-      }
-    );
-  }, [roomCode, router]);
+    if (roomCode !== "DEBUG") return;
+    setPlayer(FAKE_PLAYER);
+  }, [roomCode]);
 
   /*===== self-test-end ===== */
 
 
   /* ===== LOGIC GIỮ NGUYÊN (FETCH SELF PLAYER) ===== */
   useEffect(() => {
+    // Bỏ qua khi đang dùng chế độ DEBUG phục vụ UI test
+    if (roomCode === "DEBUG") return;
+
     if (!socket) return;
     const playerId = Number(localStorage.getItem(KEYS.USER_ID));
     if (!playerId) {
@@ -136,7 +119,7 @@ const FAKE_PLAYER = {
     const audio = audioRef.current;
     const play = async () => {
       try {
-        audio.src = `/api/v1/tts?text=${encodeURIComponent(flow.message)}`;
+        audio.src = `/api/v1/tts?text=${encodeURIComponent(flow?.message || "")}`;
         audio.load();
         await audio.play();
       } catch {}

@@ -23,7 +23,7 @@ const ROLE_NAME_VN = {
   WEREWOLF: "MA SÓI",
   VILLAGER: " DÂN LÀNG",
   SEER: "TIÊN TRI",
-  GUARD: "BẢO VỆ",
+  BODYGUARD: "BẢO VỆ",
   WITCH: "PHÙ THUỶ",
   TANNER: "CHÁN ĐỜI",
   CURSED: "BỊ NGUYỀN",
@@ -46,51 +46,23 @@ export default function NightSilencedPhase({ roomCode, flow }) {
  useKeepScreenOn(); 
   /*===== self-test-start ===== */
   useEffect(() => {
-    // 1. CHẾ ĐỘ DEBUG
-    if (roomCode === "DEBUG") {
-      const mockPlayers = flow?.data?.players || [];
-      const currentPlayer = mockPlayers.find(p => p.player_id === 1) || {};
-      setPlayer(currentPlayer);
-      setPlayersList(mockPlayers.filter(p => p.is_alive && p.is_connected && p.is_ready));
-      return;
-    }
-  
-    // 2. CHẾ ĐỘ CHẠY THẬT
-    const socket = getGameSocket();
-    if (!socket) return;
-  
-    const playerId = Number(localStorage.getItem(KEYS.USER_ID));
-    if (!playerId) {
-      router.push(PATHS.SIGN_IN);
-      return;
-    }
-  
-    // Emit lấy thông tin bản thân
-    socket.emit(
-      EVENTS.PLAYER_INFO,
-      { room: { code: roomCode }, player: { ids: [playerId] } },
-      (res) => {
-        if (res?.data?.players?.length) {
-          setPlayer(res.data.players[0]);
-        }
-      }
-    );
+    // 1. CHẾ ĐỘ DEBUG: chỉ dùng dữ liệu mock, KHÔNG gọi socket thực
+    if (roomCode !== "DEBUG") return;
 
-    // Emit lấy danh sách
-    socket.emit(
-      EVENTS.PLAYER_INFO, 
-      { room: { code: roomCode } }, 
-      (res) => {
-        if (res?.data?.players) {
-          setPlayersList(res.data.players.filter((p) => p.is_alive && p.is_connected && p.is_ready));
-        }
-      }
+    const mockPlayers = flow?.data?.players || [];
+    const currentPlayer = mockPlayers.find((p) => p.player_id === 1) || {};
+    setPlayer(currentPlayer);
+    setPlayersList(
+      mockPlayers.filter((p) => p.is_alive && p.is_connected && p.is_ready)
     );
-  }, [roomCode, router, flow]); 
+  }, [roomCode, flow]); 
 /*===== self-test-end ===== */ 
 
   /* ===== FETCH PLAYER INFO ===== */
   useEffect(() => {
+    // Bỏ qua gọi socket khi đang ở chế độ DEBUG
+    if (roomCode === "DEBUG") return;
+
     if (!socket) return;
     const playerId = Number(localStorage.getItem(KEYS.USER_ID));
     if (!playerId) {
