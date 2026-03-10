@@ -38,6 +38,7 @@ const fontHorror = localFont({
 };
 
 
+
 export default function NightCursedPhase({ roomCode, flow }) {
   const router = useRouter();
   const socket = getGameSocket();
