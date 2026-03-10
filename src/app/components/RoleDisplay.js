@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 
-
 const RoleDisplay = ({roleNameVN}) => {
   const [isVisible, setIsVisible] = useState(false);
   const hiddenStars = "**********";
@@ -35,7 +34,8 @@ const RoleDisplay = ({roleNameVN}) => {
           {isVisible ? roleNameVN: hiddenStars}
         </span>
       </p>
-     <i><span style = {{fontSize : "10px"}}>(Click vào dấu sao để xem, tự ẩn sau 3s)</span></i>
+      <i><small style = {{fontSize : "7px"}}>(Click vào dấu sao để xem, tự ẩn sau 3s)</small></i>
+      
     </div>
   );
 };

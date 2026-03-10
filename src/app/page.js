@@ -2,11 +2,12 @@
 
 import AuthLayout from "@/layouts/AuthLayout";
 import MainContent from "@/components/MainContent";
+// import UiTest  from "@/_ui-test/page";
 
 export default function HomePage() {
   return (
     <AuthLayout>
-      <MainContent />
+      <MainContent/> 
     </AuthLayout>
   );
 }

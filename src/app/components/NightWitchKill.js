@@ -46,14 +46,41 @@ export default function NightWitchKill({ roomCode, flow }) {
  useKeepScreenOn(); 
   /*===== self-test-start ===== */
   useEffect(() => {
-    // CHẾ ĐỘ DEBUG: chỉ dùng dữ liệu mock từ flow, KHÔNG gọi socket thực
-    if (roomCode !== "DEBUG") return;
+    if (roomCode === "DEBUG") {
+      const mockPlayers = flow?.data?.players || [];
+      const currentPlayer = mockPlayers.find(p => p.player_id === 1) || {};
+      setPlayer(currentPlayer);
+      setPlayersList(mockPlayers.filter( p => p.is_alive && p.is_connected && p.is_ready && p.player_id != 1));
+      return;
+    }
+  
+    const socket = getGameSocket();
+    if (!socket) return;
+  
+    const playerId = Number(localStorage.getItem(KEYS.USER_ID));
+    if (!playerId) {
+      router.push(PATHS.SIGN_IN);
+      return;
+    }
+  
+    socket.emit(
+      EVENTS.PLAYER_INFO,
+      { room: { code: roomCode }, player: { ids: [playerId] } },
+      (res) => {
+        if (res?.data?.players?.length) {
+          setPlayer(res.data.players[0]);
+        }
+      }
+    );
 
-    const mockPlayers = flow?.data?.players || [];
-    const currentPlayer = mockPlayers.find((p) => p.player_id === 1) || {};
-    setPlayer(currentPlayer);
-    setPlayersList(
-      mockPlayers.filter((p) => p.is_alive && p.is_connected && p.is_ready)
+    socket.emit(
+      EVENTS.PLAYER_INFO, 
+      { room: { code: roomCode } }, 
+      (res) => {
+        if (res?.data?.players) {
+          setPlayersList(res.data.players.filter( p => p.is_alive && p.is_connected && p.is_ready && p.player_id != playerId));
+        }
+      }
     );
   }, [roomCode, flow]); 
 /*===== self-test-end ===== */ 
@@ -82,7 +109,7 @@ export default function NightWitchKill({ roomCode, flow }) {
 
     socket.emit(EVENTS.PLAYER_INFO, { room: { code: roomCode } }, (res) => {
       if (!res?.data?.players?.length) return;
-      setPlayersList(res.data.players.filter((p) => p.is_alive && p.is_connected && p.is_ready));
+      setPlayersList(res.data.players.filter((p) => p.is_alive && p.is_connected && p.is_ready && p.player_id != playerId));
     });
   }, [roomCode, socket, router]);
 
