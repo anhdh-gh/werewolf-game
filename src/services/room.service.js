@@ -35,8 +35,8 @@ const RoomService = {
             next_step: {
                 action: EVENTS.CONNECT_ROOM,
                 description: "Connect to the websocket to start playing the game",
-                //websocket: SERVERS.filter(S => process.env.SERVER_ID === S.id)[0].ws
-                websocket: process.env.LIVEKIT_URL
+                websocket: SERVERS.filter(S => process.env.SERVER_ID === S.id)[0].ws
+                //websocket: process.env.LIVEKIT_URL
             },
             voice: {
                 room_id: room.room_voice_id,
