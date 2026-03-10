@@ -1,3 +1,12 @@
+-- Tạo database nếu chưa có
+CREATE DATABASE IF NOT EXISTS werewolf_game
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+
+-- Chọn database
+USE werewolf_game;
+
+
 DROP TABLE IF EXISTS users;
 CREATE TABLE users
 (
@@ -29,7 +38,8 @@ CREATE TABLE rooms
         )                                               NOT NULL,
     max_players INT UNSIGNED NOT NULL,
     phase_expires_at DATETIME,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    room_voice_id VARCHAR(255) NOT NULL
 );
 
 # Cleanup DELETE FROM players WHERE room_code = :room
@@ -49,6 +59,7 @@ CREATE TABLE players
     is_protected        BOOLEAN DEFAULT FALSE,
     witch_heal          INT UNSIGNED DEFAULT 1,
     witch_poison        INT UNSIGNED DEFAULT 1,
+    room_voice_token       VARCHAR(255) NOT NULL,
     UNIQUE (player_id, room_code)
 );
 

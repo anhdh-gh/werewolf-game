@@ -7,7 +7,7 @@ const ERROR_CODES = require('../constants/errorCode.constants');
 
 const RoomRepository = {
 
-    async createRoom(max_players) {
+    async createRoom(max_players, room_voice_id) {
         const maxRetries = 5;
 
         for (let attempt = 0; attempt < maxRetries; attempt++) {
@@ -17,9 +17,9 @@ const RoomRepository = {
             try {
                 // Insert room into DB
                 await pool.query(
-                    `INSERT INTO rooms (code, status, current_phase, max_players) 
-                     VALUES (?, ?, ?, ?)`,
-                    [code, STATUS.WAITING, PHASE.LOBBY.key, max_players]
+                    `INSERT INTO rooms (code, status, current_phase, max_players, room_voice_id) 
+                     VALUES (?, ?, ?, ?, ?)`,
+                    [code, STATUS.WAITING, PHASE.LOBBY.key, max_players, room_voice_id]
                 );
 
                 // Success: return the room code
