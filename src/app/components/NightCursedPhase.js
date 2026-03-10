@@ -100,14 +100,19 @@ export default function NightCursedPhase({ roomCode, flow }) {
       audio.pause();
       audio.currentTime = 0;
 
+      // Xóa các dấu câu gượng ép, dùng ngữ pháp chuẩn để AI đọc mượt hơn
       let cleanText = flow.message
-        // 1. Xử lý tên Role (tách ra để đọc rõ vần "Nguyền")
-        .replace("Bị Nguyền", "Bị, , Nguyền")
-        .replace("Nguyền", "Nguyền. . .")
+        // Dùng 1 dấu phẩy sau tên Role để tạo độ nghỉ tự nhiên khoảng 0.5s
+        .replace("Bị Nguyền", "Bị Nguyền,")
         
-        // 2. Xử lý các hành động sau tên Role để tạo khoảng nghỉ
-        .replace("thức dậy", ", , thức dậy")
-        .replace("đi ngủ", ", , đi ngủ"); // 👈 THÊM DÒNG NÀY
+        // Thêm dấu chấm cuối câu hành động để AI biết là kết thúc câu và hạ giọng xuống
+        .replace("thức dậy", "thức dậy.")
+        .replace("đi ngủ", "đi ngủ.");
+
+      // MẸO TRỊ NGỌNG: 
+      // Nếu chữ "Nguyền" vẫn bị AI đọc lẹo lưỡi, hãy thử cố tình viết sai chính tả thành âm thanh tương đương
+      // Ví dụ mở comment dòng dưới nếu cần:
+      // cleanText = cleanText.replace("Nguyền", "Nguỳn"); 
 
       audio.src = `/api/v1/tts?text=${encodeURIComponent(cleanText)}`;
       audio.load();
