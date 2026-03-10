@@ -15,11 +15,6 @@ exports.joinRoomDto = z.object({
             .trim()
             .min(5, { message: 'Room code must be at least 5 characters' })
             .max(10, { message: 'Room code must be at most 10 characters' }),
-        room_voice_id: z
-            .string()
-            .trim()
-            .min(1, { message: 'room_voice_id is required' })
     })
-
 });
 

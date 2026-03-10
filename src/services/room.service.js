@@ -4,7 +4,6 @@ const RoomRepository = require('../repositories/room.repository')
 const { Mutex } = require('async-mutex');
 const AppError = require('../errors/AppError');
 const ERROR_CODES = require('../constants/errorCode.constants');
-const { createVoiceToken } = require("../services/livekit.service");
 
 const roomLocks = new Map();
 const ROOM_TIMEOUT = 300000;
@@ -12,37 +11,25 @@ const ROOM_TIMEOUT = 300000;
 const RoomService = {
 
     async createRoom(userId, maxPlayers) {
-        const roomVoiceId = `voice_${crypto.randomUUID()}`;
-        return await RoomService.joinRoom(userId, await RoomRepository.createRoom(maxPlayers, roomVoiceId), roomVoiceId);
+        return await RoomService.joinRoom(userId, await RoomRepository.createRoom(maxPlayers));
     },
 
-    async joinRoom(userId, roomCode, roomVoiceId) {
+    async joinRoom(userId, roomCode) {
         const room = await RoomRepository.getByCode(roomCode)
-        if (!room) {
+        if(!room) {
             throw new AppError(ERROR_CODES.ROOM_NOT_FOUND)
         }
-        if (await RoomRepository.isFull(roomCode, room?.max_players)) {
+        if(await RoomRepository.isFull(roomCode, room?.max_players)) {
             throw new AppError(ERROR_CODES.ROOM_IS_FULL)
         }
 
-        const voiceToken = await createVoiceToken(room.room_voice_id, userId)
-
         //
         return {
-            room: {
-                code: roomCode,
-            },
+            room: { code: roomCode },
             next_step: {
                 action: EVENTS.CONNECT_ROOM,
                 description: "Connect to the websocket to start playing the game",
-                //websocket: SERVERS.filter(S => process.env.SERVER_ID === S.id)[0].ws
-                websocket: process.env.LIVEKIT_URL
-            },
-            voice: {
-                room_id: room.room_voice_id,
-                url: process.env.LIVEKIT_URL,
-                token: voiceToken,
-                auto_join: true
+                websocket: SERVERS.filter(S => process.env.SERVER_ID === S.id)[0].ws
             }
         };
     },

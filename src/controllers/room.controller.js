@@ -7,6 +7,6 @@ exports.createRoom = errorWrapper(async (req, res) => {
 });
 
 exports.joinRoom = errorWrapper(async (req, res) => {
-    return success(res, await RoomService.joinRoom(req.user.id, req.body.room.code, req.body.room.room_voice_id));
+    return success(res, await RoomService.joinRoom(req.user.id, req.body.room.code));
 });
 
