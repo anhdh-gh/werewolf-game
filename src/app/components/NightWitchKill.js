@@ -50,7 +50,7 @@ export default function NightWitchKill({ roomCode, flow }) {
       const mockPlayers = flow?.data?.players || [];
       const currentPlayer = mockPlayers.find(p => p.player_id === 1) || {};
       setPlayer(currentPlayer);
-      setPlayersList(mockPlayers.filter(p => p.is_alive && p.is_connected && p.is_ready));
+      setPlayersList(mockPlayers.filter( p => p.is_alive && p.is_connected && p.is_ready && p.player_id != 1));
       return;
     }
   
@@ -78,7 +78,7 @@ export default function NightWitchKill({ roomCode, flow }) {
       { room: { code: roomCode } }, 
       (res) => {
         if (res?.data?.players) {
-          setPlayersList(res.data.players.filter((p) => p.is_alive && p.is_connected && p.is_ready));
+          setPlayersList(res.data.players.filter( p => p.is_alive && p.is_connected && p.is_ready && p.player_id != playerId));
         }
       }
     );
@@ -106,7 +106,7 @@ export default function NightWitchKill({ roomCode, flow }) {
 
     socket.emit(EVENTS.PLAYER_INFO, { room: { code: roomCode } }, (res) => {
       if (!res?.data?.players?.length) return;
-      setPlayersList(res.data.players.filter((p) => p.is_alive && p.is_connected && p.is_ready));
+      setPlayersList(res.data.players.filter((p) => p.is_alive && p.is_connected && p.is_ready && p.player_id != playerId));
     });
   }, [roomCode, socket, router]);
 

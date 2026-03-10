@@ -116,21 +116,39 @@ export default function NightCursedPhase({ roomCode, flow }) {
 
   /* ===== TTS (GIỮ NGUYÊN LOGIC) ===== */
   useEffect(() => {
-    if (!flow?.message) return;
-    if (!audioRef.current) audioRef.current = new Audio();
-    const audio = audioRef.current;
-    const play = async () => {
-      try {
-        audio.src = `/api/v1/tts?text=${encodeURIComponent(flow.message)}`;
-        audio.load();
-        await audio.play();
-      } catch (err) {
-        console.warn("TTS error:", err?.message);
-      }
-    };
-    play();
-    return () => audio.pause();
-  }, [flow?.message]);
+  if (!flow?.message) return;
+  if (!audioRef.current) audioRef.current = new Audio();
+  const audio = audioRef.current;
+
+  const play = async () => {
+    try {
+      audio.pause();
+      audio.currentTime = 0;
+
+      // 🛠️ MẸO XỬ LÝ RIÊNG CHO CHỮ "BỊ NGUYỀN"
+      let cleanText = flow.message
+        // 1. Tách chữ "Bị" và "Nguyền" để AI đọc rõ từng chữ một
+        .replace("Bị Nguyền", "Bị, , Nguyền") 
+        // 2. Nếu nó vẫn ngọng, hãy thử viết lái thành "Nguyền rủa" 
+        // hoặc thêm dấu chấm để nó nhấn mạnh âm "Nguyền"
+        .replace("Nguyền", "Nguyền. . .")
+        // 3. Xử lý đoạn "thức dậy" để không bị dính vào tên Role
+        .replace("thức dậy", ", , thức dậy");
+
+      audio.src = `/api/v1/tts?text=${encodeURIComponent(cleanText)}`;
+      audio.load();
+      await audio.play();
+    } catch (err) {
+      console.warn("TTS error:", err?.message);
+    }
+  };
+
+  play();
+  return () => {
+    audio.pause();
+    audio.src = "";
+  };
+}, [flow?.message]);
 
   /* ===== DONE (GIỮ NGUYÊN LOGIC) ===== */
   const handleDone = () => {
@@ -216,7 +234,7 @@ export default function NightCursedPhase({ roomCode, flow }) {
                 {/* -- PHẦN TRÊN: TIÊU ĐỀ -- */}
                 <div className="text-center w-full mt-2">
                     <span className={`${fontHorror.className} text-gray-400 text-xl tracking-widest block mb-1`} >
-                       <RoleDisplay roleNameVN={roleNameVN}></RoleDisplay>
+            
                     </span>
                     <div className="h-[1px] w-12 bg-red-600 mx-auto"></div>
                 </div>

@@ -18,12 +18,14 @@ import NightCursedPhase from "@/components/NightCursedPhase";
 import NightAllSleepPhase from "@/components/NightAllSleepPhase";
 import DayDiscussionPhase from "@/components/DayDiscussionPhase";
 import EndPhase from "@/components/EndPhase";
+import { RoomProvider } from "@/contexts/RoomContext";
 
 export default function UITestPage(){
   
-  const TEST_PHASE = PHASES.END; 
+  const TEST_PHASE = PHASES.NIGHT_WITCH_KILL;
+  ; 
 
-  const TEST_ROLE = ROLES.SEER;
+  const TEST_ROLE = ROLES.WITCH;
  
   const [phase] = useState(TEST_PHASE);
   const [role] = useState(TEST_ROLE);
@@ -135,8 +137,8 @@ export default function UITestPage(){
 
   // 👇 CHỈ RETURN ĐÚNG UI CỦA PHASE, KHÔNG BỌC GÌ THÊM
   return (
-    <>
+    <RoomProvider> 
         {renderPhase()}
-    </>
+    </RoomProvider>
   );
 }
