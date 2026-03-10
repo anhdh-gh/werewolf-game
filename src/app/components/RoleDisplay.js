@@ -35,7 +35,7 @@ const RoleDisplay = ({roleNameVN}) => {
           {isVisible ? roleNameVN: hiddenStars}
         </span>
       </p>
-      <small>(Click vào dấu sao để xem, tự ẩn sau 3s)</small>
+     <i><span style = {{fontSize : "10px"}}>(Click vào dấu sao để xem, tự ẩn sau 3s)</span></i>
     </div>
   );
 };
