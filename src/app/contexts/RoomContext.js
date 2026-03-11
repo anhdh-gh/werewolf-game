@@ -2,37 +2,30 @@
 
 import { createContext, useContext, useMemo, useState } from "react";
 
-/**
- * RoomContext dùng để chia sẻ state room cho toàn bộ màn Room
- * Tránh props drilling khi game flow phức tạp dần
- */
 const RoomContext = createContext(null);
 
 export function RoomProvider({ children }) {
   const [players, setPlayers] = useState([]);
   const [gameFlow, setGameFlow] = useState(null);
 
-  /**
-   * gom tất cả state + setter lại
-   * useMemo để tránh re-render không cần thiết
-   */
+  // ⭐ voice info
+  const [voiceInfo, setVoiceInfo] = useState(null);
+
   const value = useMemo(
     () => ({
       players,
       setPlayers,
       gameFlow,
       setGameFlow,
+      voiceInfo,
+      setVoiceInfo,
     }),
-    [players, gameFlow]
+    [players, gameFlow, voiceInfo]
   );
 
   return <RoomContext.Provider value={value}>{children}</RoomContext.Provider>;
 }
 
-/**
- * Hook dùng trong các component con
- * Ví dụ: const { players } = useRoom();
- */
 export function useRoom() {
   const ctx = useContext(RoomContext);
   if (!ctx) {

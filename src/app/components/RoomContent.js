@@ -2,7 +2,7 @@
 
 
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   connectGameSocket,
@@ -28,19 +28,46 @@ import NightGuardPhase from "@/components/NightGuardPhase";
 import NightSilencedPhase from "@/components/NightSilencedPhase";
 import NightCursedPhase from "@/components/NightCursedPhase";
 import useKeepScreenOn from '../hooks/useKeepScreenOn';
-  
- 
+import MicButton from "@/components/MicButton";
+
+import { useVoiceRoom } from "@/hooks/useVoiceRoom";
+
+
 
 
 export default function RoomContent() {
   const { room_code } = useParams();
   const router = useRouter();
+  const { voiceInfo } = useRoom();
 
   const [connected, setConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // New loading state
   const { gameFlow, setPlayers, setGameFlow } = useRoom();
+  const {
+    connectedVoice,
+    micEnabled,
+    participants,
+    joinVoiceRoom,
+    leaveVoiceRoom,
+    toggleMic,
+  } = useVoiceRoom();
 
- useKeepScreenOn(); 
+  useKeepScreenOn();
+
+const joinedVoiceRef = useRef(false);
+
+useEffect(() => {
+  if (!voiceInfo?.voiceUrl || !voiceInfo?.voiceToken) return;
+  if (joinedVoiceRef.current) return;
+
+  joinedVoiceRef.current = true;
+
+  joinVoiceRoom({
+    url: voiceInfo.voiceUrl,
+    token: voiceInfo.voiceToken,
+  });
+}, [voiceInfo, joinVoiceRoom]);
+
   useEffect(() => {
     console.log("RoomContent mounted");
     console.log("Initial isLoading:", isLoading);
@@ -56,12 +83,13 @@ export default function RoomContent() {
     /* ===== ON SOCKET CONNECT ===== */
     const onConnected = () => {
       console.log("✅ SOCKET CONNECTED:", socket.id);
+      console.log("✅ room_voice_token:", voiceInfo.voiceToken);
 
       /* ===== STEP 1: CONNECT ROOM ===== */
       socket.emit(
         EVENTS.CONNECT_ROOM,
-        { room: { code: room_code } },
-        (res) => {
+        { room: { code: room_code, room_voice_token: voiceInfo.voiceToken } },
+        async (res) => {
           if (!res || res.code !== 200) {
             console.error("❌ CONNECT_ROOM FAIL:", res);
             alert(JSON.stringify(res));
@@ -94,7 +122,7 @@ export default function RoomContent() {
 
     socket.on(EVENTS.GAME_DATA_FLOW, (payload) => {
       console.log("🎮 GAME_DATA_FLOW:", payload);
-      if(payload?.data?.players) {
+      if (payload?.data?.players) {
         setPlayers(payload?.data?.players || []);
       }
       setGameFlow(payload);
@@ -143,7 +171,7 @@ export default function RoomContent() {
         });
       }
 
-      disconnectGameSocket(); // ✅ disconnect hoàn toàn
+    //  disconnectGameSocket(); // ✅ disconnect hoàn toàn
     };
   }, [room_code, router]);
 
@@ -202,7 +230,7 @@ export default function RoomContent() {
     return <NightCursedPhase roomCode={room_code} flow={gameFlow} />;
   }
 
-  
+
   /* ===== DAY_DISCUSSION ===== */
   if (connected && gameFlow?.phase === PHASES.DAY_DISCUSSION) {
     return <DayDiscussionPhase roomCode={room_code} flow={gameFlow} />;
@@ -211,8 +239,8 @@ export default function RoomContent() {
   /* ===== END ===== */
   if (connected && gameFlow?.phase === PHASES.END) {
     return <EndPhase roomCode={room_code} flow={gameFlow} />;
-        
-    
+
+
   }
 
   /* ===== LOADING ===== */

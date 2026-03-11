@@ -2,14 +2,13 @@
 
 import AuthLayout from "@/layouts/AuthLayout";
 import RoomContent from "@/components/RoomContent";
-import { RoomProvider } from "@/contexts/RoomContext";
+import MicButton from "@/components/MicButton";
 
 export default function HomePage() {
   return (
     <AuthLayout>
-      <RoomProvider>
-        <RoomContent />
-      </RoomProvider>
+      <RoomContent />
+      <MicButton onToggle={(muted) => console.log("muted =", muted)} />
     </AuthLayout>
   );
 }
