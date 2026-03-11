@@ -67,6 +67,102 @@ export default function NightCursedPhase({ roomCode, flow }) {
 
     setPlayer(currentPlayer);
   }, [roomCode, flow]); // Thêm flow vào dependency để nó cập nhật khi bạn đổi data bên file test
+
+
+// /*====selt_test_ngong_start==*/
+//   // Lôi hàm này ra ngoài useEffect nhé
+// const testPhaseCursed = async () => {
+//   const audio = audioRef.current;
+//   if (!audio) return; // Safety check: Tránh crash nếu audioRef chưa kịp render
+
+//   try {
+//     // 1. Dọn dẹp luồng âm thanh cũ
+//     audio.pause();
+//     audio.currentTime = 0;
+
+//     // 2. Xử lý text thông minh hơn
+//     const rawText = "Bị nguyền thức dậy"; 
+//     const cleanText = rawText
+//       .replace(/bị nguyền/gi, "Bị nguyền,")
+//       .replace(/thức dậy/gi, "thức dậy.")
+//       .replace(/đi ngủ/gi, "đi ngủ.");
+
+//     // --- 3. ĐỔI GIỌNG Ở ĐÂY SẾP ---
+//     // Điền mã giọng mà API của bạn hỗ trợ (ví dụ: 'nam_mien_nam', 'nu_mien_bac', '1', '2'...)
+//     const selectedVoice = "vi-VN-Neural2-B"; 
+
+//     // Gắn thêm tham số &voice= vào link tải âm thanh
+//     audio.src = `/api/v1/tts?text=${encodeURIComponent(cleanText)}&voice=${selectedVoice}`;
+//     audio.load();
+    
+//     // 4. Bắt code phải CHỜ âm thanh đọc XONG HOÀN TOÀN
+//     await new Promise((resolve, reject) => {
+//       audio.onended = () => {
+//         resolve(); 
+//       };
+//       audio.onerror = () => {
+//         reject(new Error("Lỗi tải hoặc phát file âm thanh từ API"));
+//       };
+      
+//       // Gọi play() và bắt lỗi Autoplay ngay lập tức nếu có
+//       audio.play().catch(reject); 
+//     });
+
+//     console.log("Đã đọc XONG HOÀN TOÀN! Chuyển phase hoặc hiện UI tiếp theo đi sếp!");
+
+//   } catch (err) {
+//     console.error("Lỗi phát TTS rồi sếp:", err.message);
+//   }
+// };
+/*====selt_test_ngong_end==*/
+  // Kéo xuống phần return của component, nhét cái nút này vào:
+  // <button onClick={testPhaseCursed}>TEST ĐỌC BỊ NGUYỀN</button>
+
+  useEffect(() => {
+    // Nếu không có flow?.message (hoặc điều kiện trigger nào đó), thì không làm gì cả
+    if (!flow?.message) return; 
+
+    const audio = audioRef.current;
+
+    const playTTS = async () => {
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+
+        // Xóa các dấu câu gượng ép, dùng ngữ pháp chuẩn để AI đọc mượt hơn
+         const cleanText = flow?.message
+      .replace(/bị nguyền/gi, "Bị nguyền,")
+      .replace(/thức dậy/gi, "thức dậy.")
+      .replace(/đi ngủ/gi, "đi ngủ.");
+
+        // MẸO TRỊ NGỌNG (nếu cần): cleanText = cleanText.replace("Nguyền", "Nguỳn");
+
+        // Gọi API TTS của bạn
+        audio.src = `/api/v1/tts?text=${encodeURIComponent(cleanText)}`;
+        audio.load();
+        
+        // Chờ phát âm thanh
+        await audio.play();
+        console.log("Đang đọc: ", cleanText);
+
+      } catch (err) {
+        console.warn("TTS error:", err?.message);
+        
+        // Xử lý lỗi trình duyệt chặn tự động phát
+        if (err.name === 'NotAllowedError') {
+          console.error("Trình duyệt chặn âm thanh! Người dùng cần click vào màn hình ít nhất 1 lần trước khi AI có thể tự động đọc.");
+        }
+      }
+    };
+
+    playTTS();
+
+    // Cleanup: Dừng âm thanh khi component unmount hoặc khi effect này chạy lại
+    return () => {
+      audio.pause();
+      audio.src = "";
+    };
+  }, [flow?.message]); // Chạy lại khi có thông báo/message mới
 /*===== self-test-end ===== */
 
 
@@ -241,6 +337,7 @@ export default function NightCursedPhase({ roomCode, flow }) {
                     <h1 className={`${fontHorror.className} text-3xl text-red-500 text-center drop-shadow-[0_2px_2px_black] uppercase leading-relaxed break-words`}>
                         {roleNameVN}
                     </h1>
+                    {/* <button onClick={testPhaseCursed}>bấm em đi </button> */}
                 </div>
 
                 {/* -- PHẦN DƯỚI: THÔNG TIN -- */}

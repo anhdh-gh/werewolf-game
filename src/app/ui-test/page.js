@@ -22,10 +22,10 @@ import { RoomProvider } from "@/contexts/RoomContext";
 
 export default function UITestPage(){
   
-  const TEST_PHASE = PHASES.NIGHT_WITCH_KILL;
+  const TEST_PHASE = PHASES.NIGHT_CURSED;
   
 
-  const TEST_ROLE = ROLES.WITCH;
+  const TEST_ROLE = ROLES.CURSED;
  
   const [phase] = useState(TEST_PHASE);
   const [role] = useState(TEST_ROLE);
@@ -135,7 +135,7 @@ export default function UITestPage(){
     }
   };
 
-  // 👇 CHỈ RETURN ĐÚNG UI CỦA PHASE, KHÔNG BỌC GÌ THÊM
+  
   return (
     <RoomProvider> 
         {renderPhase()}
