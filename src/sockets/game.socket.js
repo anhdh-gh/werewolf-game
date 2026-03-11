@@ -21,6 +21,7 @@ module.exports = (io, socket) => {
     /**[ CONNECT ]**/
     const existingSocketId = userSocketMap.get(socket.user.id);
     if (existingSocketId) {
+        console.log("có thật luôn", existingSocketId)
         socket.emit(EVENTS.SOCKET_ERROR, {
             code: ERROR_CODES.ALREADY_CONNECTED.code,
             message: ERROR_CODES.ALREADY_CONNECTED.message
@@ -66,9 +67,8 @@ module.exports = (io, socket) => {
     /**[ CONNECT_ROOM ]**/
     socket.on(EVENTS.CONNECT_ROOM, socketHandlerError(async (socket, payload, ack) => {
         try {
-            await GameService.connectRoom(socket.user, payload.room.code)
+            await GameService.connectRoom(socket.user, payload.room.code, payload.room.room_voice_token)
             socket.join(payload.room.code)
-
             io.to(payload.room.code).emit(EVENTS.ROOM_PLAYERS, {
                 data: { players: await GameService.getPlayerInfo(payload.room.code) }
             })

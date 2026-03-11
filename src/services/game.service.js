@@ -28,20 +28,30 @@ const GameService = {
     },
 
     /**[ CONNECT_ROOM ]* */
-    async connectRoom(player, roomCode) {
+    async connectRoom(player, roomCode, roomVoiceToken) {
         //
         const room = await RoomRepository.getByCode(roomCode)
         if(!room) {
             throw new AppError(ERROR_CODES.ROOM_NOT_FOUND)
         }
-
         //
         if(STATUS.WAITING !== room.status || PHASE.LOBBY.key !== room.current_phase) {
             throw new AppError(ERROR_CODES.ROOM_PLAYING)
         }
-
         //
-        await PlayerRepository.connectRoom(player, roomCode)
+        await PlayerRepository.connectRoom(player, roomCode, roomVoiceToken)
+
+    //    try {
+    //     await PlayerRepository.connectRoom(player, roomCode, roomVoiceToken);
+    // } catch (err) {
+    //     console.error("PlayerRepository.connectRoom error:", err);
+
+    //     // nếu muốn chuyển thành lỗi business
+    //     throw new AppError(
+    //         ERROR_CODES.ROOM_CONNECT_FAILED.code,
+    //         "Không thể kết nối vào phòng"
+    //     );
+    // }
     },
 
     /**[ ROOM_INFO ]* */

@@ -18,6 +18,8 @@ const RoomService = {
 
     async joinRoom(userId, roomCode, roomVoiceId) {
         const room = await RoomRepository.getByCode(roomCode)
+        const roomVoiceIdData = roomVoiceId === null ? room.room_voice_id : roomVoiceId
+        console.log("roomVoiceIdData",roomVoiceIdData)
         if (!room) {
             throw new AppError(ERROR_CODES.ROOM_NOT_FOUND)
         }
@@ -25,7 +27,7 @@ const RoomService = {
             throw new AppError(ERROR_CODES.ROOM_IS_FULL)
         }
 
-        const voiceToken = await createVoiceToken(room.room_voice_id, userId)
+        const voiceToken = await createVoiceToken(roomVoiceIdData, userId)
 
         //
         return {
@@ -39,7 +41,7 @@ const RoomService = {
                 //websocket: process.env.LIVEKIT_URL
             },
             voice: {
-                room_id: room.room_voice_id,
+                room_id: roomVoiceIdData,
                 url: process.env.LIVEKIT_URL,
                 token: voiceToken,
                 auto_join: true

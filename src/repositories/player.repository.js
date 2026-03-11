@@ -32,14 +32,14 @@ const PlayerRepository = {
         );
     },
 
-    async connectRoom(player, roomCode) {
+    async connectRoom(player, roomCode, roomVoiceToken) {
         await pool.query(
-            `INSERT INTO players(player_id, username, room_code, is_connected)
-             VALUES (?, ?, ?, true)
+            `INSERT INTO players(player_id, username, room_code, room_voice_token, is_connected)
+             VALUES (?, ?, ?, ?, true)
              ON DUPLICATE KEY UPDATE
                 username = VALUES(username),
                 is_connected = true`,
-            [player.id, player.username, roomCode]
+            [player.id, player.username, roomCode, roomVoiceToken]
         );
     },
 

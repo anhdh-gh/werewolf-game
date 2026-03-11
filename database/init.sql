@@ -39,7 +39,7 @@ CREATE TABLE rooms
     max_players INT UNSIGNED NOT NULL,
     phase_expires_at DATETIME,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    room_voice_id VARCHAR(255) NOT NULL
+    room_voice_id VARCHAR(255) NULL
 );
 
 # Cleanup DELETE FROM players WHERE room_code = :room
@@ -59,7 +59,7 @@ CREATE TABLE players
     is_protected        BOOLEAN DEFAULT FALSE,
     witch_heal          INT UNSIGNED DEFAULT 1,
     witch_poison        INT UNSIGNED DEFAULT 1,
-    room_voice_token       VARCHAR(255) NOT NULL,
+    room_voice_token    TEXT NULL,
     UNIQUE (player_id, room_code)
 );
 
