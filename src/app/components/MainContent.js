@@ -1,6 +1,6 @@
   "use client";
 
-  import { useEffect, useState } from "react";
+  import { useEffect, useState, useRef } from "react";
   import { useRouter } from "next/navigation";
   import Image from "next/image";
   import { KEYS } from "@/constants/keys";
@@ -27,8 +27,31 @@
     const [maxPlayers, setMaxPlayers] = useState(4);
     const [loadingCreate, setLoadingCreate] = useState(false);
     const [loadingJoin, setLoadingJoin] = useState(false);
+    const audioRef = useRef(null);
 
     useKeepScreenOn();
+
+    const playTTS = async (text) => {
+  try {
+    if (!audioRef.current) audioRef.current = new Audio();
+    const audio = audioRef.current;
+
+    let cleanText = text
+      .replace("Bị Nguyền", "bị nguỳn")
+      .replace("thức dậy", "thức dậy.")
+      .replace("đi ngủ", "đi ngủ.");
+
+    audio.pause();
+    audio.currentTime = 0;
+    audio.src = `/api/v1/tts?text=${encodeURIComponent(cleanText)}`;
+    audio.load();
+
+    console.log("TTS URL:", audio.src);
+    await audio.play();
+  } catch (err) {
+    console.warn("TTS error:", err?.message);
+  }
+};
 
     useEffect(() => {
       const name = localStorage.getItem(KEYS.USERNAME);
@@ -197,6 +220,16 @@
             >
                 Đăng xuất 
             </button>
+
+            <div className="flex flex-col items-center gap-4 mt-20">
+
+      <button
+        onClick={() => playTTS("Bị Nguyền thức dậy")}
+        className="px-4 py-2 bg-red-600 text-white rounded"
+      >
+        🔊 TEST VOICE
+      </button>
+    </div>
           </div>
         </div>
       </div>
