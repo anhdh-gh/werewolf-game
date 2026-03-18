@@ -17,12 +17,15 @@ const RoomService = {
     },
 
     async joinRoom(userId, roomCode, roomVoiceId) {
-        const room = await RoomRepository.getByCode(roomCode)
-        const roomVoiceIdData = roomVoiceId === null ? room.room_voice_id : roomVoiceId
-        console.log("roomVoiceIdData",roomVoiceIdData)
+        const room = await RoomRepository.getByCode(roomCode);
+
         if (!room) {
-            throw new AppError(ERROR_CODES.ROOM_NOT_FOUND)
+            throw new AppError(ERROR_CODES.ROOM_NOT_FOUND);
         }
+
+        const roomVoiceIdData = roomVoiceId == null ? room.room_voice_id : roomVoiceId;
+        console.log("roomVoiceIdData", roomVoiceIdData);
+        
         if (await RoomRepository.isFull(roomCode, room?.max_players)) {
             throw new AppError(ERROR_CODES.ROOM_IS_FULL)
         }
