@@ -24,14 +24,12 @@ export async function connectVoiceRoom({
   try {
     if (livekitRoom) {
       console.log("B. disconnect old room");
-      livekitRoom.disconnect();
-      livekitRoom = null;
+      await disconnectVoiceRoom();
     }
 
-    const room = new Room();
-
-    room.on("connected", () => {
-      console.log("EVENT connected");
+    const room = new Room({
+      adaptiveStream: true,
+      dynacast: true,
     });
 
     room.on("connectionStateChanged", (state) => {
@@ -55,11 +53,24 @@ export async function connectVoiceRoom({
 
       if (track.kind === "audio") {
         const element = track.attach();
+        element.autoplay = true;
         element.setAttribute("data-participant-id", participant.identity);
-        document.body.appendChild(element);
+
+        const container = document.getElementById("livekit-audio-container");
+        if (container) {
+          container.appendChild(element);
+        }
       }
 
       onTrackSubscribed?.(track, publication, participant);
+    });
+
+    room.on("trackUnsubscribed", (track, publication, participant) => {
+      console.log("EVENT trackUnsubscribed:", participant.identity, track.kind);
+
+      if (track.kind === "audio") {
+        track.detach().forEach((el) => el.remove());
+      }
     });
 
     room.on("disconnected", (reason) => {
@@ -94,7 +105,19 @@ export async function connectVoiceRoom({
 
 export async function disconnectVoiceRoom() {
   if (!livekitRoom) return;
+
   console.log("disconnectVoiceRoom called");
+
+  livekitRoom.remoteParticipants.forEach((participant) => {
+    participant.trackPublications.forEach((publication) => {
+      publication.track?.detach?.().forEach((el) => el.remove());
+    });
+  });
+
+  livekitRoom.localParticipant.trackPublications.forEach((publication) => {
+    publication.track?.detach?.().forEach((el) => el.remove());
+  });
+
   livekitRoom.disconnect();
   livekitRoom = null;
 }
