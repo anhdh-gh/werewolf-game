@@ -1523,13 +1523,20 @@ describe("joinRoom", () => {
   });
 
   it("throws FULL when the room is at maxPlayers", async () => {
+    // maxPlayers has a floor of 4 (createRoom validates it, and the deployed
+    // rules' settings.validate enforces the same bound), so this fills a
+    // 4-player room via three real joinRoom calls rather than creating a
+    // room already at capacity.
     const db = getDatabase(app);
     const code = await createRoom(db, {
       uid: "owner-2",
       name: "Owner",
       photoURL: null,
-      maxPlayers: 1,
+      maxPlayers: 4,
     });
+    await joinRoom(db, code, { uid: "joiner-a", name: "A", photoURL: null });
+    await joinRoom(db, code, { uid: "joiner-b", name: "B", photoURL: null });
+    await joinRoom(db, code, { uid: "joiner-c", name: "C", photoURL: null });
 
     let caught: unknown;
     try {
