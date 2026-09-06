@@ -920,9 +920,21 @@ describe("rooms/$code", () => {
     );
   });
 
-  it("denies a settings write with the wrong shape", async () => {
+  // Writing null is a delete in RTDB, and .validate never runs on deletes —
+  // only .write governs whether a deletion is permitted. This is denied by
+  // the settings rule's newData.exists() guard, not by .validate: settings
+  // must never disappear from a room, matching Room.settings being a
+  // required (non-optional) field in src/types/room.ts.
+  it("denies deleting settings entirely", async () => {
     const db = testEnv.authenticatedContext("uid-owner").database();
     await assertFails(set(ref(db, "rooms/EXIST1/settings"), null));
+  });
+
+  // This one exercises .validate directly: a non-deleting payload (has
+  // children) that is still the wrong shape.
+  it("denies a settings write missing rolesEnabled", async () => {
+    const db = testEnv.authenticatedContext("uid-owner").database();
+    await assertFails(set(ref(db, "rooms/EXIST1/settings"), { maxPlayers: 8 }));
   });
 
   it("denies a settings write with maxPlayers out of range", async () => {
@@ -975,7 +987,7 @@ Expected: FAIL — the current locked-down rules (`.read: false, .write: false`)
           }
         },
         "settings": {
-          ".write": "auth != null && newData.parent().child('members').child(auth.uid).exists() && newData.parent().child('status').val() === 'LOBBY'",
+          ".write": "auth != null && newData.exists() && newData.parent().child('members').child(auth.uid).exists() && newData.parent().child('status').val() === 'LOBBY'",
           ".validate": "newData.hasChildren(['maxPlayers', 'rolesEnabled']) && newData.child('maxPlayers').isNumber() && newData.child('maxPlayers').val() >= 4 && newData.child('maxPlayers').val() <= 16 && newData.child('rolesEnabled').hasChildren(['BODYGUARD', 'CURSED', 'MUTER', 'TANNER'])"
         },
         "status": {
@@ -1003,7 +1015,7 @@ Expected: FAIL — the current locked-down rules (`.read: false, .write: false`)
 - [ ] **Step 5: Run the tests to verify they pass**
 
 Run: `npx vitest run src/test/rules.test.ts`
-Expected: PASS, 16 tests.
+Expected: PASS, 17 tests.
 
 - [ ] **Step 6: Deploy the rules to the real project**
 
