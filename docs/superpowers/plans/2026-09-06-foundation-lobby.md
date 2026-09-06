@@ -30,6 +30,12 @@ Emulator Suite.
   (`online: boolean`), which the Game Engine sub-project will later read.
 - The app must be installable as a PWA (spec §9) — this plan ships the manifest and icons;
   the audio-keep-alive and push work belongs to the Resilience sub-project.
+- The Firebase Realtime Database emulator is a Java process and needs a JVM on `PATH`. This
+  machine has no system JVM and no root, but carries an unused Temurin JDK 21 at
+  `/home/anhdh/.local/jdk/jdk-21.0.12.1+1`. Any task that starts the emulator must export
+  `JAVA_HOME` to that directory and prepend `$JAVA_HOME/bin` to `PATH` in its own shell.
+  Do not bake that absolute path into `package.json` or any committed config — it is
+  specific to this machine and would break for anyone else.
 - Infrastructure already exists and must be reused, not recreated:
   - Firebase project `werewolf-game-2026`, RTDB instance
     `werewolf-game-2026-default-rtdb` in `asia-southeast1`, Google sign-in already enabled.
