@@ -1224,7 +1224,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="vi">
+    <html lang="vi" className="dark">
       <body>
         <AuthProvider>{children}</AuthProvider>
       </body>
@@ -1233,12 +1233,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 ```
 
-`src/app/page.tsx`:
+Note the `className="dark"` on `<html>` — Task 1 added this so shadcn's dark-mode tokens apply
+unconditionally (there is no light mode). This block is a full replacement of `layout.tsx`,
+so carry it forward here rather than dropping it.
+
+`src/app/page.tsx` — uses shadcn's `Button` and `Card` (installed in Task 1):
 
 ```tsx
 "use client";
 
 import { useAuth } from "@/lib/auth/useAuth";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function HomePage() {
   const { user, loading, signInWithGoogle, signOut } = useAuth();
@@ -1246,31 +1252,34 @@ export default function HomePage() {
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center">
-        <p>Đang tải...</p>
+        <p className="text-muted-foreground">Đang tải...</p>
       </main>
     );
   }
 
   if (!user) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-4">
-        <h1 className="text-2xl font-bold">Ma Sói</h1>
-        <button
-          onClick={signInWithGoogle}
-          className="rounded bg-red-700 px-4 py-2 font-semibold"
-        >
-          Đăng nhập với Google
-        </button>
+      <main className="flex min-h-screen items-center justify-center p-6">
+        <Card className="w-full max-w-sm">
+          <CardHeader>
+            <CardTitle className="text-center text-2xl">Ma Sói</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={signInWithGoogle} className="w-full">
+              Đăng nhập với Google
+            </Button>
+          </CardContent>
+        </Card>
       </main>
     );
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4">
+    <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-6">
       <p>Xin chào {user.displayName}</p>
-      <button onClick={signOut} className="rounded bg-neutral-700 px-4 py-2">
+      <Button variant="secondary" onClick={signOut}>
         Đăng xuất
-      </button>
+      </Button>
     </main>
   );
 }
@@ -1907,13 +1916,12 @@ Expected: PASS, 2 tests.
 
 - [ ] **Step 6: Build the Lobby component**
 
-`src/components/RoomLobby.tsx`:
+`src/components/RoomLobby.tsx` — uses shadcn's `Button` and `Card` (installed in Task 1):
 
 ```tsx
 "use client";
 
 import { useEffect } from "react";
-import type { Room } from "@/types/room";
 import { db } from "@/lib/firebase/client";
 import { useAuth } from "@/lib/auth/useAuth";
 import { useRoom } from "@/lib/rooms/useRoom";
@@ -1921,6 +1929,8 @@ import { attachPresence, detachPresence } from "@/lib/presence/presence";
 import { ref, update } from "firebase/database";
 import { roomMemberPath } from "@/lib/rooms/paths";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function RoomLobby({ code }: { code: string }) {
   const { user } = useAuth();
@@ -1933,8 +1943,8 @@ export function RoomLobby({ code }: { code: string }) {
     return () => detach();
   }, [user, code]);
 
-  if (loading) return <p>Đang tải phòng...</p>;
-  if (!room) return <p>Không tìm thấy phòng {code}</p>;
+  if (loading) return <p className="p-6 text-muted-foreground">Đang tải phòng...</p>;
+  if (!room) return <p className="p-6 text-muted-foreground">Không tìm thấy phòng {code}</p>;
   if (!user) return null;
 
   const toggleReady = () => {
@@ -1950,33 +1960,39 @@ export function RoomLobby({ code }: { code: string }) {
   const members = Object.entries(room.members);
 
   return (
-    <div className="flex min-h-screen flex-col items-center gap-6 p-6">
-      <h1 className="text-3xl font-bold tracking-widest">{code}</h1>
-      <p>
-        {members.length} / {room.settings.maxPlayers} người
-      </p>
-      <ul className="w-full max-w-sm space-y-2">
-        {members.map(([uid, member]) => (
-          <li
-            key={uid}
-            className={`flex justify-between rounded px-3 py-2 ${
-              member.online ? "bg-neutral-800" : "bg-neutral-900 text-neutral-500"
-            }`}
-          >
-            <span>{member.name}</span>
-            <span>{!member.online ? "đang vắng" : member.ready ? "sẵn sàng" : "chờ"}</span>
-          </li>
-        ))}
-      </ul>
-      <div className="flex gap-3">
-        <button onClick={toggleReady} className="rounded bg-red-700 px-4 py-2">
-          {room.members[user.uid]?.ready ? "Huỷ sẵn sàng" : "Sẵn sàng"}
-        </button>
-        <button onClick={leave} className="rounded bg-neutral-700 px-4 py-2">
-          Rời phòng
-        </button>
-      </div>
-    </div>
+    <main className="flex min-h-screen flex-col items-center gap-6 p-6">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle className="text-center text-3xl tracking-widest">{code}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <p className="text-center text-muted-foreground">
+            {members.length} / {room.settings.maxPlayers} người
+          </p>
+          <ul className="space-y-2">
+            {members.map(([uid, member]) => (
+              <li
+                key={uid}
+                className={`flex justify-between rounded-md px-3 py-2 ${
+                  member.online ? "bg-secondary" : "bg-muted text-muted-foreground"
+                }`}
+              >
+                <span>{member.name}</span>
+                <span>{!member.online ? "đang vắng" : member.ready ? "sẵn sàng" : "chờ"}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="flex gap-3">
+            <Button onClick={toggleReady} className="flex-1">
+              {room.members[user.uid]?.ready ? "Huỷ sẵn sàng" : "Sẵn sàng"}
+            </Button>
+            <Button variant="secondary" onClick={leave} className="flex-1">
+              Rời phòng
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </main>
   );
 }
 ```
@@ -2000,7 +2016,9 @@ export default async function RoomPage({
 
 - [ ] **Step 8: Add create/join to the home page**
 
-Replace the signed-in branch of `src/app/page.tsx`:
+Replace the entire file at `src/app/page.tsx` (both branches, using the same shadcn
+components as Task 7's version — `Button`, `Card`, plus `Input`/`Label` for the two form
+fields, all installed in Task 1):
 
 ```tsx
 "use client";
@@ -2011,6 +2029,10 @@ import { useAuth } from "@/lib/auth/useAuth";
 import { db } from "@/lib/firebase/client";
 import { createRoom } from "@/lib/rooms/createRoom";
 import { joinRoom, JoinRoomError } from "@/lib/rooms/joinRoom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function HomePage() {
   const { user, loading, signInWithGoogle, signOut } = useAuth();
@@ -2022,21 +2044,24 @@ export default function HomePage() {
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center">
-        <p>Đang tải...</p>
+        <p className="text-muted-foreground">Đang tải...</p>
       </main>
     );
   }
 
   if (!user) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-4">
-        <h1 className="text-2xl font-bold">Ma Sói</h1>
-        <button
-          onClick={signInWithGoogle}
-          className="rounded bg-red-700 px-4 py-2 font-semibold"
-        >
-          Đăng nhập với Google
-        </button>
+      <main className="flex min-h-screen items-center justify-center p-6">
+        <Card className="w-full max-w-sm">
+          <CardHeader>
+            <CardTitle className="text-center text-2xl">Ma Sói</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={signInWithGoogle} className="w-full">
+              Đăng nhập với Google
+            </Button>
+          </CardContent>
+        </Card>
       </main>
     );
   }
@@ -2078,39 +2103,48 @@ export default function HomePage() {
     <main className="flex min-h-screen flex-col items-center justify-center gap-6 p-6">
       <p>Xin chào {user.displayName}</p>
 
-      <div className="flex flex-col items-center gap-2">
-        <label htmlFor="maxPlayers">Số người chơi</label>
-        <input
-          id="maxPlayers"
-          type="number"
-          min={4}
-          max={16}
-          value={maxPlayers}
-          onChange={(e) => setMaxPlayers(Number(e.target.value))}
-          className="w-20 rounded bg-neutral-800 px-2 py-1 text-center"
-        />
-        <button onClick={handleCreate} className="rounded bg-red-700 px-4 py-2">
-          Tạo phòng
-        </button>
-      </div>
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>Tạo phòng</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="maxPlayers">Số người chơi</Label>
+            <Input
+              id="maxPlayers"
+              type="number"
+              min={4}
+              max={16}
+              value={maxPlayers}
+              onChange={(e) => setMaxPlayers(Number(e.target.value))}
+            />
+          </div>
+          <Button onClick={handleCreate}>Tạo phòng</Button>
+        </CardContent>
+      </Card>
 
-      <div className="flex flex-col items-center gap-2">
-        <input
-          placeholder="Mã phòng"
-          value={joinCode}
-          onChange={(e) => setJoinCode(e.target.value)}
-          className="rounded bg-neutral-800 px-2 py-1 text-center uppercase"
-        />
-        <button onClick={handleJoin} className="rounded bg-neutral-700 px-4 py-2">
-          Vào phòng
-        </button>
-      </div>
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>Vào phòng</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <Input
+            placeholder="Mã phòng"
+            value={joinCode}
+            onChange={(e) => setJoinCode(e.target.value)}
+            className="text-center uppercase"
+          />
+          <Button variant="secondary" onClick={handleJoin}>
+            Vào phòng
+          </Button>
+        </CardContent>
+      </Card>
 
-      {error && <p className="text-red-400">{error}</p>}
+      {error && <p className="text-destructive">{error}</p>}
 
-      <button onClick={signOut} className="text-sm text-neutral-500 underline">
+      <Button variant="link" onClick={signOut} className="text-muted-foreground">
         Đăng xuất
-      </button>
+      </Button>
     </main>
   );
 }
