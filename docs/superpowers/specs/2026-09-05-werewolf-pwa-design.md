@@ -9,8 +9,9 @@
   Xem mục 5.
 - **Đăng nhập bằng Google, không có lối tắt cho khách.** Đơn giản, đổi lại người mượn máy
   phải có tài khoản Google trên máy đó.
-- **Chat sói và chat làng giữ nguyên, luôn bật** — kể cả khi chơi cùng bàn. Không tắt theo
-  chế độ chơi xa/gần.
+- **Chat sói và chat làng tắt mặc định, chỉ bật khi phòng bật "Chơi xa".** Ngồi cùng bàn thì
+  nói bằng miệng — bật chat lúc đó chỉ tạo tiếng thông báo vô nghĩa và phá luật nhắm mắt.
+  Chat và video call cùng nằm sau một công tắc duy nhất là "Chơi xa".
 - **Voice (LiveKit) chỉ dành cho phòng bật "Chơi xa".**
 - **Deploy: Vercel (Next.js) + Firebase (Auth, RTDB) — cả hai đều dùng gói miễn phí.**
 - **Domain:** `wolf.anhdh.net`, DNS do Vercel quản lý.
