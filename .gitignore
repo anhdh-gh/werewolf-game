@@ -12,6 +12,8 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+database-debug.log
+firebase-debug.log
 
 .DS_Store
 .idea/
@@ -23,6 +25,7 @@ next-env.d.ts
 coverage/
 playwright-report/
 test-results/
+.vitest/
 
 public/sw.js
 public/workbox-*.js
