@@ -71,7 +71,7 @@ gì. Ai cũng bấm Bắt đầu được, miễn đủ người. Mọi thứ c�
 | Tiên Tri | Làng | Mỗi đêm soi một người, biết người đó có phải sói không. |
 | Bảo Vệ | Làng | Mỗi đêm che chở một người khỏi bị sói cắn. Không được che cùng một người hai đêm liên tiếp. |
 | Phù Thuỷ | Làng | Có một bình cứu và một bình độc, mỗi bình dùng một lần cả ván. Được biết nạn nhân của sói đêm đó trước khi quyết định cứu. |
-| Kẻ Bịt Miệng | Làng | Mỗi đêm chọn một người; hôm sau người đó không nói được trong chat làng. |
+| Kẻ Bịt Miệng | Làng | Mỗi đêm chọn một người; hôm sau người đó không được nói. Xem §4.7 về cách áp dụng. |
 | Bị Nguyền | Làng | Khởi đầu là dân. Lần đầu bị sói cắn thì không chết mà **hoá thành sói**. |
 | Chán Đời | Riêng | Thắng một mình nếu chết, bằng bất kỳ cách nào. |
 | Dân Làng | Làng | Không có năng lực. |
@@ -145,6 +145,22 @@ Kiểm tra sau mỗi lần công bố người chết, theo thứ tự:
 
 Kết thúc ván thì lật toàn bộ vai của mọi người. Phòng quay về sảnh, giữ nguyên người chơi
 để chơi ván mới.
+
+### 4.7 Trạng thái câm được áp dụng thế nào
+
+Vì chat chỉ bật khi phòng bật "Chơi xa" (§0), năng lực của Kẻ Bịt Miệng không thể chỉ là
+"khoá ô chat" — nếu vậy vai này vô dụng ở chế độ chơi chính là ngồi cùng bàn. Trạng thái câm
+được áp dụng theo đúng cách ma sói ngoài đời vẫn làm, cộng thêm phần cưỡng chế khi chơi xa:
+
+- **Luôn luôn, ở mọi chế độ:** người bị câm nhận thông báo rõ ràng trên máy mình ("Hôm nay
+  bạn không được nói"), và cả bàn thấy dấu câm cạnh tên người đó trong danh sách. Ngồi cùng
+  bàn thì đây là luật danh dự, giống hệt việc quản trò tuyên bố ai bị câm — không cần và
+  không thể cưỡng chế bằng phần mềm.
+- **Thêm vào đó, khi phòng bật "Chơi xa":** ô chat của người đó bị khoá, và token LiveKit của
+  họ không được cấp quyền publish trong phase Thảo Luận, nên micro thật sự không phát được.
+
+Nói cách khác, phần thông báo là bắt buộc và đủ để vai này có nghĩa; phần khoá chat/micro chỉ
+là lớp cưỡng chế thêm khi kênh nói chuyện nằm trong tay ứng dụng.
 
 ## 5. Mô hình kết nối và vắng mặt
 
