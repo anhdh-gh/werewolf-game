@@ -853,6 +853,41 @@ describe("rooms/$code", () => {
     const db = testEnv.authenticatedContext("uid-owner").database();
     await assertFails(set(ref(db, "rooms/EXIST1/currentGameId"), "game-1"));
   });
+
+  // Task 8's createRoom writes a whole room in ONE transaction at rooms/<code>.
+  // The settings rule must therefore be satisfiable by sibling data written in
+  // the same operation — which is why it reads newData.parent() and not root
+  // (root sees only the pre-write tree, so it cannot see the members node being
+  // created alongside it).
+  it("allows creating a whole room in a single write", async () => {
+    const db = testEnv.authenticatedContext("uid-solo").database();
+    await assertSucceeds(
+      set(ref(db, "rooms/SOLO01"), {
+        createdAt: 5000,
+        status: "LOBBY",
+        settings: {
+          maxPlayers: 8,
+          rolesEnabled: { BODYGUARD: true, CURSED: true, MUTER: true, TANNER: true },
+        },
+        members: {
+          "uid-solo": {
+            name: "Solo",
+            photoURL: null,
+            joinedAt: 5000,
+            ready: false,
+            online: true,
+          },
+        },
+      }),
+    );
+  });
+
+  it("denies writing settings into a room the writer is not a member of", async () => {
+    const db = testEnv.authenticatedContext("uid-ghost").database();
+    await assertFails(
+      set(ref(db, "rooms/GHOST1/settings"), { maxPlayers: 8, rolesEnabled: {} }),
+    );
+  });
 });
 
 describe("presence/$uid", () => {
@@ -899,7 +934,7 @@ Expected: FAIL — the current locked-down rules (`.read: false, .write: false`)
           }
         },
         "settings": {
-          ".write": "auth != null && root.child('rooms').child($code).child('members').child(auth.uid).exists() && root.child('rooms').child($code).child('status').val() === 'LOBBY'"
+          ".write": "auth != null && newData.parent().child('members').child(auth.uid).exists() && newData.parent().child('status').val() === 'LOBBY'"
         },
         "status": {
           ".write": "auth != null && !data.exists()",
@@ -926,7 +961,7 @@ Expected: FAIL — the current locked-down rules (`.read: false, .write: false`)
 - [ ] **Step 5: Run the tests to verify they pass**
 
 Run: `npx vitest run src/test/rules.test.ts`
-Expected: PASS, 10 tests.
+Expected: PASS, 13 tests.
 
 - [ ] **Step 6: Deploy the rules to the real project**
 
