@@ -1,6 +1,33 @@
 {
   "rules": {
-    ".read": false,
-    ".write": false
+    "rooms": {
+      "$code": {
+        ".read": "auth != null",
+        "members": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid"
+          }
+        },
+        "settings": {
+          ".write": "auth != null && root.child('rooms').child($code).child('members').child(auth.uid).exists() && root.child('rooms').child($code).child('status').val() === 'LOBBY'"
+        },
+        "status": {
+          ".write": "auth != null && !data.exists()",
+          ".validate": "newData.val() === 'LOBBY'"
+        },
+        "createdAt": {
+          ".write": "auth != null && !data.exists()"
+        },
+        "currentGameId": {
+          ".write": false
+        }
+      }
+    },
+    "presence": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    }
   }
 }
