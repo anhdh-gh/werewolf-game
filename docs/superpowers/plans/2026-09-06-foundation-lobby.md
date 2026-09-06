@@ -1337,11 +1337,17 @@ Run: `npm run emulators` (background)
 
 - [ ] **Step 2: Write the failing tests for createRoom**
 
-`src/lib/rooms/createRoom.test.ts`:
+`src/lib/rooms/createRoom.test.ts` — **must authenticate against the Auth emulator**.
+`database.rules.json` requires `auth != null` on every path `createRoom` touches, and the
+deployed rules are enforced the moment any test in the suite uploads them (see Task 6) — so
+an unauthenticated test client only "works" by accident, in isolation, before that upload
+happens. `input.uid` must be the *real* signed-in uid (not a literal string), because the
+`members/$uid` rule checks `auth.uid === $uid` directly:
 
 ```ts
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { connectDatabaseEmulator, getDatabase, ref, get } from "firebase/database";
+import { connectAuthEmulator, getAuth, signInAnonymously } from "firebase/auth";
 import { initializeApp, deleteApp, type FirebaseApp } from "firebase/app";
 import { createRoom } from "./createRoom";
 import { roomPath } from "./paths";
@@ -1349,8 +1355,13 @@ import { roomPath } from "./paths";
 let app: FirebaseApp;
 
 beforeAll(() => {
-  app = initializeApp({ databaseURL: "http://127.0.0.1:9000/?ns=werewolf-rules-test" });
+  app = initializeApp({
+    apiKey: "test-api-key",
+    projectId: "werewolf-rules-test",
+    databaseURL: "http://127.0.0.1:9000/?ns=werewolf-rules-test",
+  });
   connectDatabaseEmulator(getDatabase(app), "127.0.0.1", 9000);
+  connectAuthEmulator(getAuth(app), "http://127.0.0.1:9099", { disableWarnings: true });
 });
 
 afterAll(async () => {
@@ -1360,8 +1371,9 @@ afterAll(async () => {
 describe("createRoom", () => {
   it("creates a room with the given owner as its first member", async () => {
     const db = getDatabase(app);
+    const { user } = await signInAnonymously(getAuth(app));
     const code = await createRoom(db, {
-      uid: "uid-1",
+      uid: user.uid,
       name: "Anh",
       photoURL: null,
       maxPlayers: 8,
@@ -1372,7 +1384,7 @@ describe("createRoom", () => {
     const room = snapshot.val();
     expect(room.status).toBe("LOBBY");
     expect(room.settings.maxPlayers).toBe(8);
-    expect(room.members["uid-1"].name).toBe("Anh");
+    expect(room.members[user.uid].name).toBe("Anh");
   });
 
   it("rejects maxPlayers below 4", async () => {
@@ -1390,6 +1402,15 @@ describe("createRoom", () => {
   });
 });
 ```
+
+The last two tests need no sign-in: `createRoom` validates `maxPlayers` before making any
+Firebase call, so they never reach RTDB.
+
+If `initializeApp`/`getAuth` rejects this config (e.g. still complains about the placeholder
+`apiKey`), that's an empirical detail to resolve the same way Task 6 resolved its RTDB
+questions — try it against the real emulator and adjust, then note what you found in your
+report. The design (real anonymous sign-in, `input.uid` set to the resulting `user.uid`) is
+the part that is not up for revision.
 
 - [ ] **Step 3: Run the tests to verify they fail**
 
@@ -1475,11 +1496,18 @@ Expected: PASS, 3 tests.
 
 - [ ] **Step 6: Write the failing tests for joinRoom**
 
-`src/lib/rooms/joinRoom.test.ts`:
+`src/lib/rooms/joinRoom.test.ts` — same authentication requirement as `createRoom.test.ts`,
+with one more wrinkle: `joinRoom`'s very first step is `get(ref(db, roomPath(roomCode)))`, and
+`.read` also requires `auth != null` — so even the `NOT_FOUND` test (checking a code that
+never existed) needs a signed-in client, or the read itself throws a permission error instead
+of returning a null snapshot. Tests that need two people (an existing member plus someone
+joining) sign in as one identity, act, then sign in again to switch to a second identity —
+`signInAnonymously` on the same `Auth` instance replaces the current user:
 
 ```ts
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { getDatabase, connectDatabaseEmulator, ref, get } from "firebase/database";
+import { connectAuthEmulator, getAuth, signInAnonymously } from "firebase/auth";
 import { initializeApp, deleteApp, type FirebaseApp } from "firebase/app";
 import { createRoom } from "./createRoom";
 import { joinRoom, JoinRoomError } from "./joinRoom";
@@ -1489,36 +1517,49 @@ let app: FirebaseApp;
 
 beforeAll(() => {
   app = initializeApp(
-    { databaseURL: "http://127.0.0.1:9000/?ns=werewolf-rules-test" },
+    {
+      apiKey: "test-api-key",
+      projectId: "werewolf-rules-test",
+      databaseURL: "http://127.0.0.1:9000/?ns=werewolf-rules-test",
+    },
     "join-room-tests",
   );
   connectDatabaseEmulator(getDatabase(app), "127.0.0.1", 9000);
+  connectAuthEmulator(getAuth(app), "http://127.0.0.1:9099", { disableWarnings: true });
 });
 
 afterAll(async () => {
   await deleteApp(app);
 });
 
+async function signInAs(): Promise<string> {
+  const { user } = await signInAnonymously(getAuth(app));
+  return user.uid;
+}
+
 describe("joinRoom", () => {
   it("adds the joiner as a member", async () => {
     const db = getDatabase(app);
+    const ownerUid = await signInAs();
     const code = await createRoom(db, {
-      uid: "owner-1",
+      uid: ownerUid,
       name: "Owner",
       photoURL: null,
       maxPlayers: 4,
     });
 
-    await joinRoom(db, code, { uid: "joiner-1", name: "Joiner", photoURL: null });
+    const joinerUid = await signInAs();
+    await joinRoom(db, code, { uid: joinerUid, name: "Joiner", photoURL: null });
 
     const snapshot = await get(ref(db, roomPath(code)));
-    expect(snapshot.val().members["joiner-1"].name).toBe("Joiner");
+    expect(snapshot.val().members[joinerUid].name).toBe("Joiner");
   });
 
   it("throws NOT_FOUND for a code that does not exist", async () => {
     const db = getDatabase(app);
+    const uid = await signInAs();
     await expect(
-      joinRoom(db, "NOPE00", { uid: "joiner-2", name: "X", photoURL: null }),
+      joinRoom(db, "NOPE00", { uid, name: "X", photoURL: null }),
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
@@ -1528,19 +1569,25 @@ describe("joinRoom", () => {
     // 4-player room via three real joinRoom calls rather than creating a
     // room already at capacity.
     const db = getDatabase(app);
+    const ownerUid = await signInAs();
     const code = await createRoom(db, {
-      uid: "owner-2",
+      uid: ownerUid,
       name: "Owner",
       photoURL: null,
       maxPlayers: 4,
     });
-    await joinRoom(db, code, { uid: "joiner-a", name: "A", photoURL: null });
-    await joinRoom(db, code, { uid: "joiner-b", name: "B", photoURL: null });
-    await joinRoom(db, code, { uid: "joiner-c", name: "C", photoURL: null });
 
+    const aUid = await signInAs();
+    await joinRoom(db, code, { uid: aUid, name: "A", photoURL: null });
+    const bUid = await signInAs();
+    await joinRoom(db, code, { uid: bUid, name: "B", photoURL: null });
+    const cUid = await signInAs();
+    await joinRoom(db, code, { uid: cUid, name: "C", photoURL: null });
+
+    const extraUid = await signInAs();
     let caught: unknown;
     try {
-      await joinRoom(db, code, { uid: "joiner-3", name: "X", photoURL: null });
+      await joinRoom(db, code, { uid: extraUid, name: "X", photoURL: null });
     } catch (error) {
       caught = error;
     }
@@ -1550,19 +1597,25 @@ describe("joinRoom", () => {
 
   it("is idempotent for a member re-joining their own room", async () => {
     const db = getDatabase(app);
+    const ownerUid = await signInAs();
     const code = await createRoom(db, {
-      uid: "owner-3",
+      uid: ownerUid,
       name: "Owner",
       photoURL: null,
       maxPlayers: 4,
     });
 
     await expect(
-      joinRoom(db, code, { uid: "owner-3", name: "Owner", photoURL: null }),
+      joinRoom(db, code, { uid: ownerUid, name: "Owner", photoURL: null }),
     ).resolves.toBeUndefined();
   });
 });
 ```
+
+Same note as `createRoom.test.ts`: if the `initializeApp` config needs adjusting for `getAuth`
+to accept it, verify against the real emulator and report what you found — the design (real
+per-identity sign-in, switching identity via a fresh `signInAnonymously` call) is fixed, the
+exact config shape is not.
 
 - [ ] **Step 7: Run the tests to verify they fail**
 
