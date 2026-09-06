@@ -1,6 +1,19 @@
 # Ma Sói PWA — Thiết kế hệ thống
 
-> Trạng thái: bản nháp chờ duyệt · Ngày: 2026-09-05 · Nhánh: `main` (viết lại từ đầu)
+> Trạng thái: đã duyệt · Ngày: 2026-09-05 · Nhánh: `main` (viết lại từ đầu)
+
+## 0. Quyết định đã chốt sau brainstorm
+
+- **Không có chủ phòng.** Ai vào đầu tiên không có đặc quyền gì, ai bấm Bắt đầu cũng được.
+- **Vắng mặt (rớt mạng, khoá màn hình, chuyển app) không bao giờ giết ai.** Chỉ mất lượt.
+  Xem mục 5.
+- **Đăng nhập bằng Google, không có lối tắt cho khách.** Đơn giản, đổi lại người mượn máy
+  phải có tài khoản Google trên máy đó.
+- **Chat sói và chat làng giữ nguyên, luôn bật** — kể cả khi chơi cùng bàn. Không tắt theo
+  chế độ chơi xa/gần.
+- **Voice (LiveKit) chỉ dành cho phòng bật "Chơi xa".**
+- **Deploy: Vercel (Next.js) + Firebase (Auth, RTDB) — cả hai đều dùng gói miễn phí.**
+- **Domain:** `wolf.anhdh.net`, DNS do Vercel quản lý.
 
 ## 1. Bối cảnh
 
@@ -305,14 +318,30 @@ Có màn hình hướng dẫn cài đặt, hiển thị đúng lúc: trên Andro
 iOS là hướng dẫn "Chia sẻ → Thêm vào MH chính". Trên iOS cần nói rõ vì sao — không cài thì
 không có thông báo đẩy.
 
-## 10. Thoại
+## 10. Thoại và video call
 
 LiveKit Cloud, bật theo từng phòng bằng một công tắc "Chơi xa". Phòng ngồi cùng bàn không cần
-và không nên bật, vì mười micro trong một phòng là vọng âm.
+và không nên bật, vì mười micro trong một phòng là vọng âm — ngồi cạnh nhau thì nói bằng miệng.
+
+Có cả **video**, không chỉ audio. Bật "Chơi xa" thì mỗi người thấy mặt nhau qua camera trong
+lúc gọi, giống như đang ngồi chung bàn nhìn thấy biểu cảm của nhau — phần quan trọng của ma sói
+là đọc phản ứng người khác lúc bị nghi ngờ.
+
+**Phòng gọi tự động ghép theo phase, không cần bấm gọi thủ công:**
+
+- Đêm, đến phiên Sói thức dậy → tất cả sói còn sống tự động vào chung một phòng gọi video để
+  bàn cắn ai. Người không phải sói không thấy, không nghe được phòng này.
+- Ngày, vào Thảo Luận → tất cả người còn sống tự động vào chung một phòng gọi video để bàn
+  ai đáng ngờ trước khi bỏ phiếu. Người đã chết không được nói (xem theo dõi câm lặng) nhưng
+  vẫn xem được hình để theo dõi ván.
+- Các phase đêm khác (Tiên Tri, Bảo Vệ, Phù Thuỷ, Kẻ Bịt Miệng) không có phòng gọi — đó là
+  hành động một mình, không bàn bạc với ai.
 
 Token do `POST /api/livekit/token` cấp, secret nằm ở biến môi trường trên Vercel, không lộ ra
-client. Micro tự tắt tiếng theo phase: ban đêm chỉ sói nghe được nhau, ban ngày người chết và
-người bị bịt miệng không phát được.
+client. Mỗi phòng gọi theo phase là một LiveKit room riêng (đặt tên theo `{gameId}-{phaseKey}`)
+để khỏi phải tự quản lý mute/permission phức tạp — hết phase là rời phòng gọi cũ, vào phòng gọi
+mới nếu phase kế tiếp có gọi. Micro/camera của người chết luôn tắt phát (không cấp quyền publish
+trong token), chỉ subscribe để xem/nghe.
 
 Thoại cũng là một luồng âm thanh, nên khi bật nó tự làm luôn nhiệm vụ giữ trang sống ở mục 8.
 
