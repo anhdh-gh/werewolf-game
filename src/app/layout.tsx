@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Geist } from "next/font/google";
 import { cn } from "@/lib/utils";
+import { AuthProvider } from "@/lib/auth/AuthProvider";
 
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
@@ -21,7 +22,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="vi" className={cn("dark", "font-sans", geist.variable)}>
-      <body>{children}</body>
+      <body>
+        <AuthProvider>{children}</AuthProvider>
+      </body>
     </html>
   );
 }
