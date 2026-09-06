@@ -751,7 +751,7 @@ import {
   assertFails,
 } from "@firebase/rules-unit-testing";
 import { readFileSync } from "node:fs";
-import { ref, set, get } from "firebase/database";
+import { ref, set, get, update } from "firebase/database";
 
 let testEnv: RulesTestEnvironment;
 
@@ -854,15 +854,16 @@ describe("rooms/$code", () => {
     await assertFails(set(ref(db, "rooms/EXIST1/currentGameId"), "game-1"));
   });
 
-  // Task 8's createRoom writes a whole room in ONE transaction at rooms/<code>.
-  // The settings rule must therefore be satisfiable by sibling data written in
-  // the same operation — which is why it reads newData.parent() and not root
-  // (root sees only the pre-write tree, so it cannot see the members node being
-  // created alongside it).
-  it("allows creating a whole room in a single write", async () => {
-    const db = testEnv.authenticatedContext("uid-solo").database();
-    await assertSucceeds(
-      set(ref(db, "rooms/SOLO01"), {
+  // RTDB evaluates a set()/transaction's write permission by walking from its
+  // exact target path up to root only — it never separately consults a
+  // descendant leaf's own .write rule for a single nested write. A room can
+  // therefore never be created with one set()/transaction at rooms/$code,
+  // no matter what the leaf rules below it allow. This test documents that
+  // constraint so it isn't mistaken for a bug later.
+  it("denies a single nested set() at the room root, even with fully valid data", async () => {
+    const db = testEnv.authenticatedContext("uid-solo2").database();
+    await assertFails(
+      set(ref(db, "rooms/SOLO02"), {
         createdAt: 5000,
         status: "LOBBY",
         settings: {
@@ -870,13 +871,43 @@ describe("rooms/$code", () => {
           rolesEnabled: { BODYGUARD: true, CURSED: true, MUTER: true, TANNER: true },
         },
         members: {
-          "uid-solo": {
-            name: "Solo",
+          "uid-solo2": {
+            name: "Solo2",
             photoURL: null,
             joinedAt: 5000,
             ready: false,
             online: true,
           },
+        },
+      }),
+    );
+  });
+
+  // This is the pattern createRoom (Task 8) actually uses: claim the code by
+  // transacting on the status leaf alone (it already carries its own
+  // "!data.exists()" rule), then fill in the rest with a multi-path
+  // update() — each key of an update() is evaluated independently against
+  // its own leaf rule, unlike a single set(). The settings rule's
+  // newData.parent() sees the room's state as it resolves at the end of
+  // this update(), including the members key written in the same call.
+  it("allows the two-step creation pattern: claim the status leaf, then multi-path update", async () => {
+    const db = testEnv.authenticatedContext("uid-solo").database();
+
+    await assertSucceeds(set(ref(db, "rooms/SOLO01/status"), "LOBBY"));
+
+    await assertSucceeds(
+      update(ref(db), {
+        "rooms/SOLO01/createdAt": 5000,
+        "rooms/SOLO01/settings": {
+          maxPlayers: 8,
+          rolesEnabled: { BODYGUARD: true, CURSED: true, MUTER: true, TANNER: true },
+        },
+        "rooms/SOLO01/members/uid-solo": {
+          name: "Solo",
+          photoURL: null,
+          joinedAt: 5000,
+          ready: false,
+          online: true,
         },
       }),
     );
@@ -961,7 +992,7 @@ Expected: FAIL — the current locked-down rules (`.read: false, .write: false`)
 - [ ] **Step 5: Run the tests to verify they pass**
 
 Run: `npx vitest run src/test/rules.test.ts`
-Expected: PASS, 13 tests.
+Expected: PASS, 14 tests.
 
 - [ ] **Step 6: Deploy the rules to the real project**
 
@@ -1244,13 +1275,27 @@ git push
   `src/lib/rooms/joinRoom.ts`, `src/lib/rooms/joinRoom.test.ts`
 
 **Interfaces:**
-- Consumes: `Room`, `RoomMember`, `OPTIONAL_ROLE_KEYS` (Task 3); `roomPath` (Task 3);
-  `generateRoomCode` (Task 4).
+- Consumes: `Room` (Task 3, used by `joinRoom` to type the read room snapshot); `roomPath`,
+  `roomStatusPath`, `roomMemberPath` (Task 3); `generateRoomCode` (Task 4).
 - Produces:
   - `createRoom(db: Database, input: CreateRoomInput): Promise<string>` — returns the new
     room code.
   - `joinRoom(db: Database, roomCode: string, input: JoinRoomInput): Promise<void>`.
   - `JoinRoomError` with `.code: "NOT_FOUND" | "FULL" | "ALREADY_PLAYING"`.
+
+**Why these aren't a single transaction on the whole room:** RTDB evaluates a `set()` or
+`runTransaction()` issued at one path by walking from that exact path up to root for a
+passing `.write` rule — it does not separately consult a descendant leaf's own `.write` rule.
+`rooms/$code` itself has no `.write` (only `.read`), so a transaction that reads and rewrites
+the whole room object at `rooms/$code` is denied outright regardless of what `status`,
+`settings`, or `members/$uid` individually allow. `createRoom` therefore claims the room code
+with a transaction scoped to the `status` leaf alone (which has its own `!data.exists()`
+rule), then fills in the rest with a multi-path `update()`, since `update()` evaluates each
+key independently against its own leaf rule. `joinRoom` reads the room once to decide which
+error (if any) applies, then writes only its own `members/$uid` leaf — accepting a small,
+documented race window on the last open slot as a fair trade for a friend-group party game
+that has no adversarial concurrency to defend against. See Task 6's rules tests for the
+empirical proof of this constraint.
 
 These tests run against the emulator (real transactions, real rules) — start it first.
 
@@ -1324,10 +1369,9 @@ Expected: FAIL — `Cannot find module './createRoom'`
 `src/lib/rooms/createRoom.ts`:
 
 ```ts
-import { type Database, ref, runTransaction } from "firebase/database";
-import type { Room } from "@/types/room";
+import { type Database, ref, runTransaction, update } from "firebase/database";
 import { generateRoomCode } from "./roomCode";
-import { roomPath } from "./paths";
+import { roomPath, roomStatusPath, roomMemberPath } from "./paths";
 
 const MAX_ATTEMPTS = 5;
 
@@ -1356,31 +1400,39 @@ async function tryCreateAt(
   code: string,
   input: CreateRoomInput,
 ): Promise<boolean> {
+  // RTDB checks a set()/transaction's write permission by walking from its
+  // exact target path up to root only — it never separately consults a
+  // descendant leaf's own .write rule for a single nested write (see
+  // database.rules.json and Task 6's rules tests). So the collision claim
+  // must transact on ONE leaf that already carries its own
+  // "!data.exists()" rule — status — not on the whole room object.
+  const claim = await runTransaction(ref(db, roomStatusPath(code)), (current) => {
+    if (current !== null) return undefined;
+    return "LOBBY";
+  });
+  if (!claim.committed) return false;
+
   const now = Date.now();
-  const room: Room = {
-    createdAt: now,
-    status: "LOBBY",
-    settings: {
+
+  // A multi-path update() evaluates each key independently against its own
+  // leaf rule, unlike set() — this is what lets the rest of the room get
+  // written once the code is claimed.
+  await update(ref(db), {
+    [`${roomPath(code)}/createdAt`]: now,
+    [`${roomPath(code)}/settings`]: {
       maxPlayers: input.maxPlayers,
       rolesEnabled: { BODYGUARD: true, CURSED: true, MUTER: true, TANNER: true },
     },
-    members: {
-      [input.uid]: {
-        name: input.name,
-        photoURL: input.photoURL,
-        joinedAt: now,
-        ready: false,
-        online: true,
-      },
+    [roomMemberPath(code, input.uid)]: {
+      name: input.name,
+      photoURL: input.photoURL,
+      joinedAt: now,
+      ready: false,
+      online: true,
     },
-  };
-
-  const result = await runTransaction(ref(db, roomPath(code)), (current) => {
-    if (current !== null) return undefined;
-    return room;
   });
 
-  return result.committed;
+  return true;
 }
 ```
 
@@ -1483,9 +1535,9 @@ Expected: FAIL — `Cannot find module './joinRoom'`
 `src/lib/rooms/joinRoom.ts`:
 
 ```ts
-import { type Database, ref, runTransaction } from "firebase/database";
-import type { Room, RoomMember } from "@/types/room";
-import { roomPath } from "./paths";
+import { type Database, ref, get, set } from "firebase/database";
+import type { Room } from "@/types/room";
+import { roomPath, roomMemberPath } from "./paths";
 
 export class JoinRoomError extends Error {
   code: "NOT_FOUND" | "FULL" | "ALREADY_PLAYING";
@@ -1507,42 +1559,40 @@ export async function joinRoom(
   roomCode: string,
   input: JoinRoomInput,
 ): Promise<void> {
-  const result = await runTransaction(ref(db, roomPath(roomCode)), (current: Room | null) => {
-    if (current === null) return current;
-    if (current.status === "PLAYING") return current;
+  const snapshot = await get(ref(db, roomPath(roomCode)));
+  const room = snapshot.val() as Room | null;
 
-    const alreadyMember = Boolean(current.members?.[input.uid]);
-    const memberCount = Object.keys(current.members ?? {}).length;
-    if (!alreadyMember && memberCount >= current.settings.maxPlayers) {
-      return current;
-    }
-
-    const member: RoomMember = alreadyMember
-      ? current.members[input.uid]
-      : {
-          name: input.name,
-          photoURL: input.photoURL,
-          joinedAt: Date.now(),
-          ready: false,
-          online: true,
-        };
-
-    return {
-      ...current,
-      members: { ...current.members, [input.uid]: member },
-    };
-  });
-
-  const room = result.snapshot.val() as Room | null;
   if (room === null) {
     throw new JoinRoomError("NOT_FOUND", `Phòng ${roomCode} không tồn tại`);
   }
   if (room.status === "PLAYING") {
     throw new JoinRoomError("ALREADY_PLAYING", "Phòng đang chơi, không vào được");
   }
-  if (!room.members[input.uid]) {
+
+  const alreadyMember = Boolean(room.members?.[input.uid]);
+  if (alreadyMember) return;
+
+  const memberCount = Object.keys(room.members ?? {}).length;
+  if (memberCount >= room.settings.maxPlayers) {
     throw new JoinRoomError("FULL", "Phòng đã đầy");
   }
+
+  // A single set() at the member's own leaf matches that leaf's own
+  // .write rule directly (auth.uid === $uid) — the same reason createRoom
+  // writes leaf-by-leaf instead of the whole room at once (see Task 6).
+  // This leaves a small race window: two people joining the last open
+  // slot at the same instant could both pass the FULL check above before
+  // either write lands, so the room could briefly hold one more member
+  // than maxPlayers. Accepted for v1 — this is a friend-group party game
+  // with no adversarial concurrency, not a security boundary, and the
+  // room self-corrects on the next read.
+  await set(ref(db, roomMemberPath(roomCode, input.uid)), {
+    name: input.name,
+    photoURL: input.photoURL,
+    joinedAt: Date.now(),
+    ready: false,
+    online: true,
+  });
 }
 ```
 
