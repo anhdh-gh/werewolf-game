@@ -174,6 +174,28 @@ describe("rooms/$code", () => {
       set(ref(db, "rooms/GHOST1/settings"), { maxPlayers: 8, rolesEnabled: {} }),
     );
   });
+
+  // Writing null is a delete in RTDB, and .validate never runs on deletes —
+  // only .write governs whether a deletion is permitted. This is denied by
+  // the settings rule's newData.exists() guard, not by .validate: settings
+  // must never disappear from a room, matching Room.settings being a
+  // required (non-optional) field in src/types/room.ts.
+  it("denies deleting settings entirely", async () => {
+    const db = testEnv.authenticatedContext("uid-owner").database();
+    await assertFails(set(ref(db, "rooms/EXIST1/settings"), null));
+  });
+
+  // This one exercises .validate directly: a non-deleting payload (has
+  // children) that is still the wrong shape.
+  it("denies a settings write missing rolesEnabled", async () => {
+    const db = testEnv.authenticatedContext("uid-owner").database();
+    await assertFails(set(ref(db, "rooms/EXIST1/settings"), { maxPlayers: 8 }));
+  });
+
+  it("denies a settings write with maxPlayers out of range", async () => {
+    const db = testEnv.authenticatedContext("uid-owner").database();
+    await assertFails(set(ref(db, "rooms/EXIST1/settings/maxPlayers"), 99));
+  });
 });
 
 describe("presence/$uid", () => {

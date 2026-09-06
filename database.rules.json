@@ -9,7 +9,8 @@
           }
         },
         "settings": {
-          ".write": "auth != null && newData.parent().child('members').child(auth.uid).exists() && newData.parent().child('status').val() === 'LOBBY'"
+          ".write": "auth != null && newData.exists() && newData.parent().child('members').child(auth.uid).exists() && newData.parent().child('status').val() === 'LOBBY'",
+          ".validate": "newData.hasChildren(['maxPlayers', 'rolesEnabled']) && newData.child('maxPlayers').isNumber() && newData.child('maxPlayers').val() >= 4 && newData.child('maxPlayers').val() <= 16 && newData.child('rolesEnabled').hasChildren(['BODYGUARD', 'CURSED', 'MUTER', 'TANNER'])"
         },
         "status": {
           ".write": "auth != null && !data.exists()",
