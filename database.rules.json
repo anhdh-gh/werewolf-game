@@ -9,7 +9,7 @@
           }
         },
         "settings": {
-          ".write": "auth != null && root.child('rooms').child($code).child('members').child(auth.uid).exists() && root.child('rooms').child($code).child('status').val() === 'LOBBY'"
+          ".write": "auth != null && newData.parent().child('members').child(auth.uid).exists() && newData.parent().child('status').val() === 'LOBBY'"
         },
         "status": {
           ".write": "auth != null && !data.exists()",

@@ -6,7 +6,7 @@ import {
   assertFails,
 } from "@firebase/rules-unit-testing";
 import { readFileSync } from "node:fs";
-import { ref, set, get } from "firebase/database";
+import { ref, set, get, update } from "firebase/database";
 
 let testEnv: RulesTestEnvironment;
 
@@ -107,6 +107,72 @@ describe("rooms/$code", () => {
   it("denies any client from writing currentGameId", async () => {
     const db = testEnv.authenticatedContext("uid-owner").database();
     await assertFails(set(ref(db, "rooms/EXIST1/currentGameId"), "game-1"));
+  });
+
+  // RTDB evaluates a set()/transaction's write permission by walking from its
+  // exact target path up to root only — it never separately consults a
+  // descendant leaf's own .write rule for a single nested write. A room can
+  // therefore never be created with one set()/transaction at rooms/$code,
+  // no matter what the leaf rules below it allow. This test documents that
+  // constraint so it isn't mistaken for a bug later.
+  it("denies a single nested set() at the room root, even with fully valid data", async () => {
+    const db = testEnv.authenticatedContext("uid-solo2").database();
+    await assertFails(
+      set(ref(db, "rooms/SOLO02"), {
+        createdAt: 5000,
+        status: "LOBBY",
+        settings: {
+          maxPlayers: 8,
+          rolesEnabled: { BODYGUARD: true, CURSED: true, MUTER: true, TANNER: true },
+        },
+        members: {
+          "uid-solo2": {
+            name: "Solo2",
+            photoURL: null,
+            joinedAt: 5000,
+            ready: false,
+            online: true,
+          },
+        },
+      }),
+    );
+  });
+
+  // This is the pattern createRoom (Task 8) actually uses: claim the code by
+  // transacting on the status leaf alone (it already carries its own
+  // "!data.exists()" rule), then fill in the rest with a multi-path
+  // update() — each key of an update() is evaluated independently against
+  // its own leaf rule, unlike a single set(). The settings rule's
+  // newData.parent() sees the room's state as it resolves at the end of
+  // this update(), including the members key written in the same call.
+  it("allows the two-step creation pattern: claim the status leaf, then multi-path update", async () => {
+    const db = testEnv.authenticatedContext("uid-solo").database();
+
+    await assertSucceeds(set(ref(db, "rooms/SOLO01/status"), "LOBBY"));
+
+    await assertSucceeds(
+      update(ref(db), {
+        "rooms/SOLO01/createdAt": 5000,
+        "rooms/SOLO01/settings": {
+          maxPlayers: 8,
+          rolesEnabled: { BODYGUARD: true, CURSED: true, MUTER: true, TANNER: true },
+        },
+        "rooms/SOLO01/members/uid-solo": {
+          name: "Solo",
+          photoURL: null,
+          joinedAt: 5000,
+          ready: false,
+          online: true,
+        },
+      }),
+    );
+  });
+
+  it("denies writing settings into a room the writer is not a member of", async () => {
+    const db = testEnv.authenticatedContext("uid-ghost").database();
+    await assertFails(
+      set(ref(db, "rooms/GHOST1/settings"), { maxPlayers: 8, rolesEnabled: {} }),
+    );
   });
 });
 
