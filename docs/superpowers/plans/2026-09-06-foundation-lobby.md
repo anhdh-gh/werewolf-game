@@ -919,6 +919,16 @@ describe("rooms/$code", () => {
       set(ref(db, "rooms/GHOST1/settings"), { maxPlayers: 8, rolesEnabled: {} }),
     );
   });
+
+  it("denies a settings write with the wrong shape", async () => {
+    const db = testEnv.authenticatedContext("uid-owner").database();
+    await assertFails(set(ref(db, "rooms/EXIST1/settings"), null));
+  });
+
+  it("denies a settings write with maxPlayers out of range", async () => {
+    const db = testEnv.authenticatedContext("uid-owner").database();
+    await assertFails(set(ref(db, "rooms/EXIST1/settings/maxPlayers"), 99));
+  });
 });
 
 describe("presence/$uid", () => {
@@ -965,7 +975,8 @@ Expected: FAIL — the current locked-down rules (`.read: false, .write: false`)
           }
         },
         "settings": {
-          ".write": "auth != null && newData.parent().child('members').child(auth.uid).exists() && newData.parent().child('status').val() === 'LOBBY'"
+          ".write": "auth != null && newData.parent().child('members').child(auth.uid).exists() && newData.parent().child('status').val() === 'LOBBY'",
+          ".validate": "newData.hasChildren(['maxPlayers', 'rolesEnabled']) && newData.child('maxPlayers').isNumber() && newData.child('maxPlayers').val() >= 4 && newData.child('maxPlayers').val() <= 16 && newData.child('rolesEnabled').hasChildren(['BODYGUARD', 'CURSED', 'MUTER', 'TANNER'])"
         },
         "status": {
           ".write": "auth != null && !data.exists()",
@@ -992,7 +1003,7 @@ Expected: FAIL — the current locked-down rules (`.read: false, .write: false`)
 - [ ] **Step 5: Run the tests to verify they pass**
 
 Run: `npx vitest run src/test/rules.test.ts`
-Expected: PASS, 14 tests.
+Expected: PASS, 16 tests.
 
 - [ ] **Step 6: Deploy the rules to the real project**
 
