@@ -1722,7 +1722,12 @@ Run: `npm run emulators` (background, if not already running)
 
 - [ ] **Step 2: Write the failing test**
 
-`src/lib/presence/presence.test.ts`:
+`src/lib/presence/presence.test.ts` — **must authenticate**, same requirement as Task 8's
+tests: `presence/$uid` and `members/$uid` both require `auth != null && auth.uid === $uid`.
+Sign in with a fresh anonymous identity per test (`signOut()` immediately before
+`signInAnonymously()` — Task 8 found that signing in again on an `Auth` instance that already
+has a session returns the *same* user, not a new one) and use the real resulting `uid`
+everywhere a hardcoded `"uid-1"`/`"uid-2"` previously appeared:
 
 ```ts
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
@@ -1735,6 +1740,7 @@ import {
   goOffline,
   goOnline,
 } from "firebase/database";
+import { connectAuthEmulator, getAuth, signInAnonymously, signOut } from "firebase/auth";
 import { initializeApp, deleteApp, type FirebaseApp } from "firebase/app";
 import { attachPresence, detachPresence } from "./presence";
 import { presencePath, roomMemberPath } from "../rooms/paths";
@@ -1743,20 +1749,32 @@ let app: FirebaseApp;
 
 beforeAll(() => {
   app = initializeApp(
-    { databaseURL: "http://127.0.0.1:9000/?ns=werewolf-rules-test" },
+    {
+      apiKey: "test-api-key",
+      projectId: "werewolf-rules-test",
+      databaseURL: "http://127.0.0.1:9000/?ns=werewolf-rules-test",
+    },
     "presence-tests",
   );
   connectDatabaseEmulator(getDatabase(app), "127.0.0.1", 9000);
+  connectAuthEmulator(getAuth(app), "http://127.0.0.1:9099", { disableWarnings: true });
 });
 
 afterAll(async () => {
   await deleteApp(app);
 });
 
+async function signInAs(): Promise<string> {
+  await signOut(getAuth(app));
+  const { user } = await signInAnonymously(getAuth(app));
+  return user.uid;
+}
+
 describe("attachPresence", () => {
   it("marks the user online and sets up an onDisconnect handler that flips it offline", async () => {
     const db = getDatabase(app);
-    await set(ref(db, roomMemberPath("ROOM01", "uid-1")), {
+    const uid = await signInAs();
+    await set(ref(db, roomMemberPath("ROOM01", uid)), {
       name: "Anh",
       photoURL: null,
       joinedAt: 1,
@@ -1764,9 +1782,9 @@ describe("attachPresence", () => {
       online: false,
     });
 
-    const detach = attachPresence(db, "uid-1", "ROOM01");
+    const detach = attachPresence(db, uid, "ROOM01");
     await vi.waitFor(async () => {
-      const snap = await get(ref(db, presencePath("uid-1")));
+      const snap = await get(ref(db, presencePath(uid)));
       expect(snap.val()?.online).toBe(true);
     });
 
@@ -1774,7 +1792,7 @@ describe("attachPresence", () => {
     await vi.waitFor(
       async () => {
         goOnline(db);
-        const snap = await get(ref(db, presencePath("uid-1")));
+        const snap = await get(ref(db, presencePath(uid)));
         expect(snap.val()?.online).toBe(false);
         goOffline(db);
       },
@@ -1788,8 +1806,9 @@ describe("attachPresence", () => {
 describe("detachPresence", () => {
   it("explicitly marks the user offline", async () => {
     const db = getDatabase(app);
-    await detachPresence(db, "uid-2", "ROOM02");
-    const snap = await get(ref(db, presencePath("uid-2")));
+    const uid = await signInAs();
+    await detachPresence(db, uid, "ROOM02");
+    const snap = await get(ref(db, presencePath(uid)));
     expect(snap.val()?.online).toBe(false);
     expect(snap.val()?.roomCode).toBeNull();
   });
@@ -1887,12 +1906,16 @@ Run: `npm run emulators` (background, if not already running)
 
 - [ ] **Step 2: Write the failing test for useRoom**
 
-`src/lib/rooms/useRoom.test.ts`:
+`src/lib/rooms/useRoom.test.ts` — **must authenticate**, same requirement as Tasks 8 and 9:
+both `createRoom` and the `.read` on `rooms/$code` require `auth != null`. Without it, the
+second test would not fail cleanly — `useRoom`'s `onValue` has no error callback, so a denied
+read just never calls back, and `loading` stays `true` until `waitFor` times out:
 
 ```ts
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { getDatabase, connectDatabaseEmulator } from "firebase/database";
+import { connectAuthEmulator, getAuth, signInAnonymously } from "firebase/auth";
 import { initializeApp, deleteApp, type FirebaseApp } from "firebase/app";
 import { createRoom } from "./createRoom";
 import { useRoom } from "./useRoom";
@@ -1901,10 +1924,15 @@ let app: FirebaseApp;
 
 beforeAll(() => {
   app = initializeApp(
-    { databaseURL: "http://127.0.0.1:9000/?ns=werewolf-rules-test" },
+    {
+      apiKey: "test-api-key",
+      projectId: "werewolf-rules-test",
+      databaseURL: "http://127.0.0.1:9000/?ns=werewolf-rules-test",
+    },
     "use-room-tests",
   );
   connectDatabaseEmulator(getDatabase(app), "127.0.0.1", 9000);
+  connectAuthEmulator(getAuth(app), "http://127.0.0.1:9099", { disableWarnings: true });
 });
 
 afterAll(async () => {
@@ -1914,8 +1942,9 @@ afterAll(async () => {
 describe("useRoom", () => {
   it("loads the room and reflects live updates", async () => {
     const db = getDatabase(app);
+    const { user } = await signInAnonymously(getAuth(app));
     const code = await createRoom(db, {
-      uid: "uid-1",
+      uid: user.uid,
       name: "Anh",
       photoURL: null,
       maxPlayers: 8,
@@ -1923,11 +1952,12 @@ describe("useRoom", () => {
 
     const { result } = renderHook(() => useRoom(db, code));
     await waitFor(() => expect(result.current.loading).toBe(false));
-    expect(result.current.room?.members["uid-1"].name).toBe("Anh");
+    expect(result.current.room?.members[user.uid].name).toBe("Anh");
   });
 
   it("returns a null room for a code that does not exist", async () => {
     const db = getDatabase(app);
+    await signInAnonymously(getAuth(app));
     const { result } = renderHook(() => useRoom(db, "NOPE99"));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.room).toBeNull();
