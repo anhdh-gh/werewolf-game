@@ -142,25 +142,17 @@ export function ActionPanel({
   }
 
   if (phase === "WOLVES") {
-    // Never bite a fellow pack member (spec §7's packUids exists exactly so
-    // the pack can see each other — not so they can target each other).
+    // Never bite a fellow pack member. Who they are is shown persistently
+    // by GameScreen's <PackInfo>, not repeated here.
     const packmates = privateState?.packUids ?? [];
-    const packmateNames = packmates.map((packUid) => game.players[packUid]?.name).filter(Boolean);
     return (
-      <div className="flex flex-col gap-3">
-        {packmateNames.length > 0 && (
-          <p className="text-sm text-muted-foreground">
-            Đồng bọn của bạn: <span className="text-foreground">{packmateNames.join(", ")}</span>
-          </p>
-        )}
-        <TargetPicker
-          targets={alivePlayersExcept(game, [uid, ...packmates])}
-          selected={selected}
-          onSelect={setSelected}
-          onSubmit={() => selected && submit("WOLVES", selected)}
-          submitLabel="Cắn"
-        />
-      </div>
+      <TargetPicker
+        targets={alivePlayersExcept(game, [uid, ...packmates])}
+        selected={selected}
+        onSelect={setSelected}
+        onSubmit={() => selected && submit("WOLVES", selected)}
+        submitLabel="Cắn"
+      />
     );
   }
 

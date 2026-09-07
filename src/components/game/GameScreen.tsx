@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { ActionPanel } from "./ActionPanel";
 import { RoleCard } from "./RoleCard";
+import { PackInfo } from "./PackInfo";
 import { SeerHints } from "./SeerHints";
 import { PlayerList } from "./PlayerList";
 import { GameEndScreen } from "./GameEndScreen";
@@ -119,6 +120,7 @@ function GameScreenInner({ gameId, uid }: { gameId: string; uid: string }) {
 
         <div className="flex flex-col gap-4">
           <RoleCard privateState={privateState} />
+          <PackInfo privateState={privateState} players={game.players} />
           <SeerHints privateState={privateState} players={game.players} />
 
           {isRequired && !alreadyDone ? (
