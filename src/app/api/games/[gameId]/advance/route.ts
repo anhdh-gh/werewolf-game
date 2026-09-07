@@ -1,13 +1,17 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 import { planAdvance } from "@/lib/game/planAdvance";
+import { requiredActorsForPhase } from "@/lib/game/requiredActors";
 import type { Game, GamePlayer, PrivatePlayerState, RoleKey } from "@/types/game";
 import { PHASE_DURATIONS_MS } from "@/lib/game/phases";
 
 /**
  * The single server-authoritative phase-transition endpoint (spec §6.2/§6.3).
  * Any client may call this — the phase.version transaction below makes
- * repeated/concurrent calls a no-op after the first one wins.
+ * repeated/concurrent calls a no-op after the first one wins, and the
+ * readiness check before it means a call that lands too early (before
+ * every required actor is done, and before endsAt) just returns the
+ * current phase unchanged rather than skipping ahead.
  *
  * NOT LIVE-VERIFIED: this route needs FIREBASE_SERVICE_ACCOUNT_KEY, which the
  * sandboxed session that wrote it does not have (see the Game Engine plan's
@@ -34,6 +38,32 @@ export async function POST(
     return NextResponse.json({ phase: game.phase, result: game.result ?? null });
   }
 
+  const [privateSnap, currentPhaseActions, bodyguard, wolves, witchSave, witchKill, vote, hunterShot] =
+    await Promise.all([
+      db.ref(`private/${gameId}`).get(),
+      db.ref(`games/${gameId}/actions/${game.phase.name}`).get(),
+      db.ref(`games/${gameId}/actions/BODYGUARD`).get(),
+      db.ref(`games/${gameId}/actions/WOLVES`).get(),
+      db.ref(`games/${gameId}/actions/WITCH_SAVE`).get(),
+      db.ref(`games/${gameId}/actions/WITCH_KILL`).get(),
+      db.ref(`games/${gameId}/actions/VOTE`).get(),
+      db.ref(`games/${gameId}/actions/HUNTER_SHOT`).get(),
+    ]);
+
+  // Spec §4.3: end the phase early only once every required actor is done;
+  // otherwise wait for endsAt. requiredActors is empty for announcement-only
+  // phases (NIGHT_FALLS, DAWN, DISCUSSION, VOTE_RESULT, REVEAL_ROLE) — those
+  // must never early-exit, so an empty list only counts as "ready" via the
+  // time check, never on its own.
+  const currentActionsVal = (currentPhaseActions.val() ?? {}) as Record<string, { done?: boolean }>;
+  const allRequiredDone =
+    game.phase.requiredActors.length > 0 &&
+    game.phase.requiredActors.every((uid) => currentActionsVal[uid]?.done);
+  const timeUp = Date.now() >= game.phase.endsAt;
+  if (!allRequiredDone && !timeUp) {
+    return NextResponse.json({ phase: game.phase, notYet: true });
+  }
+
   // Idempotency guard (spec §6.3): claim this exact version before doing any
   // work. A second caller reading the same pre-claim version loses the race
   // and gets `committed: false` — it does nothing further.
@@ -45,17 +75,6 @@ export async function POST(
     const latest = await db.ref(`games/${gameId}/phase`).get();
     return NextResponse.json({ phase: latest.val() });
   }
-
-  const [privateSnap, bodyguard, wolves, witchSave, witchKill, vote, hunterShot] =
-    await Promise.all([
-      db.ref(`private/${gameId}`).get(),
-      db.ref(`games/${gameId}/actions/BODYGUARD`).get(),
-      db.ref(`games/${gameId}/actions/WOLVES`).get(),
-      db.ref(`games/${gameId}/actions/WITCH_SAVE`).get(),
-      db.ref(`games/${gameId}/actions/WITCH_KILL`).get(),
-      db.ref(`games/${gameId}/actions/VOTE`).get(),
-      db.ref(`games/${gameId}/actions/HUNTER_SHOT`).get(),
-    ]);
 
   const privateState = (privateSnap.val() ?? {}) as Record<string, PrivatePlayerState>;
   const activeRoles: RoleKey[] = Object.values(privateState).map((p) => p.role);
@@ -106,13 +125,24 @@ export async function POST(
     lovers,
   });
 
+  const survivingRolesByUid: Record<string, RoleKey> = {};
+  const deathSet = new Set(decision.deaths);
+  const transformedSet = new Set(decision.transformedToWolf);
+  for (const [uid, role] of Object.entries(aliveRolesByUid)) {
+    if (!deathSet.has(uid)) {
+      survivingRolesByUid[uid] = transformedSet.has(uid) ? "WEREWOLF" : role;
+    }
+  }
+
+  const newPhase = {
+    name: decision.nextPhase,
+    endsAt: Date.now() + (PHASE_DURATIONS_MS[decision.nextPhase] ?? 0),
+    version: game.phase.version + 1,
+    requiredActors: requiredActorsForPhase(decision.nextPhase, survivingRolesByUid),
+  };
+
   const updates: Record<string, unknown> = {
-    [`games/${gameId}/phase`]: {
-      name: decision.nextPhase,
-      endsAt: Date.now() + (PHASE_DURATIONS_MS[decision.nextPhase] ?? 0),
-      version: game.phase.version + 1,
-      requiredActors: [],
-    },
+    [`games/${gameId}/phase`]: newPhase,
   };
 
   for (const uid of decision.deaths) {
@@ -146,11 +176,7 @@ export async function POST(
 
   await db.ref().update(updates);
 
-  return NextResponse.json({
-    phase: updates[`games/${gameId}/phase`],
-    deaths: decision.deaths,
-    winner: decision.winner,
-  });
+  return NextResponse.json({ phase: newPhase, deaths: decision.deaths, winner: decision.winner });
 }
 
 function findLoverPair(

@@ -1,0 +1,55 @@
+import { describe, it, expect } from "vitest";
+import { requiredActorsForPhase } from "./requiredActors";
+import type { RoleKey } from "@/types/game";
+
+const ROLES: Record<string, RoleKey> = {
+  wolf1: "WEREWOLF",
+  wolf2: "WEREWOLF",
+  traitor1: "TRAITOR",
+  seer1: "SEER",
+  witch1: "WITCH",
+  bodyguard1: "BODYGUARD",
+  muter1: "MUTER",
+  cupid1: "CUPID",
+  hunter1: "HUNTER",
+  villager1: "VILLAGER",
+};
+
+describe("requiredActorsForPhase", () => {
+  it("only the wolves act during WOLVES — the Traitor does not", () => {
+    const actors = requiredActorsForPhase("WOLVES", ROLES);
+    expect(actors.sort()).toEqual(["wolf1", "wolf2"]);
+  });
+
+  it("only the Seer acts during SEER", () => {
+    expect(requiredActorsForPhase("SEER", ROLES)).toEqual(["seer1"]);
+  });
+
+  it("only the Witch acts during both witch phases", () => {
+    expect(requiredActorsForPhase("WITCH_SAVE", ROLES)).toEqual(["witch1"]);
+    expect(requiredActorsForPhase("WITCH_KILL", ROLES)).toEqual(["witch1"]);
+  });
+
+  it("only Cupid acts during PAIR_LOVERS", () => {
+    expect(requiredActorsForPhase("PAIR_LOVERS", ROLES)).toEqual(["cupid1"]);
+  });
+
+  it("everyone alive votes during VOTE", () => {
+    const actors = requiredActorsForPhase("VOTE", ROLES);
+    expect(actors.sort()).toEqual(Object.keys(ROLES).sort());
+  });
+
+  it("nobody is required during announcement/wait phases", () => {
+    expect(requiredActorsForPhase("NIGHT_FALLS", ROLES)).toEqual([]);
+    expect(requiredActorsForPhase("DAWN", ROLES)).toEqual([]);
+    expect(requiredActorsForPhase("DISCUSSION", ROLES)).toEqual([]);
+    expect(requiredActorsForPhase("VOTE_RESULT", ROLES)).toEqual([]);
+    expect(requiredActorsForPhase("REVEAL_ROLE", ROLES)).toEqual([]);
+    expect(requiredActorsForPhase("ENDED", ROLES)).toEqual([]);
+  });
+
+  it("returns nobody for a role phase whose role isn't alive", () => {
+    const { seer1: _seer1, ...withoutSeer } = ROLES;
+    expect(requiredActorsForPhase("SEER", withoutSeer)).toEqual([]);
+  });
+});
