@@ -28,6 +28,7 @@ import { PlayerList } from "./PlayerList";
 import { GameEndScreen } from "./GameEndScreen";
 import { HunterRevengePrompt } from "./HunterRevenge";
 import { ChatPanel } from "./ChatPanel";
+import { CallRoom } from "./CallRoom";
 import { EnableNotificationsButton } from "@/components/EnableNotificationsButton";
 
 function CenteredState({ children }: { children: React.ReactNode }) {
@@ -77,6 +78,7 @@ function GameScreenInner({
   uid: string;
   remoteMode: boolean;
 }) {
+  const { user } = useAuth();
   const { game, loading } = useGame(db, gameId);
   const { privateState } = usePrivateState(db, gameId, uid);
   const serverOffset = useServerTimeOffset(db);
@@ -188,6 +190,11 @@ function GameScreenInner({
               {me?.alive ? "Đang chờ những người khác…" : "Bạn đã chết — theo dõi ván đấu"}
             </p>
           )}
+
+          {/* Spec §10: the exact same rooms as the chat scopes above — one
+              shared call for Discussion, a wolves-only one for WOLVES. */}
+          <CallRoom user={user} gameId={gameId} enabled={showVillageChat} title="Gọi cả làng" />
+          <CallRoom user={user} gameId={gameId} enabled={showWolvesChat} title="Gọi bầy sói" />
 
           {showVillageChat && (
             <ChatPanel

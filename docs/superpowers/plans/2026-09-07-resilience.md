@@ -218,10 +218,81 @@ mocked send failure doesn't block the transition. Actual delivery — real devic
 real FCM project — is the one thing that couldn't be verified here, same ceiling as
 every other Admin-SDK-backed piece of this codebase.
 
-## Task 7: LiveKit voice/video — STATUS: not started
+## Task 7: LiveKit voice/video — STATUS: done (code-only, needs a live LiveKit project)
 
-§10: `POST /api/livekit/token`, auto-joined rooms per phase (`{gameId}-{phaseKey}`),
-publish permission withheld for dead players and for anyone whose target phase isn't
-a "bàn bạc" phase (WOLVES for the pack, DISCUSSION for everyone alive). Needs
-`LIVEKIT_API_KEY`/`LIVEKIT_API_SECRET` — same "written, not live-verified" ceiling as
-every Admin-SDK-backed Game Engine route.
+Added `livekit-server-sdk`, `livekit-client`, `@livekit/components-react`,
+`@livekit/components-styles` (all fetched fine — npm registry is reachable from this
+sandbox even though most live services aren't).
+
+`POST /api/livekit/token` (`src/app/api/livekit/token/route.ts`) is the one HTTP API
+route in this codebase that actually needs to know who's calling — `start`/`advance`
+are deliberately caller-agnostic (any client calling them has the same effect,
+spec §6.3), but a LiveKit grant's room and publish permission depend on this specific
+uid's role and alive status. A forged uid here wouldn't just cheat the forger (which
+spec §3 puts out of scope) — it would let them listen in on the wolves' private
+voice room, exactly the leak this whole codebase has been built to prevent
+elsewhere. So this route verifies a real Firebase ID token
+(`Authorization: Bearer <idToken>`, checked via a new `adminAuth()` in `admin.ts`)
+rather than trusting a client-supplied uid the way RTDB writes get to (Security
+Rules already gate those by the verified `auth.uid`).
+
+Room-per-phase exactly matches spec §10's two call rooms: WOLVES (membership is
+`requiredActorsForPhase("WOLVES", ...)` reused directly, not re-derived — the same
+list is "who must act" for the phase and "who's in the pack's call," Traitor
+excluded from both for the same reason) and DISCUSSION (everyone in `game.players`
+gets a token; `canPublish` is `player.alive` — a dead player still gets a
+subscribe-only grant, matching "vẫn xem được hình để theo dõi ván"). Every other
+phase has no call room at all, matching spec's explicit list.
+
+Real, offline verification — not just "written," genuinely checked: LiveKit access
+tokens are self-contained JWTs, so `src/test/livekitToken.test.ts` signs and decodes
+real tokens with a throwaway key/secret pair, entirely locally (`@vitest-environment
+node` override on that one file — `jose`, which signs the JWT, needs Node's native
+WebCrypto/TextEncoder, and this project's default jsdom test environment overrides
+enough of that to break signing with "payload must be an instance of Uint8Array").
+10 tests cover: no/invalid auth rejected, remoteMode-off rejected, an alive Werewolf
+gets a canPublish WOLVES token (`TokenVerifier.verify()` confirms the actual decoded
+grant), the Traitor and a non-wolf both denied a WOLVES token, an alive/dead player
+both get DISCUSSION tokens with the right canPublish, a solo-action phase (SEER) has
+no room at all, a non-player is denied, and the token's embedded identity is the
+verified uid, never a client-forgeable one.
+
+Client side: `useCallToken` (fetches a token whenever `enabled`, using the current
+user's real Firebase ID token) and `CallRoom` (wraps `@livekit/components-react`'s
+`LiveKitRoom`/`VideoConference`/`RoomAudioRenderer`; only requests camera/mic from
+the browser when the server actually granted `canPublish` — no point prompting a
+dead player or a non-wolf during WOLVES for permissions they can't use). Wired into
+`GameScreen` right where the matching `ChatPanel` already is — same
+`showVillageChat`/`showWolvesChat` gating, so the call room and the text chat always
+agree on when they exist.
+
+The one thing that could not be verified here even partially: an actual WebRTC
+connection to a real LiveKit room. That needs `LIVEKIT_API_KEY`/`LIVEKIT_API_SECRET`/
+`NEXT_PUBLIC_LIVEKIT_URL` pointing at a real LiveKit Cloud project, which this
+sandbox has never had — same ceiling as every other Admin-SDK/external-service
+route, but for the connection itself rather than the routing logic. Confirmed via a
+temporary dev-preview route + real headless-Chromium CDP session that the full
+client→server round trip works and degrades to a clear error message (not a crash)
+exactly as designed when Firebase Admin credentials aren't configured — that route
+was deleted before this commit.
+
+## What's left before any of this runs live
+
+Same shape as Game Engine's own checklist — everything below needs the user's own
+access, not more code:
+
+- Deploy `database.rules.json` (now also covers `fcmTokens/`, `chat/`) to the real
+  Firebase project.
+- Set `FIREBASE_SERVICE_ACCOUNT_KEY` in Vercel (already needed by Game Engine;
+  Resilience's new routes — `/api/livekit/token` — depend on the same one).
+- Set `NEXT_PUBLIC_FIREBASE_VAPID_KEY` (Firebase Console → Project Settings → Cloud
+  Messaging → Web Push certificates) for Task 6's push notifications to mint tokens
+  at all.
+- Create a LiveKit Cloud project; set `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`,
+  `NEXT_PUBLIC_LIVEKIT_URL` for Task 7.
+- Render `NARRATION_SENTENCES`/`NARRATION_COUNT_WORDS` (Task 5, `narration.ts`) to
+  real Vietnamese mp3s at the exact paths its own path helpers expect — the one
+  piece of this whole plan blocked on a missing tool rather than missing
+  credentials.
+- Run a real multi-device game with "Chơi xa" on to confirm chat, push, and the
+  LiveKit call rooms actually work together the way the phase-gating logic assumes.

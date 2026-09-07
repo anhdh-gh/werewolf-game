@@ -1,6 +1,7 @@
 import { cert, getApps, initializeApp, type App } from "firebase-admin/app";
 import { getDatabase, type Database } from "firebase-admin/database";
 import { getMessaging, type Messaging } from "firebase-admin/messaging";
+import { getAuth, type Auth } from "firebase-admin/auth";
 
 let app: App | undefined;
 
@@ -44,4 +45,13 @@ export function adminDb(): Database {
  * adminDb() — no separate setup. */
 export function adminMessaging(): Messaging {
   return getMessaging(getAdminApp());
+}
+
+/** Spec §10's LiveKit token route (the one HTTP API route in this codebase
+ * that actually needs to know WHO is calling, not just what to do — see
+ * its own file for why that's different from start/advance, which are
+ * deliberately caller-agnostic). Used to verify the caller's Firebase ID
+ * token before minting a room-join grant. */
+export function adminAuth(): Auth {
+  return getAuth(getAdminApp());
 }
