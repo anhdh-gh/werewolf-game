@@ -254,8 +254,17 @@ export async function POST(
   for (const uid of decision.deaths) {
     updates[`games/${gameId}/players/${uid}/alive`] = false;
   }
-  if (decision.transformedToWolf.length > 0) {
-    for (const uid of decision.transformedToWolf) {
+  // resolveNight() treats the wolf bite and the Witch's poison as fully
+  // independent (by design — see its own comment), so the same uid can come
+  // back in both `deaths` (poisoned) and `transformedToWolf` (their first
+  // bite, evaluated separately). Death wins: a poisoned player doesn't also
+  // get folded into the pack and left there forever as a dead "packmate"
+  // every alive wolf's ActionPanel would otherwise carry.
+  const transformedAndAlive = decision.transformedToWolf.filter(
+    (uid) => !decision.deaths.includes(uid),
+  );
+  if (transformedAndAlive.length > 0) {
+    for (const uid of transformedAndAlive) {
       updates[`private/${gameId}/${uid}/role`] = "WEREWOLF";
     }
     // Spec §7: the pack needs to know a newly-turned Cursed player, and the
@@ -266,7 +275,7 @@ export async function POST(
       ...Object.entries(privateState)
         .filter(([, p]) => p.role === "WEREWOLF" || p.role === "TRAITOR")
         .map(([packUid]) => packUid),
-      ...decision.transformedToWolf,
+      ...transformedAndAlive,
     ];
     for (const packUid of newPack) {
       updates[`private/${gameId}/${packUid}/packUids`] = newPack.filter((u) => u !== packUid);

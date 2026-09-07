@@ -285,3 +285,18 @@ Writing it immediately found one more real bug:
     `advance/route.ts` by clearing `actions/{gameId}/{phaseKey}` at the moment the
     route transitions *into* that phase — the one point guaranteed to run exactly
     once per occurrence, strictly before anyone can write that round's data.
+13. **A poisoned Cursed player could end up simultaneously "dead" and "turned into a
+    wolf".** `resolveNight()` deliberately evaluates the wolf bite and the Witch's
+    poison as fully independent branches (its own doc comment explains why: no set
+    subtraction, so a protect/cure aimed at someone else never accidentally saves a
+    poison victim). Independent cuts both ways though — if the wolves bite the Cursed
+    player (first bite -> `transformed`, not `deaths`) and the Witch separately
+    poisons that *same* uid the *same* night, that uid comes back in both
+    `decision.deaths` and `decision.transformedToWolf`. The route applied both
+    effects: marked them dead **and** flipped their private role to WEREWOLF and
+    folded them into every other wolf's `packUids` — a dead uid permanently listed as
+    a live wolf's teammate. Fixed by excluding anyone in `decision.deaths` from the
+    transform-to-wolf application; death wins. Caught by a new end-to-end test
+    (`gameFlowEndToEnd.test.ts`, "Bug #13 regression") that bites and poisons the
+    same Cursed uid in one night and asserts they stay CURSED, stay out of every
+    packUids list, and end up dead.

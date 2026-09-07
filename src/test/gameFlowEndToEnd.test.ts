@@ -447,6 +447,51 @@ describe("optional roles wired through the real routes: MUTER, TRAITOR pack, CUR
     expect(game.players[villager1].muted).toBe(false);
     expect(game.result).toBeUndefined();
   });
+
+  it("Bug #13 regression: a poisoned Cursed player stays dead — the Witch's independent poison doesn't get overridden by the same-night bite transformation", async () => {
+    // resolveNight() evaluates the wolf bite and the Witch's poison
+    // completely independently (by design), so the exact same uid can land
+    // in both `deaths` (poisoned) and `transformedToWolf` (their first
+    // bite) when the wolves bite the Cursed player and the Witch
+    // separately poisons that same person on the same night. Death must
+    // win — the route must not also turn them into a "wolf" and leave a
+    // dead uid sitting in every other wolf's packUids forever.
+    let res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("SEER");
+    await writeAction(gameId, "SEER", seer, wolfA);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("MUTER");
+    await writeAction(gameId, "MUTER", muter, villager1);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WOLVES");
+
+    await writeAction(gameId, "WOLVES", wolfA, cursed);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WITCH_SAVE");
+    await writeAction(gameId, "WITCH_SAVE", witch, null);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WITCH_KILL");
+    // Poison the exact same uid the wolves just bit.
+    await writeAction(gameId, "WITCH_KILL", witch, cursed);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("CURSED");
+    await expirePhaseTimer(gameId);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("DAWN");
+    expect(res.deaths).toEqual([cursed]);
+
+    const game = await getGame(gameId);
+    expect(game.players[cursed].alive).toBe(false);
+
+    const privAfter = await getPrivate(gameId);
+    // Still holds their original role — never "transformed" into a wolf
+    // they immediately died as.
+    expect(privAfter[cursed].role).toBe("CURSED");
+    // Neither pack member's list was ever touched — the dead Cursed player
+    // is nowhere in it.
+    expect(privAfter[wolfA].packUids).toEqual([traitor]);
+    expect(privAfter[traitor].packUids).toEqual([wolfA]);
+  });
 });
 
 describe("Hunter's revenge shot (Bug #4 / #9): applied via the independent pending-shot pass", () => {
