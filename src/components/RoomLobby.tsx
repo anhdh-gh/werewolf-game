@@ -6,13 +6,26 @@ import { useAuth } from "@/lib/auth/useAuth";
 import { useRoom } from "@/lib/rooms/useRoom";
 import { attachPresence, detachPresence } from "@/lib/presence/presence";
 import { ref, update } from "firebase/database";
-import { roomMemberPath } from "@/lib/rooms/paths";
+import { roomMemberPath, roomSettingsPath } from "@/lib/rooms/paths";
 import { useRouter } from "next/navigation";
-import { Check, CheckCircle2, Circle, Copy, DoorOpen, Loader2, Swords } from "lucide-react";
+import {
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  Circle,
+  Copy,
+  DoorOpen,
+  Loader2,
+  Settings2,
+  Swords,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { Logo } from "@/components/Logo";
 import { cn } from "@/lib/utils";
+import { OPTIONAL_ROLE_KEYS, type OptionalRoleKey } from "@/types/room";
+import { ROLE_LABELS } from "@/lib/game/labels";
 
 const AVATAR_TINTS = [
   "bg-red-500/20 text-red-300",
@@ -77,6 +90,7 @@ export function RoomLobby({ code }: { code: string }) {
   const [copied, setCopied] = useState(false);
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -122,6 +136,15 @@ export function RoomLobby({ code }: { code: string }) {
   const toggleReady = () => {
     const currentlyReady = room.members[user.uid]?.ready ?? false;
     update(ref(db, roomMemberPath(code, user.uid)), { ready: !currentlyReady });
+  };
+
+  // Spec §4.2: "phòng có mấy công tắc bật/tắt từng vai phụ" — no room owner
+  // (spec §0/§3), so any member can flip these while the room is still in
+  // LOBBY, same as toggleReady above. Security Rules gate this the same way
+  // (settings.write checks status === 'LOBBY', not who's asking).
+  const toggleRole = (key: OptionalRoleKey) => {
+    const current = room.settings.rolesEnabled[key];
+    update(ref(db, `${roomSettingsPath(code)}/rolesEnabled`), { [key]: !current });
   };
 
   const leave = async () => {
@@ -261,6 +284,45 @@ export function RoomLobby({ code }: { code: string }) {
               </Button>
             </div>
           </CardContent>
+        </Card>
+
+        <Card className="mt-3">
+          <button
+            type="button"
+            onClick={() => setSettingsOpen((v) => !v)}
+            className="flex w-full touch-manipulation items-center justify-between gap-2 px-6 py-4 text-sm font-medium"
+            aria-expanded={settingsOpen}
+          >
+            <span className="flex items-center gap-2">
+              <Settings2 className="size-4 text-muted-foreground" />
+              Cài đặt vai
+            </span>
+            <ChevronDown
+              className={cn(
+                "size-4 text-muted-foreground transition-transform",
+                settingsOpen && "rotate-180",
+              )}
+            />
+          </button>
+          {settingsOpen && (
+            <CardContent className="animate-in fade-in-0 slide-in-from-top-1 flex flex-col gap-1 pt-0 duration-200">
+              <p className="pb-2 text-xs text-muted-foreground">
+                Không cần chỉnh gì cũng chơi được — mặc định bật hết. Sói và Dân luôn có mặt.
+              </p>
+              {OPTIONAL_ROLE_KEYS.map((key) => (
+                <label
+                  key={key}
+                  className="flex touch-manipulation items-center justify-between gap-3 rounded-lg px-2.5 py-2.5 text-sm hover:bg-muted"
+                >
+                  <span>{ROLE_LABELS[key]}</span>
+                  <Switch
+                    checked={room.settings.rolesEnabled[key]}
+                    onCheckedChange={() => toggleRole(key)}
+                  />
+                </label>
+              ))}
+            </CardContent>
+          )}
         </Card>
       </div>
     </main>
