@@ -130,6 +130,22 @@ WebSocket alive through a lock screen) still could not run here — that's real
 hardware, not something a CDP script can stand in for; flagged as the one remaining
 unverified assumption this task rests on.
 
+Found and closed a gap in this same task on a later re-check: §8.2 has a second,
+distinct alert this task hadn't covered yet — "Đến lượt bạn thì máy gọi: một đoạn
+chuông riêng cắt vào luồng nền, kèm rung trên Android." That's the in-app alert for
+while the tab is still alive (foregrounded or merely backgrounded), separate from
+Task 6's FCM push (which only fires once the OS has actually killed the tab). Added
+`public/audio/turn-chime.wav` (hand-generated — a real two-note "ding-dong", not
+silence like the keepalive loop; verified its samples aren't all zero) and
+`useTurnChime` (`useKeepAlive.ts`): fires exactly once on the false→true edge of
+`isRequired`, never on mount (opening the app to a turn you already knew about
+shouldn't double-alert) and never again while it stays true. Vibration via
+`navigator.vibrate([200, 100, 200])`, matching spec's own "kèm rung trên Android"
+(Android-only by construction — the Vibration API isn't implemented on iOS Safari).
+Wired into `GameScreen` alongside the other `useKeepAlive` hooks. Verified for real
+via the same monkey-patch-and-CDP technique as the rest of this task: confirmed no
+chime/vibration before the transition, and both firing together exactly on it.
+
 ## Task 5: TTS narration — STATUS: mechanism done, audio not rendered
 
 Checked first rather than assuming: no espeak/espeak-ng/festival/pico2wave, no

@@ -12,6 +12,7 @@ import {
   useBackgroundAudioKeepAlive,
   usePhaseMediaSession,
   useAutoActionWakeLock,
+  useTurnChime,
 } from "@/lib/game/useKeepAlive";
 import { useNarrationPlayback } from "@/lib/game/useNarrationPlayback";
 import { PHASE_LABELS } from "@/lib/game/labels";
@@ -109,6 +110,7 @@ function GameScreenInner({
   usePhaseMediaSession(game?.phase, game?.dayNumber);
   useAutoActionWakeLock(isRequired && !alreadyDone);
   useNarrationPlayback(db, gameId, !!game && game.phase.name !== "ENDED");
+  useTurnChime(isRequired && !alreadyDone);
 
   if (loading || !game) {
     return (

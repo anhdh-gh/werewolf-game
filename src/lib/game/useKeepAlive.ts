@@ -126,3 +126,31 @@ export function useAutoActionWakeLock(shouldHold: boolean): void {
     };
   }, [shouldHold]);
 }
+
+/** Spec §8.2: "Đến lượt bạn thì máy gọi: một đoạn chuông riêng cắt vào
+ * luồng nền, kèm rung trên Android." This is the in-app alert for while
+ * the tab is still alive (backgrounded or foregrounded) — distinct from
+ * the FCM push in useNotifications/advance route, which only fires once
+ * the OS has killed the tab outright. Fires exactly once on the
+ * false -> true edge of `isRequired`, never on mount if the phase already
+ * required this uid before the component ever rendered (opening the app
+ * to a turn you already knew about — e.g. from the FCM push itself —
+ * shouldn't double-alert), and never again while it stays true. */
+export function useTurnChime(isRequired: boolean): void {
+  const wasRequiredRef = useRef(isRequired);
+
+  useEffect(() => {
+    const wasRequired = wasRequiredRef.current;
+    wasRequiredRef.current = isRequired;
+    if (!isRequired || wasRequired) return;
+
+    new Audio("/audio/turn-chime.wav").play().catch(() => {
+      // autoplay blocked — the useBackgroundAudioKeepAlive loop already
+      // playing (if it got past autoplay itself) means this one usually
+      // won't be blocked in practice, but there's nothing more to do if it is
+    });
+    if ("vibrate" in navigator) {
+      navigator.vibrate([200, 100, 200]); // spec: "kèm rung trên Android"
+    }
+  }, [isRequired]);
+}
