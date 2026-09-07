@@ -8,7 +8,7 @@ import { attachPresence, detachPresence } from "@/lib/presence/presence";
 import { ref, update } from "firebase/database";
 import { roomMemberPath } from "@/lib/rooms/paths";
 import { useRouter } from "next/navigation";
-import { Check, CheckCircle2, Circle, Copy, DoorOpen, Loader2 } from "lucide-react";
+import { Check, CheckCircle2, Circle, Copy, DoorOpen, Loader2, Swords } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Logo } from "@/components/Logo";
@@ -75,6 +75,8 @@ export function RoomLobby({ code }: { code: string }) {
   const router = useRouter();
   const [leaving, setLeaving] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -87,6 +89,12 @@ export function RoomLobby({ code }: { code: string }) {
     const timer = setTimeout(() => setCopied(false), 1500);
     return () => clearTimeout(timer);
   }, [copied]);
+
+  useEffect(() => {
+    if (room?.status === "PLAYING" && room.currentGameId) {
+      router.push(`/room/${code}/game`);
+    }
+  }, [room?.status, room?.currentGameId, code, router]);
 
   if (loading) {
     return (
@@ -131,9 +139,27 @@ export function RoomLobby({ code }: { code: string }) {
     }
   };
 
+  const startGame = async () => {
+    setStartError(null);
+    setStarting(true);
+    try {
+      const res = await fetch(`/api/rooms/${code}/start`, { method: "POST" });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(body?.error ?? "Không bắt đầu được ván đấu");
+      }
+      // room.status flipping to PLAYING (via the live subscription) is what
+      // actually navigates everyone — see the effect above.
+    } catch (err) {
+      setStartError(err instanceof Error ? err.message : "Không bắt đầu được ván đấu");
+      setStarting(false);
+    }
+  };
+
   const members = Object.entries(room.members).sort(([, a], [, b]) => a.joinedAt - b.joinedAt);
   const isReady = room.members[user.uid]?.ready ?? false;
   const fillRatio = Math.min(1, members.length / room.settings.maxPlayers);
+  const canStart = members.length >= 4;
 
   return (
     <main className="flex min-h-dvh flex-col items-center gap-6 p-6">
@@ -199,8 +225,24 @@ export function RoomLobby({ code }: { code: string }) {
               ))}
             </ul>
 
+            <Button
+              onClick={startGame}
+              disabled={!canStart || starting}
+              className="h-12 gap-1.5 text-base"
+              size="lg"
+            >
+              {starting ? <Loader2 className="size-4 animate-spin" /> : <Swords className="size-4" />}
+              {canStart ? "Bắt đầu" : `Cần thêm ${4 - members.length} người`}
+            </Button>
+
+            {startError && (
+              <p className="rounded-md bg-destructive/10 px-3 py-2 text-center text-xs text-destructive">
+                {startError}
+              </p>
+            )}
+
             <div className="flex gap-3">
-              <Button onClick={toggleReady} className="h-12 flex-1 gap-1.5 text-base">
+              <Button onClick={toggleReady} variant="outline" className="h-12 flex-1 gap-1.5 text-base">
                 {isReady ? <CheckCircle2 className="size-4" /> : <Circle className="size-4" />}
                 {isReady ? "Đã sẵn sàng" : "Sẵn sàng"}
               </Button>

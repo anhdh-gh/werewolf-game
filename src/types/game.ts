@@ -98,6 +98,12 @@ export interface Game {
   result?: GameResult;
 }
 
+export interface SeerHint {
+  targetUid: string;
+  result: "WOLF" | "VILLAGER";
+  dayNumber: number;
+}
+
 /** /private/{gameId}/{uid} — never readable by anyone but that uid. */
 export interface PrivatePlayerState {
   role: RoleKey;
@@ -105,6 +111,9 @@ export interface PrivatePlayerState {
   potions: { heal: boolean; poison: boolean };
   /** Set on both members of a Cupid pair — spec §4.4 step 7. */
   loverUid?: string;
+  /** The Seer's own check history — RTDB push() keys, so this is a map, not
+   * an array. Only ever present for a uid dealt the Seer role. */
+  hints?: Record<string, SeerHint>;
 }
 
 export interface NightActions {

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
 import { planAdvance } from "@/lib/game/planAdvance";
 import { requiredActorsForPhase } from "@/lib/game/requiredActors";
-import type { Game, GamePlayer, PrivatePlayerState, RoleKey } from "@/types/game";
+import { seerCheck, type Game, type GamePlayer, type PrivatePlayerState, type RoleKey } from "@/types/game";
 import { PHASE_DURATIONS_MS } from "@/lib/game/phases";
 
 /**
@@ -158,6 +158,29 @@ export async function POST(
         Object.entries(privateState).map(([uid, p]) => [uid, p.role]),
       ),
     };
+    // Spec §4.6: "Phòng quay về sảnh, giữ nguyên người chơi để chơi ván
+    // mới." Only the Admin SDK can ever move status off LOBBY or back, so
+    // this is the one place that happens.
+    updates[`rooms/${game.roomCode}/status`] = "LOBBY";
+    for (const uid of Object.keys(game.players)) {
+      updates[`rooms/${game.roomCode}/members/${uid}/ready`] = false;
+    }
+  }
+
+  // Leaving SEER: the Seer's check result is theirs to know immediately,
+  // not something to hold until dawn (spec §4.1's Tiên Tri entry).
+  if (game.phase.name === "SEER") {
+    const seerActionSnap = await db.ref(`games/${gameId}/actions/SEER`).get();
+    const seerActionVal = (seerActionSnap.val() ?? {}) as Record<string, { target: string }>;
+    const [seerUid, seerAction] = Object.entries(seerActionVal)[0] ?? [];
+    const targetRole = seerAction ? privateState[seerAction.target]?.role : undefined;
+    if (seerUid && seerAction && targetRole) {
+      await db.ref(`private/${gameId}/${seerUid}/hints`).push({
+        targetUid: seerAction.target,
+        result: seerCheck(targetRole),
+        dayNumber: game.dayNumber,
+      });
+    }
   }
 
   // Leaving PAIR_LOVERS: snapshot Cupid's one-time choice into both chosen
