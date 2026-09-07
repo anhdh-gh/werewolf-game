@@ -29,6 +29,19 @@ export const PHASE_DURATIONS_MS: Record<PhaseName, number> = {
   ENDED: 20_000,
 };
 
+/** Spec §4.3: "Nếu vai có mặt nhưng người giữ vai đã chết, phase vẫn chạy
+ * với thời lượng giả 15 giây — nếu không, người khác sẽ suy ra được vai nào
+ * đã chết chỉ bằng cách bấm giờ." A role-specific phase whose actor is
+ * alive ends the moment they act (often well under its normal duration);
+ * one whose actor has died can only ever time out at the FULL normal
+ * duration (there's no one left to end it early) — a phase that always
+ * takes exactly its configured max is itself a tell that nobody's home.
+ * Standardizing dead-holder phases to this one fixed duration (matching
+ * CURSED's own, which is *always* actor-less by design) removes that
+ * signal instead of encoding it in whichever role's normal duration would
+ * otherwise leak through. */
+export const DEAD_HOLDER_PHASE_DURATION_MS = 15_000;
+
 /** Spec §4.3: a role's phase is skipped entirely when that role isn't in the
  * game at all (not merely disabled in settings — `activeRoles` is the actual
  * dealt role list). Wolves/Seer/Witch are always present, so only the

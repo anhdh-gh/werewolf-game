@@ -14,7 +14,7 @@ import type { PhaseName, RoleKey } from "@/types/game";
  * UI for them, so requiring an "action" from them here would just make
  * the phase stall to its full duration with nothing for anyone to click,
  * every single night. */
-const ACTING_ROLE_BY_PHASE: Partial<Record<PhaseName, RoleKey>> = {
+export const ACTING_ROLE_BY_PHASE: Partial<Record<PhaseName, RoleKey>> = {
   SEER: "SEER",
   BODYGUARD: "BODYGUARD",
   MUTER: "MUTER",

@@ -300,3 +300,63 @@ Writing it immediately found one more real bug:
     (`gameFlowEndToEnd.test.ts`, "Bug #13 regression") that bites and poisons the
     same Cursed uid in one night and asserts they stay CURSED, stay out of every
     packUids list, and end up dead.
+
+Also added 3 more end-to-end scenarios closing coverage gaps (no new bugs, just
+previously-untested real paths): Cupid's PAIR_LOVERS dealt via `start`'s own
+optional-role slotting plus the cross-faction lover death cascade wired through the
+real route; the Tanner solo win (voted out, overriding the normal faction-headcount
+check even with both wolves still alive).
+
+### Task 12: Cross-checking the spec line by line against "is this actually built" — STATUS: done
+
+User asked directly: "are all the role cards and the full game flow really 100% done?"
+Rather than reflexively saying yes, re-read spec §4.1 and §4.3–§4.7 role-by-role and
+requirement-by-requirement against the actual code, instead of re-scanning files
+already audited. Found two real gaps — both genuinely missing, not just under-tested:
+
+1. **The Traitor never learned who their pack was.** Spec §4.1: "Kẻ Phản Bội biết hết
+   đồng bọn sói." `packUids` was written to their private state at game start (Task
+   10 already covers that plumbing), but the only place anything ever displayed it
+   was `ActionPanel`'s WOLVES branch — which the Traitor correctly never opens, since
+   they never wake for WOLVES (spec: "không thức đêm, không tham gia cắn"). Data
+   existed, no UI ever showed it to them, for the whole game. Fixed with a new
+   standing `PackInfo` card (same pattern as `RoleCard`/`SeerHints`) shown whenever
+   `privateState.packUids` is non-empty — covers Werewolves, the Traitor, and a
+   Cursed player who transformed mid-game, all without being gated behind any
+   phase/required-actor check. `ActionPanel`'s inline packmate line (now redundant)
+   removed.
+2. **No timing-decoy for a dead role-holder's phase.** Spec §4.3, explicit and easy
+   to miss on a first read: "Nếu vai có mặt nhưng người giữ vai đã chết, phase vẫn
+   chạy với thời lượng giả 15 giây — nếu không, người khác sẽ suy ra được vai nào đã
+   chết chỉ bằng cách bấm giờ." A live actor's phase ends the instant they act
+   (usually well under its configured duration); a dead actor's phase can only ever
+   time out at the FULL configured duration, since nobody's left to end it early —
+   over a few nights, "this phase always takes exactly its max, every single time"
+   is itself a tell that the role died. The route was using each phase's normal
+   `PHASE_DURATIONS_MS` unconditionally, with no check for this at all. Fixed:
+   `phases.ts` adds `DEAD_HOLDER_PHASE_DURATION_MS = 15_000` (deliberately matching
+   CURSED's own duration, which is *always* actor-less by design, so a dead-holder
+   phase is timing-indistinguishable from it); the route now checks, for whatever
+   phase it's about to enter, whether that phase has an acting role
+   (`ACTING_ROLE_BY_PHASE`, now exported from `requiredActors.ts`) AND that role's
+   `requiredActorsForPhase(...)` comes back empty — meaning the role was dealt into
+   the game (not skipped) but its holder has since died — and uses the decoy
+   duration instead of the phase's own. WOLVES/VOTE are naturally excluded (never
+   actor-less while the game continues — that faction would already have lost);
+   CURSED is naturally excluded too (absent from `ACTING_ROLE_BY_PHASE` by design,
+   since it's *always* actor-less regardless of alive/dead). Covered by two new
+   end-to-end tests asserting the actual `endsAt` gap: ~15s for BODYGUARD with its
+   holder already dead, ~30s (its normal duration) with the holder alive.
+
+Also (§4.7, not a gap — a check): the muted-player table-wide "câm" badge was already
+implemented (`PlayerList`), but the OTHER required half — "người bị câm nhận thông
+báo rõ ràng trên máy mình" (a clear notification on the muted player's own device) —
+had no UI at all. Added `MutedBanner`, a standing banner shown on the muted player's
+own screen. (§4.7's chat-lockout/mic-lockout layer is explicitly "Chơi xa" mode —
+LiveKit voice — which is the separate, deferred Resilience sub-project; this only
+covers the "Luôn luôn, ở mọi chế độ" baseline the spec says is required and
+sufficient on its own.)
+
+Both role-card-table requirements and the phase-flow requirements in §4.1–§4.7 are
+now cross-checked line by line against the implementation — not just re-read; each
+row was checked against actual code before deciding it needed no change.

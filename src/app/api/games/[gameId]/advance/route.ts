@@ -3,7 +3,7 @@ import type { Database, DataSnapshot } from "firebase-admin/database";
 import { adminDb } from "@/lib/firebase/admin";
 import { planAdvance } from "@/lib/game/planAdvance";
 import { tallyMajorityVote } from "@/lib/game/resolveNight";
-import { requiredActorsForPhase } from "@/lib/game/requiredActors";
+import { requiredActorsForPhase, ACTING_ROLE_BY_PHASE } from "@/lib/game/requiredActors";
 import { checkWinner } from "@/lib/game/checkWinner";
 import { applyLoverDeaths } from "@/lib/game/resolveDeathExtras";
 import {
@@ -14,7 +14,7 @@ import {
   type PrivatePlayerState,
   type RoleKey,
 } from "@/types/game";
-import { PHASE_DURATIONS_MS } from "@/lib/game/phases";
+import { PHASE_DURATIONS_MS, DEAD_HOLDER_PHASE_DURATION_MS } from "@/lib/game/phases";
 
 /**
  * The single server-authoritative phase-transition endpoint (spec §6.2/§6.3).
@@ -166,9 +166,27 @@ export async function POST(
     lovers,
   });
 
+  // Spec §4.3: a role-specific phase whose actor is alive ends the moment
+  // they act; one dealt into the game but whose sole holder has since died
+  // can only ever time out at its full normal duration, since nobody's left
+  // to end it early — that pattern (always exactly the configured max) is
+  // itself the leak the spec calls out. CURSED is deliberately absent from
+  // ACTING_ROLE_BY_PHASE (it never has an actor, alive or dead), so it
+  // never matches here and keeps using its own normal duration, same as
+  // WOLVES/VOTE (never actor-less while the game is still running — the
+  // faction would already have lost otherwise).
+  const nextPhaseActingRole = ACTING_ROLE_BY_PHASE[decision.nextPhase];
+  const nextPhaseHolderIsDead =
+    nextPhaseActingRole !== undefined &&
+    requiredActorsForPhase(decision.nextPhase, aliveRolesByUid).length === 0;
+
   const newPhase = {
     name: decision.nextPhase,
-    endsAt: Date.now() + (PHASE_DURATIONS_MS[decision.nextPhase] ?? 0),
+    endsAt:
+      Date.now() +
+      (nextPhaseHolderIsDead
+        ? DEAD_HOLDER_PHASE_DURATION_MS
+        : (PHASE_DURATIONS_MS[decision.nextPhase] ?? 0)),
     version: game.phase.version + 1,
   };
 

@@ -755,3 +755,82 @@ describe("Tanner: a solo win triggered by being voted out, overriding the headco
     expect(room.status).toBe("LOBBY");
   });
 });
+
+describe("Spec §4.3 timing decoy: a dead role-holder's phase can't be told apart from a live one by its duration", () => {
+  const gameId = "GAME-5";
+  const roomCode = "DECOY1";
+  const bodyguard = "bodyguard";
+  const seer = "seer";
+  const witch = "witch";
+  const wolfA = "wolfA";
+  const villager1 = "villager1";
+  const uids = [bodyguard, seer, witch, wolfA, villager1];
+
+  async function seedDecoyGame(bodyguardAlive: boolean) {
+    const players: Game["players"] = {};
+    for (const uid of uids) players[uid] = { name: uid, alive: true, muted: false };
+    players[bodyguard].alive = bodyguardAlive;
+
+    const game: Game = {
+      roomCode,
+      startedAt: 1,
+      dayNumber: 1,
+      phase: { name: "NIGHT_FALLS", endsAt: Date.now() - 1, version: 0 },
+      players,
+    };
+    await fakeDb.ref(`games/${gameId}`).set(game);
+    await fakeDb.ref(`private/${gameId}`).set({
+      [bodyguard]: {
+        role: "BODYGUARD",
+        initialRole: "BODYGUARD",
+        potions: { heal: true, poison: true },
+      },
+      [seer]: { role: "SEER", initialRole: "SEER", potions: { heal: true, poison: true } },
+      [witch]: { role: "WITCH", initialRole: "WITCH", potions: { heal: true, poison: true } },
+      [wolfA]: {
+        role: "WEREWOLF",
+        initialRole: "WEREWOLF",
+        potions: { heal: true, poison: true },
+        packUids: [],
+      },
+      [villager1]: {
+        role: "VILLAGER",
+        initialRole: "VILLAGER",
+        potions: { heal: true, poison: true },
+      },
+    } satisfies Record<string, PrivatePlayerState>);
+    await seedRoom(roomCode, uids, { ...NO_OPTIONAL_ROLES, BODYGUARD: true });
+    await fakeDb.ref(`rooms/${roomCode}/status`).set("PLAYING");
+  }
+
+  it("uses the fixed 15s decoy duration for BODYGUARD when its holder is already dead", async () => {
+    await seedDecoyGame(false);
+
+    let res = await callAdvance(gameId); // NIGHT_FALLS -> SEER, timer only
+    expect(res.phase.name).toBe("SEER");
+    await writeAction(gameId, "SEER", seer, wolfA);
+
+    const before = Date.now();
+    res = await callAdvance(gameId); // SEER -> BODYGUARD (dead holder)
+    expect(res.phase.name).toBe("BODYGUARD");
+    const durationMs = res.phase.endsAt - before;
+    // 15s decoy, not BODYGUARD's normal 30s — with slack for test runtime.
+    expect(durationMs).toBeGreaterThan(13_000);
+    expect(durationMs).toBeLessThan(17_000);
+  });
+
+  it("uses the normal 30s duration for BODYGUARD when its holder is alive", async () => {
+    await seedDecoyGame(true);
+
+    let res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("SEER");
+    await writeAction(gameId, "SEER", seer, wolfA);
+
+    const before = Date.now();
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("BODYGUARD");
+    const durationMs = res.phase.endsAt - before;
+    expect(durationMs).toBeGreaterThan(28_000);
+    expect(durationMs).toBeLessThan(32_000);
+  });
+});
