@@ -113,6 +113,7 @@
     }
   html {
     @apply font-sans;
+    touch-action: manipulation;
     }
   ::selection {
     background: color-mix(in oklch, var(--color-primary) 40%, transparent);

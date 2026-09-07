@@ -96,7 +96,7 @@ export function RoomLobby({ code }: { code: string }) {
       <CenteredState>
         <Logo size={44} className="opacity-60" />
         <p className="text-muted-foreground">Không tìm thấy phòng {code}</p>
-        <Button variant="secondary" onClick={() => router.push("/")}>
+        <Button variant="secondary" onClick={() => router.push("/")} className="h-11">
           Về trang chủ
         </Button>
       </CenteredState>
@@ -137,7 +137,7 @@ export function RoomLobby({ code }: { code: string }) {
           <CardHeader className="items-center gap-3 pb-2">
             <button
               onClick={copyCode}
-              className="group flex items-center gap-2 rounded-lg px-3 py-1.5 transition-colors hover:bg-muted"
+              className="group touch-manipulation flex items-center gap-2 rounded-lg px-3 py-2.5 transition-colors hover:bg-muted"
               aria-label="Sao chép mã phòng"
             >
               <span className="font-heading text-3xl tracking-[0.35em]">{code}</span>
@@ -195,7 +195,7 @@ export function RoomLobby({ code }: { code: string }) {
             </ul>
 
             <div className="flex gap-3">
-              <Button onClick={toggleReady} className="flex-1 gap-1.5">
+              <Button onClick={toggleReady} className="h-12 flex-1 gap-1.5 text-base">
                 {isReady ? <CheckCircle2 className="size-4" /> : <Circle className="size-4" />}
                 {isReady ? "Đã sẵn sàng" : "Sẵn sàng"}
               </Button>
@@ -203,7 +203,7 @@ export function RoomLobby({ code }: { code: string }) {
                 variant="secondary"
                 onClick={leave}
                 disabled={leaving}
-                className="flex-1 gap-1.5"
+                className="h-12 flex-1 gap-1.5 text-base"
               >
                 {leaving ? (
                   <Loader2 className="size-4 animate-spin" />

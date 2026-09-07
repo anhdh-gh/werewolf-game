@@ -92,7 +92,12 @@ export default function HomePage() {
 
           <Card className="w-full">
             <CardContent className="flex flex-col gap-3 pt-1">
-              <Button onClick={handleSignIn} disabled={signingIn} className="w-full gap-2" size="lg">
+              <Button
+                onClick={handleSignIn}
+                disabled={signingIn}
+                className="h-12 w-full gap-2 text-base"
+                size="lg"
+              >
                 {signingIn ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : (
@@ -180,7 +185,7 @@ export default function HomePage() {
               size="icon"
               onClick={signOut}
               aria-label="Đăng xuất"
-              className="text-muted-foreground"
+              className="size-10 text-muted-foreground"
             >
               <LogOut className="size-4" />
             </Button>
@@ -198,7 +203,7 @@ export default function HomePage() {
                   setError(null);
                 }}
                 className={cn(
-                  "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                  "touch-manipulation rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
                   mode === "create"
                     ? "bg-card text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground",
@@ -213,7 +218,7 @@ export default function HomePage() {
                   setError(null);
                 }}
                 className={cn(
-                  "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                  "touch-manipulation rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
                   mode === "join"
                     ? "bg-card text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground",
@@ -234,11 +239,12 @@ export default function HomePage() {
                   <Label htmlFor="maxPlayers" className="text-muted-foreground">
                     Số người chơi
                   </Label>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-4">
                     <Button
                       type="button"
                       variant="outline"
                       size="icon"
+                      className="size-11"
                       onClick={() => setMaxPlayers((n) => Math.max(4, n - 1))}
                       disabled={maxPlayers <= 4}
                       aria-label="Giảm"
@@ -255,6 +261,7 @@ export default function HomePage() {
                       type="button"
                       variant="outline"
                       size="icon"
+                      className="size-11"
                       onClick={() => setMaxPlayers((n) => Math.min(16, n + 1))}
                       disabled={maxPlayers >= 16}
                       aria-label="Tăng"
@@ -264,7 +271,7 @@ export default function HomePage() {
                   </div>
                   <span className="text-xs text-muted-foreground">4 đến 16 người</span>
                 </div>
-                <Button onClick={handleCreate} disabled={submitting} size="lg">
+                <Button onClick={handleCreate} disabled={submitting} size="lg" className="h-12 text-base">
                   {submitting && <Loader2 className="size-4 animate-spin" />}
                   Tạo phòng
                 </Button>
@@ -285,6 +292,7 @@ export default function HomePage() {
                   onClick={handleJoin}
                   disabled={submitting}
                   size="lg"
+                  className="h-12 text-base"
                 >
                   {submitting && <Loader2 className="size-4 animate-spin" />}
                   Vào phòng
