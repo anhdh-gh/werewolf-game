@@ -252,3 +252,36 @@ functions with hand-built inputs — it took reading planAdvance()'s actual call
 to end to find. Still not live-verified (same blockers as everything else in this
 plan) — this is as much correctness confidence as static reading and Vitest can buy
 without a real Firebase project and real concurrent players.
+
+### Task 11: End-to-end route tests (in-memory fake Admin DB) — STATUS: done
+
+User request: since live Firebase still isn't reachable from this sandbox, get as
+much of "end to end" as unit tests can actually buy. Added
+`src/test/helpers/fakeAdminDb.ts` — a minimal in-memory stand-in for the Admin SDK's
+`Database` (`ref().get/set/update/transaction/push`), and mocked
+`@/lib/firebase/admin`'s `adminDb()` to return it. `src/test/gameFlowEndToEnd.test.ts`
+then imports and calls the **real** `start` and `advance` route handlers directly (not
+a re-implementation) and plays full games through them — start → REVEAL_ROLE → nights
+→ votes → ENDED — asserting on persisted state after each transition. This is real
+regression coverage for exactly the class of bug Task 10 found (route
+orchestration/persistence), which the pure-function tests structurally cannot catch.
+Does not replace `rulesGames.test.ts` (Security Rules enforcement still needs the
+real RTDB emulator, unreachable here) — this only proves the routes' own read/write
+logic is correct assuming the rules allow the write.
+
+Writing it immediately found one more real bug:
+
+12. **Round-scoped actions were never cleared between rounds.** Every recurring role
+    phase (SEER, BODYGUARD, MUTER, WOLVES, WITCH_SAVE, WITCH_KILL, VOTE) lives at the
+    same `actions/{gameId}/{phaseKey}` path on every single occurrence — there's no
+    per-night or per-day discriminator in it. Two consequences, both real: (a) a
+    still-alive actor who simply hasn't acted *yet* this round would read as `done`
+    from their *previous* round's stale write, fooling the readiness gate into ending
+    the phase before they ever got a turn; (b) a since-dead actor's stale vote from
+    an earlier round stayed in the tally forever, corrupting `tallyMajorityVote` /
+    `resolveVote` on every later round (this is what the test actually caught: a
+    dead wolf's night-1 bite target tied against the surviving wolf's fresh night-2
+    pick, so `tallyMajorityVote` returned null and nobody got bitten). Fixed in
+    `advance/route.ts` by clearing `actions/{gameId}/{phaseKey}` at the moment the
+    route transitions *into* that phase — the one point guaranteed to run exactly
+    once per occurrence, strictly before anyone can write that round's data.

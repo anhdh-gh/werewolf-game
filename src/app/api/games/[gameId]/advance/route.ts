@@ -6,7 +6,14 @@ import { tallyMajorityVote } from "@/lib/game/resolveNight";
 import { requiredActorsForPhase } from "@/lib/game/requiredActors";
 import { checkWinner } from "@/lib/game/checkWinner";
 import { applyLoverDeaths } from "@/lib/game/resolveDeathExtras";
-import { seerCheck, type Game, type GamePlayer, type PrivatePlayerState, type RoleKey } from "@/types/game";
+import {
+  seerCheck,
+  type Game,
+  type GamePlayer,
+  type PhaseName,
+  type PrivatePlayerState,
+  type RoleKey,
+} from "@/types/game";
 import { PHASE_DURATIONS_MS } from "@/lib/game/phases";
 
 /**
@@ -168,6 +175,31 @@ export async function POST(
   const updates: Record<string, unknown> = {
     [`games/${gameId}/phase`]: newPhase,
   };
+
+  // Every recurring role phase lives at the same actions/{gameId}/{phaseKey}
+  // path on every single occurrence — there's no per-night or per-day
+  // discriminator in it. Without this, a night-2 SEER/BODYGUARD/MUTER/
+  // WOLVES/WITCH_SAVE/WITCH_KILL (or a new day's VOTE) would start with
+  // last round's data already sitting there: a still-alive actor who
+  // simply hasn't acted yet this round would read as `done` (fooling the
+  // readiness gate above into ending the phase before they ever get a
+  // turn), and a since-dead actor's old vote would still count in
+  // tallyMajorityVote/resolveVote alongside this round's real ballots.
+  // Clearing here, the moment we're about to enter that phase fresh, is
+  // the one point guaranteed to run exactly once per occurrence and
+  // strictly before anyone can write this round's data into it.
+  const ROUND_SCOPED_PHASES: PhaseName[] = [
+    "SEER",
+    "BODYGUARD",
+    "MUTER",
+    "WOLVES",
+    "WITCH_SAVE",
+    "WITCH_KILL",
+    "VOTE",
+  ];
+  if (ROUND_SCOPED_PHASES.includes(decision.nextPhase)) {
+    updates[`actions/${gameId}/${decision.nextPhase}`] = null;
+  }
 
   // Looping VOTE_RESULT -> NIGHT_FALLS (spec §4.3) is what starts a new day;
   // the very first NIGHT_FALLS (from REVEAL_ROLE or PAIR_LOVERS) is still day 1.
