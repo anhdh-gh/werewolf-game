@@ -29,6 +29,32 @@
         ".read": "auth != null",
         ".write": "auth != null && auth.uid === $uid"
       }
+    },
+    "games": {
+      "$gameId": {
+        ".read": "auth != null",
+        "roomCode": { ".write": false },
+        "startedAt": { ".write": false },
+        "dayNumber": { ".write": false },
+        "phase": { ".write": false },
+        "players": { ".write": false },
+        "result": { ".write": false },
+        "actions": {
+          "$phaseKey": {
+            "$uid": {
+              ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('phase').child('name').val() === $phaseKey"
+            }
+          }
+        }
+      }
+    },
+    "private": {
+      "$gameId": {
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": false
+        }
+      }
     }
   }
 }
