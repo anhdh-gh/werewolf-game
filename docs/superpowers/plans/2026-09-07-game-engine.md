@@ -132,7 +132,7 @@ emulator's rules validation (network policy on that machine, not a code issue); 
 tests need to run somewhere with normal internet access before this task is called
 done.
 
-### Task 8: The `advance` API route — STATUS: not started
+### Task 8: The `advance` API route — STATUS: done (code written, not live-verified)
 
 `src/app/api/games/[gameId]/advance/route.ts`: reads current phase + actions from
 RTDB via Admin SDK, calls the Task 2–6 pure functions, writes the new phase/players/
@@ -155,11 +155,38 @@ and `src/lib/game/resolveDeathExtras.ts` (lover heartbreak + Hunter revenge,
 composable, independently tested). Spec §4.1/4.2/4.3/4.4 updated to match. Full
 lovers-become-their-own-faction win condition explicitly deferred — noted in the spec.
 
-### Task 9: Gameplay screens — STATUS: not started
+### Task 9: Gameplay screens — STATUS: done (code written, not live-verified)
 
-`/room/[code]/game/page.tsx` or similar: renders the current phase, your role (from
-`/private`), the action UI for whichever role/phase requires input from you, and the
-public player list with alive/muted state. This is the largest remaining task and
-should probably become its own set of sub-tasks once Tasks 1–8 land — role-specific
-action UI (wolf pick, seer look, witch save/kill, bodyguard protect, muter pick,
-villager/discussion/vote) each need their own small component.
+`/room/[code]/game/page.tsx`: renders the current phase, your role (hold-to-peek,
+behind `/private`), the action UI for whichever role/phase requires input from you,
+and the public player list with alive/muted state. Also added `POST
+/api/rooms/[code]/start` (role dealing + game creation — not explicitly named in the
+spec but required by §3's "anyone can press Start") and wired a Start button into
+RoomLobby. Every visual state was screenshotted through a temporary mock-data route
+(deleted before committing) to confirm it renders and responds to taps correctly.
+
+Known gaps, not silently skipped: no enforcement that the Bodyguard can't protect the
+same target on consecutive nights (spec §4.1), and the UI doesn't stop a wolf from
+targeting a fellow wolf. Both are missing *input guardrails* only — the tested
+resolution engine doesn't care who submitted what, so neither is a correctness bug,
+just a rule a player could currently break by hand.
+
+## What's left before any of this runs live
+
+Everything above is code-complete and unit-tested wherever it can be without live
+infrastructure, but **none of it has run against a real Firebase project** — this
+sandboxed session has no network path to `firebase-public.firebaseio.com` (blocks the
+emulator's rules validation) or to any live Firebase/Vercel endpoint. Before trusting
+this in production:
+
+1. **Deploy the v2 rules**: `firebase deploy --only database --project werewolf-game-2026`
+   (same as Foundation & Lobby's Task 6, now covering `/games` and `/private` too).
+2. **Set `FIREBASE_SERVICE_ACCOUNT_KEY`** in Vercel (Project Settings → Environment
+   Variables) — a service account JSON for `werewolf-game-2026`, generated from
+   Firebase Console → Project Settings → Service Accounts. Without it, both API
+   routes throw immediately (`src/lib/firebase/admin.ts`'s explicit check, not a
+   silent failure).
+3. **Run a real 4+ player game once** end to end and fix whatever the first live run
+   surfaces — this is a lot of new orchestration logic (12 roles, a 14-phase state
+   machine, three interlocking death-cascade rules) that has only ever run inside
+   Vitest, never against real concurrent clients and real network latency.
