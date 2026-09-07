@@ -56,6 +56,7 @@ async function tryCreateAt(
     [`${roomPath(code)}/settings`]: {
       maxPlayers: input.maxPlayers,
       rolesEnabled: DEFAULT_ROLES_ENABLED,
+      remoteMode: false,
     },
     [roomMemberPath(code, input.uid)]: {
       name: input.name,

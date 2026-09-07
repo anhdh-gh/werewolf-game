@@ -147,6 +147,12 @@ export function RoomLobby({ code }: { code: string }) {
     update(ref(db, `${roomSettingsPath(code)}/rolesEnabled`), { [key]: !current });
   };
 
+  // Spec §0: "Chat sói và chat làng tắt mặc định, chỉ bật khi phòng bật
+  // 'Chơi xa'." Off by default — ngồi cùng bàn thì nói bằng miệng.
+  const toggleRemoteMode = () => {
+    update(ref(db, roomSettingsPath(code)), { remoteMode: !room.settings.remoteMode });
+  };
+
   const leave = async () => {
     setLeaving(true);
     await detachPresence(db, user.uid, code);
@@ -283,6 +289,18 @@ export function RoomLobby({ code }: { code: string }) {
                 Rời phòng
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-3">
+          <CardContent className="flex items-center justify-between gap-3 pt-6">
+            <label htmlFor="remoteMode" className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium">Chơi xa</span>
+              <span className="text-xs text-muted-foreground">
+                Ngồi cùng bàn thì để tắt — nói bằng miệng là đủ
+              </span>
+            </label>
+            <Switch id="remoteMode" checked={room.settings.remoteMode} onCheckedChange={toggleRemoteMode} />
           </CardContent>
         </Card>
 

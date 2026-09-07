@@ -17,6 +17,11 @@ export type OptionalRoleKey = (typeof OPTIONAL_ROLE_KEYS)[number];
 export interface RoomSettings {
   maxPlayers: number;
   rolesEnabled: Record<OptionalRoleKey, boolean>;
+  /** Spec §0/§3: "Chơi xa" — off by default (ngồi cùng bàn thì nói bằng
+   * miệng). Gates chat, the auto-joined LiveKit call rooms, and mic/cam
+   * publish permission (§4.7, §10) — none of that exists for a room that
+   * never turns this on. */
+  remoteMode: boolean;
 }
 
 export interface RoomMember {

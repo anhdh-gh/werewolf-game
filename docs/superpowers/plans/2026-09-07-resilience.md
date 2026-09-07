@@ -24,12 +24,17 @@ Started per direct user request after Game Engine reached spec parity.
   + real headless-Chromium screenshot for anything visual (always deleted before the
   commit that follows it).
 
-## Task 1: "Chơi xa" room setting — STATUS: in progress
+## Task 1: "Chơi xa" room setting — STATUS: done
 
-Add `RoomSettings.remoteMode: boolean` (default `false`), a toggle in RoomLobby next
-to the role-settings card, and Security Rules validation for the new field. This
-gates everything else in this plan — chat, LiveKit auto-join, and mic/cam publish
-permission all read it.
+Added `RoomSettings.remoteMode: boolean` (default `false`, written by `createRoom`),
+a standing `Switch` row in `RoomLobby` (above the role-settings card, since it's a
+bigger decision than any single role), and Security Rules validation
+(`hasChildren` now requires it, `.isBoolean()` checked) — same shape as `maxPlayers`.
+`rules.test.ts` covers: missing remoteMode denied, non-boolean denied, boolean write
+allowed while in LOBBY. Verified visually via a temporary dev-preview route + a real
+headless-Chromium screenshot (both deleted before the commit). This gates everything
+else in this plan — chat, LiveKit auto-join, and mic/cam publish permission all read
+it.
 
 ## Task 2: Chat (làng/sói scoped) — STATUS: not started
 

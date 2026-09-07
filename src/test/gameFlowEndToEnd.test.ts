@@ -115,7 +115,7 @@ async function seedRoom(code: string, uids: string[], rolesEnabled: typeof NO_OP
   const room: Room = {
     createdAt: 1,
     status: "LOBBY",
-    settings: { maxPlayers: uids.length, rolesEnabled },
+    settings: { maxPlayers: uids.length, rolesEnabled, remoteMode: false },
     members,
   };
   await fakeDb.ref(`rooms/${code}`).set(room);

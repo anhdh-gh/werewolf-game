@@ -13,7 +13,11 @@ let testEnv: RulesTestEnvironment;
 const EXISTING_ROOM = {
   createdAt: 1000,
   status: "LOBBY",
-  settings: { maxPlayers: 8, rolesEnabled: { BODYGUARD: true, TRAITOR: true, HUNTER: true, CUPID: true, MUTER: true, CURSED: true, LYCAN: true, TANNER: true } },
+  settings: {
+    maxPlayers: 8,
+    rolesEnabled: { BODYGUARD: true, TRAITOR: true, HUNTER: true, CUPID: true, MUTER: true, CURSED: true, LYCAN: true, TANNER: true },
+    remoteMode: false,
+  },
   members: {
     "uid-owner": { name: "Owner", photoURL: null, joinedAt: 1000, ready: false, online: true },
   },
@@ -124,6 +128,7 @@ describe("rooms/$code", () => {
         settings: {
           maxPlayers: 8,
           rolesEnabled: { BODYGUARD: true, TRAITOR: true, HUNTER: true, CUPID: true, MUTER: true, CURSED: true, LYCAN: true, TANNER: true },
+          remoteMode: false,
         },
         members: {
           "uid-solo2": {
@@ -156,6 +161,7 @@ describe("rooms/$code", () => {
         "rooms/SOLO01/settings": {
           maxPlayers: 8,
           rolesEnabled: { BODYGUARD: true, TRAITOR: true, HUNTER: true, CUPID: true, MUTER: true, CURSED: true, LYCAN: true, TANNER: true },
+          remoteMode: false,
         },
         "rooms/SOLO01/members/uid-solo": {
           name: "Solo",
@@ -195,6 +201,26 @@ describe("rooms/$code", () => {
   it("denies a settings write with maxPlayers out of range", async () => {
     const db = testEnv.authenticatedContext("uid-owner").database();
     await assertFails(set(ref(db, "rooms/EXIST1/settings/maxPlayers"), 99));
+  });
+
+  it("denies a settings write missing remoteMode", async () => {
+    const db = testEnv.authenticatedContext("uid-owner").database();
+    await assertFails(
+      set(ref(db, "rooms/EXIST1/settings"), {
+        maxPlayers: 8,
+        rolesEnabled: { BODYGUARD: true, TRAITOR: true, HUNTER: true, CUPID: true, MUTER: true, CURSED: true, LYCAN: true, TANNER: true },
+      }),
+    );
+  });
+
+  it("denies setting remoteMode to a non-boolean", async () => {
+    const db = testEnv.authenticatedContext("uid-owner").database();
+    await assertFails(set(ref(db, "rooms/EXIST1/settings/remoteMode"), "yes"));
+  });
+
+  it("allows an existing member to flip remoteMode on while in LOBBY", async () => {
+    const db = testEnv.authenticatedContext("uid-owner").database();
+    await assertSucceeds(set(ref(db, "rooms/EXIST1/settings/remoteMode"), true));
   });
 });
 
