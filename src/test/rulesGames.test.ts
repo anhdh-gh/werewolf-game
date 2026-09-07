@@ -25,6 +25,7 @@ const EXISTING_GAME = {
   players: {
     "uid-wolf": { name: "Wolf", alive: true, muted: false },
     "uid-seer": { name: "Seer", alive: true, muted: false },
+    "uid-dead-hunter": { name: "Hunter", alive: false, muted: false },
   },
 };
 
@@ -108,6 +109,28 @@ describe("games/$gameId", () => {
         target: "uid-wolf",
         done: true,
         at: 1,
+      }),
+    );
+  });
+
+  it("allows a dead Hunter to write their revenge shot regardless of the current phase", async () => {
+    const db = testEnv.authenticatedContext("uid-dead-hunter").database();
+    await assertSucceeds(
+      set(ref(db, "games/GAME1/actions/HUNTER_SHOT/uid-dead-hunter"), {
+        target: "uid-seer",
+        done: true,
+        at: 1234,
+      }),
+    );
+  });
+
+  it("denies a still-alive player from writing a Hunter revenge shot", async () => {
+    const db = testEnv.authenticatedContext("uid-wolf").database();
+    await assertFails(
+      set(ref(db, "games/GAME1/actions/HUNTER_SHOT/uid-wolf"), {
+        target: "uid-seer",
+        done: true,
+        at: 1234,
       }),
     );
   });
