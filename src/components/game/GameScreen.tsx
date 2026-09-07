@@ -8,6 +8,11 @@ import { usePrivateState } from "@/lib/game/usePrivateState";
 import { useMyAction } from "@/lib/game/useMyAction";
 import { requiredActorsForPhase } from "@/lib/game/requiredActors";
 import { useServerTimeOffset, useCountdownSeconds, useAutoAdvance } from "@/lib/game/useGameClock";
+import {
+  useBackgroundAudioKeepAlive,
+  usePhaseMediaSession,
+  useAutoActionWakeLock,
+} from "@/lib/game/useKeepAlive";
 import { PHASE_LABELS } from "@/lib/game/labels";
 import { Logo } from "@/components/Logo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,6 +83,28 @@ function GameScreenInner({
   const myAction = useMyAction(db, gameId, game?.phase.name ?? "", uid);
   const myHunterShot = useMyAction(db, gameId, "HUNTER_SHOT", uid);
 
+  // requiredActorsForPhase takes a full aliveRolesByUid map elsewhere (the
+  // server has that from /private via the Admin SDK); here it's given a
+  // singleton map containing only this client's own role, which is all a
+  // client can ever legitimately know. Passing anyone else's role would
+  // require reading their /private state, which Security Rules simply
+  // don't allow — this never leaks anything beyond what this uid already has.
+  const me = game?.players[uid];
+  const isRequired =
+    !!game &&
+    !!privateState &&
+    !!me?.alive &&
+    requiredActorsForPhase(game.phase.name, { [uid]: privateState.role }).includes(uid);
+  const alreadyDone = myAction?.done ?? false;
+
+  // These three are all hooks (call useEffect internally) — they must run
+  // unconditionally on every render, before any early return below, or
+  // they'd violate React's rules of hooks the moment `game` loads and an
+  // earlier render's early return disappears.
+  useBackgroundAudioKeepAlive(!!game && game.phase.name !== "ENDED");
+  usePhaseMediaSession(game?.phase, game?.dayNumber);
+  useAutoActionWakeLock(isRequired && !alreadyDone);
+
   if (loading || !game) {
     return (
       <CenteredState>
@@ -87,7 +114,6 @@ function GameScreenInner({
     );
   }
 
-  const me = game.players[uid];
   const isDeadHunterWithUnfiredShot =
     !!me && !me.alive && privateState?.role === "HUNTER" && !myHunterShot?.done;
 
@@ -111,18 +137,6 @@ function GameScreenInner({
       </main>
     );
   }
-
-  // requiredActorsForPhase takes a full aliveRolesByUid map elsewhere (the
-  // server has that from /private via the Admin SDK); here it's given a
-  // singleton map containing only this client's own role, which is all a
-  // client can ever legitimately know. Passing anyone else's role would
-  // require reading their /private state, which Security Rules simply
-  // don't allow — this never leaks anything beyond what this uid already has.
-  const isRequired =
-    !!privateState &&
-    !!me?.alive &&
-    requiredActorsForPhase(game.phase.name, { [uid]: privateState.role }).includes(uid);
-  const alreadyDone = myAction?.done ?? false;
 
   // Spec §0/§10: chat only exists in a "Chơi xa" room, and only mirrors the
   // same rooms §10 would auto-join for voice — village during Discussion

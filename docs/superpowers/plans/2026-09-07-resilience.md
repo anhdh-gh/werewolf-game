@@ -92,14 +92,43 @@ via `Runtime.evaluate` both that registration reaches `SW-ACTIVE` and that
 the page opportunistically pulled in — not a syntax check, an actual running
 service worker in an actual browser. Preview route removed before the commit.
 
-## Task 4: Background audio keep-alive — STATUS: not started
+## Task 4: Background audio keep-alive — STATUS: done
 
-§8.2: silent looping `<audio>` element as the anchor that keeps the tab alive when
-backgrounded (documented iOS/Android technique — a page actively playing audio is
-exempt from background throttling). MediaSession API sets lock-screen title to the
-current phase ("Đêm 2 — Sói đang thức"). Wake Lock held only during a phase this uid
-must act in, released otherwise. Real verification needs §11 point 1's real-device
-test, which cannot happen here — built to spec, flagged as such.
+`public/audio/keepalive-silence.wav` — a real, hand-generated 1-second zero-amplitude
+16-bit PCM WAV (no ffmpeg/sox in this sandbox, so written directly: RIFF header +
+silent data chunk via a ~30-line Node script; `file` confirms it's a valid WAV).
+`src/lib/game/useKeepAlive.ts` exports three hooks, wired into `GameScreen.tsx`:
+
+- `useBackgroundAudioKeepAlive(active)` — loops that silent file via `new Audio()`
+  while the game is running (not ENDED). Handles the autoplay-blocked case (no prior
+  gesture this navigation) by retrying on the next `pointerdown`.
+- `usePhaseMediaSession(phase, dayNumber)` — sets `navigator.mediaSession.metadata`
+  to spec §8.2's exact example shape ("Đêm 2 — Sói thức dậy" for a night phase,
+  "Ngày N — …" for a day one).
+- `useAutoActionWakeLock(shouldHold)` — holds `navigator.wakeLock` exactly while
+  `isRequired && !alreadyDone` (the same condition GameScreen already computes for
+  showing ActionPanel), re-acquiring on `visibilitychange` since the OS auto-releases
+  a Wake Lock whenever the document goes hidden.
+
+All three had to move above `GameScreenInner`'s early returns (loading spinner, the
+ENDED/dead-Hunter branches) — they're hooks themselves, so calling them after a
+conditional return would violate React's rules of hooks the moment those branches
+stop applying between renders. `me`/`isRequired`/`alreadyDone` were hoisted with it,
+computed defensively against a possibly-still-loading `game`.
+
+Verified for real via the same CDP technique as Task 3, with one addition: this
+sandbox's headless Chromium was launched with `--autoplay-policy=no-user-gesture-
+required` specifically to exercise the happy path cleanly (the blocked-autoplay
+retry path is a code-read verification, not exercised here). Monkey-patched
+`window.Audio` and `navigator.wakeLock.request` at module scope in the temporary
+preview page (before the hooks' own effects could run) to observe real `play`/
+`pause`/`release` events rather than just that the calls didn't throw — confirmed
+audio actually reached the playing state, the wake lock was actually held while
+`shouldHold` was true, and actually released within 500ms of it turning false.
+§11's real-device test (audio genuinely keeping a backgrounded iOS Safari tab's
+WebSocket alive through a lock screen) still could not run here — that's real
+hardware, not something a CDP script can stand in for; flagged as the one remaining
+unverified assumption this task rests on.
 
 ## Task 5: TTS narration — STATUS: not started
 
