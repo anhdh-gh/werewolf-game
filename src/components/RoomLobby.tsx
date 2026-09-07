@@ -82,6 +82,12 @@ export function RoomLobby({ code }: { code: string }) {
     return () => detach();
   }, [user, code]);
 
+  useEffect(() => {
+    if (!copied) return;
+    const timer = setTimeout(() => setCopied(false), 1500);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
   if (loading) {
     return (
       <CenteredState>
@@ -120,7 +126,6 @@ export function RoomLobby({ code }: { code: string }) {
     try {
       await navigator.clipboard.writeText(code);
       setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
     } catch {
       // clipboard unavailable — the code is already on screen, nothing more to do
     }
