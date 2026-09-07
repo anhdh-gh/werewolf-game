@@ -608,3 +608,83 @@ describe("Hunter's revenge shot (Bug #4 / #9): applied via the independent pendi
     expect(room.status).toBe("LOBBY");
   });
 });
+
+describe("Cupid + cross-faction lovers: PAIR_LOVERS through the real routes, death cascade", () => {
+  it("pairs via start's optional-role dealing, then a bitten lover's death drags their (wolf-faction) partner down too", async () => {
+    // wolfCount(8) === 2; only CUPID enabled -> buildRoleList's single pass
+    // over OPTIONAL_ROLE_KEYS adds exactly one CUPID (TANNER etc. all off),
+    // rest fall to VILLAGER: 2 WEREWOLF, SEER, WITCH, CUPID, 3 VILLAGER.
+    const uids = ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8"];
+    await seedRoom("LOVE01", uids, { ...NO_OPTIONAL_ROLES, CUPID: true });
+
+    const { gameId } = await callStart("LOVE01");
+    if (!gameId) throw new Error("start route did not return a gameId");
+
+    const priv = await getPrivate(gameId);
+    const wolfUids = uids.filter((u) => priv[u].role === "WEREWOLF");
+    const cupidUid = uids.find((u) => priv[u].role === "CUPID")!;
+    const witchUid = uids.find((u) => priv[u].role === "WITCH")!;
+    const villagerUids = uids.filter((u) => priv[u].role === "VILLAGER");
+    expect(wolfUids.length).toBe(2);
+    expect(cupidUid).toBeTruthy();
+    expect(villagerUids.length).toBe(3);
+
+    let game = await getGame(gameId);
+    expect(game.phase.name).toBe("REVEAL_ROLE");
+
+    await expirePhaseTimer(gameId);
+    let res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("PAIR_LOVERS"); // CUPID active -> not skipped
+
+    // Cross-faction pair: one wolf + one villager, so the cascade below
+    // actually removes a wolf from the pack, not just another villager.
+    const wolfLover = wolfUids[0];
+    const villagerLover = villagerUids[0];
+    await fakeDb.ref(`actions/${gameId}/PAIR_LOVERS/${cupidUid}`).set({
+      targetA: wolfLover,
+      targetB: villagerLover,
+      done: true,
+      at: 1,
+    });
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("NIGHT_FALLS");
+
+    const privAfterPairing = await getPrivate(gameId);
+    expect(privAfterPairing[wolfLover].loverUid).toBe(villagerLover);
+    expect(privAfterPairing[villagerLover].loverUid).toBe(wolfLover);
+
+    await expirePhaseTimer(gameId);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("SEER");
+    await writeAction(gameId, "SEER", uids.find((u) => priv[u].role === "SEER")!, wolfLover);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WOLVES"); // BODYGUARD/MUTER disabled -> skipped
+
+    // The pack (including the wolf who's in the pair) bites the OTHER
+    // wolf's own lover — the villager half of the pair. Neither wolf is
+    // the bite target, so this isn't the "self-sacrifice" case; it's
+    // purely the lover-cascade pulling a WOLF down via their partner's
+    // death, unrelated to who did the biting.
+    for (const w of wolfUids) await writeAction(gameId, "WOLVES", w, villagerLover);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WITCH_SAVE");
+    await writeAction(gameId, "WITCH_SAVE", witchUid, null);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WITCH_KILL");
+    await writeAction(gameId, "WITCH_KILL", witchUid, null);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("DAWN");
+
+    // Bug regression check for resolveDeathExtras wiring end to end: both
+    // halves of the pair die, even though only one was actually bitten.
+    expect(new Set(res.deaths)).toEqual(new Set([villagerLover, wolfLover]));
+
+    game = await getGame(gameId);
+    expect(game.players[villagerLover].alive).toBe(false);
+    expect(game.players[wolfLover].alive).toBe(false);
+    // The winner check already accounts for the cascade death, not just
+    // the direct bite — one wolf left (wolfUids[1]) vs 5 others alive
+    // (seer, witch, cupid, 2 remaining villagers), so no winner yet.
+    expect(game.result).toBeUndefined();
+  });
+});
