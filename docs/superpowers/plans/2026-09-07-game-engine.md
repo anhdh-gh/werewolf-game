@@ -190,3 +190,13 @@ this in production:
    surfaces — this is a lot of new orchestration logic (12 roles, a 14-phase state
    machine, three interlocking death-cascade rules) that has only ever run inside
    Vitest, never against real concurrent clients and real network latency.
+
+### Task 6c: No role reveal, ever — not even at game end — STATUS: done
+
+User override of spec §4.6's original "kết thúc ván thì lật toàn bộ vai của mọi
+người" (most werewolf games reveal roles at the end; this one deliberately never
+does). `GameResult` is now just `{ winner }` — no `revealedRoles` field exists
+anywhere in the schema, so there is nothing for a compromised client or a future
+mistake to leak. `GameEndScreen` shows the winning faction and who survived (already
+public all game) instead of a role list. Spec §4.6/§7 rewritten to state this as the
+"đừng gửi" principle from §12 applied without the usual end-of-game exception.
