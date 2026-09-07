@@ -4,6 +4,7 @@ import { Geist, Cinzel } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 const cinzel = Cinzel({ subsets: ["latin"], variable: "--font-display" });
@@ -35,6 +36,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AuthProvider>
           {children}
           <InstallPrompt />
+          <ServiceWorkerRegister />
         </AuthProvider>
       </body>
     </html>

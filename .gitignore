@@ -27,7 +27,10 @@ playwright-report/
 test-results/
 .vitest/
 
-public/sw.js
+# public/sw.js is hand-authored and committed (Resilience Task 3) — Next.js
+# runs Turbopack here, and Turbopack has no webpack-plugin hook the way a
+# generator like next-pwa needs, so there's no build step to gitignore the
+# output of. workbox-*.js stays ignored in case that ever changes.
 public/workbox-*.js
 .env*
 
