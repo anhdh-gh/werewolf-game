@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
+import type { Database, DataSnapshot } from "firebase-admin/database";
 import { adminDb } from "@/lib/firebase/admin";
 import { planAdvance } from "@/lib/game/planAdvance";
 import { requiredActorsForPhase } from "@/lib/game/requiredActors";
+import { checkWinner } from "@/lib/game/checkWinner";
+import { applyLoverDeaths } from "@/lib/game/resolveDeathExtras";
 import { seerCheck, type Game, type GamePlayer, type PrivatePlayerState, type RoleKey } from "@/types/game";
 import { PHASE_DURATIONS_MS } from "@/lib/game/phases";
 
@@ -34,29 +37,39 @@ export async function POST(
   }
   const game = gameSnap.val() as Game;
 
+  const [privateSnap, hunterShotSnap] = await Promise.all([
+    db.ref(`private/${gameId}`).get(),
+    db.ref(`games/${gameId}/actions/HUNTER_SHOT`).get(),
+  ]);
+  const privateState = (privateSnap.val() ?? {}) as Record<string, PrivatePlayerState>;
+
+  // Spec §4.4 step 8: a Hunter's revenge shot is not phase-gated — it fires
+  // reactively on death, whenever that happens, which is always AFTER the
+  // phase transition that killed them has already committed. So it can
+  // never ride along with planAdvance()'s single per-call phase decision
+  // below; it needs its own pass, independent of whatever phase transition
+  // (if any) this call is otherwise processing — including one that
+  // already ended the game, which is why this check runs even before the
+  // ENDED short-circuit right after it. Idempotent by construction: a shot
+  // only counts as "pending" while its target is still alive, so
+  // re-running this against an already-applied shot is a safe no-op.
+  const pendingHunterKill = await applyPendingHunterShots(db, gameId, game, privateState, hunterShotSnap);
+  if (pendingHunterKill) {
+    return NextResponse.json(pendingHunterKill);
+  }
+
   if (game.phase.name === "ENDED") {
     return NextResponse.json({ phase: game.phase, result: game.result ?? null });
   }
 
-  const [privateSnap, currentPhaseActions, bodyguard, muter, wolves, witchSave, witchKill, vote, hunterShot] =
-    await Promise.all([
-      db.ref(`private/${gameId}`).get(),
-      db.ref(`games/${gameId}/actions/${game.phase.name}`).get(),
-      db.ref(`games/${gameId}/actions/BODYGUARD`).get(),
-      db.ref(`games/${gameId}/actions/MUTER`).get(),
-      db.ref(`games/${gameId}/actions/WOLVES`).get(),
-      db.ref(`games/${gameId}/actions/WITCH_SAVE`).get(),
-      db.ref(`games/${gameId}/actions/WITCH_KILL`).get(),
-      db.ref(`games/${gameId}/actions/VOTE`).get(),
-      db.ref(`games/${gameId}/actions/HUNTER_SHOT`).get(),
-    ]);
+  const currentPhaseActionsSnap = await db.ref(`games/${gameId}/actions/${game.phase.name}`).get();
 
   // Spec §4.3: end the phase early only once every required actor is done;
   // otherwise wait for endsAt. requiredActors is empty for announcement-only
   // phases (NIGHT_FALLS, DAWN, DISCUSSION, VOTE_RESULT, REVEAL_ROLE) — those
   // must never early-exit, so an empty list only counts as "ready" via the
   // time check, never on its own.
-  const currentActionsVal = (currentPhaseActions.val() ?? {}) as Record<string, { done?: boolean }>;
+  const currentActionsVal = (currentPhaseActionsSnap.val() ?? {}) as Record<string, { done?: boolean }>;
   const allRequiredDone =
     game.phase.requiredActors.length > 0 &&
     game.phase.requiredActors.every((uid) => currentActionsVal[uid]?.done);
@@ -77,7 +90,15 @@ export async function POST(
     return NextResponse.json({ phase: latest.val() });
   }
 
-  const privateState = (privateSnap.val() ?? {}) as Record<string, PrivatePlayerState>;
+  const [bodyguard, muter, wolves, witchSave, witchKill, vote] = await Promise.all([
+    db.ref(`games/${gameId}/actions/BODYGUARD`).get(),
+    db.ref(`games/${gameId}/actions/MUTER`).get(),
+    db.ref(`games/${gameId}/actions/WOLVES`).get(),
+    db.ref(`games/${gameId}/actions/WITCH_SAVE`).get(),
+    db.ref(`games/${gameId}/actions/WITCH_KILL`).get(),
+    db.ref(`games/${gameId}/actions/VOTE`).get(),
+  ]);
+
   const activeRoles: RoleKey[] = Object.values(privateState).map((p) => p.role);
   const cursedUids = Object.entries(privateState)
     .filter(([, p]) => p.initialRole === "CURSED")
@@ -113,16 +134,23 @@ export async function POST(
   const voteBallots = Object.fromEntries(
     Object.entries(voteVal).map(([uid, ballot]) => [uid, ballot.target]),
   );
-  const hunterShotVal = (hunterShot.val() ?? {}) as Record<string, { target: string }>;
-  const hunterShots = Object.fromEntries(
-    Object.entries(hunterShotVal).map(([uid, shot]) => [uid, shot.target]),
-  );
 
+  // Hunter shots are handled entirely by applyPendingHunterShots() above —
+  // by the time a night/vote resolution runs, no dead-Hunter shot could
+  // possibly exist yet (the Hunter doesn't even know they're dead until
+  // this transition commits), so planAdvance never needs any here.
   const decision = planAdvance({
     currentPhase: game.phase.name,
     activeRoles,
     aliveRolesByUid,
-    actions: { protectTarget, wolfVotes, witchSaveTarget, witchPoisonTarget, voteBallots, hunterShots },
+    actions: {
+      protectTarget,
+      wolfVotes,
+      witchSaveTarget,
+      witchPoisonTarget,
+      voteBallots,
+      hunterShots: {},
+    },
     cursedUids,
     alreadyTransformedCursed,
     lovers,
@@ -252,6 +280,81 @@ export async function POST(
   await db.ref().update(updates);
 
   return NextResponse.json({ phase: newPhase, deaths: decision.deaths, winner: decision.winner });
+}
+
+/**
+ * Applies any Hunter revenge shot whose target is still alive (spec §4.4
+ * step 8). Independent of the phase clock and of planAdvance() by design —
+ * see the long comment at its call site. Also re-checks the win condition
+ * against the resulting alive roster, since a Hunter's shot can end the
+ * game on its own (e.g. it kills the last wolf).
+ *
+ * Returns a response body if it did something (so the caller can respond
+ * and stop), or null if there was nothing pending.
+ */
+async function applyPendingHunterShots(
+  db: Database,
+  gameId: string,
+  game: Game,
+  privateState: Record<string, PrivatePlayerState>,
+  hunterShotSnap: DataSnapshot,
+): Promise<{ phase: Game["phase"]; deaths: string[]; winner: string | null } | null> {
+  const hunterShotVal = (hunterShotSnap.val() ?? {}) as Record<string, { target: string }>;
+
+  const pendingTargets = Object.entries(hunterShotVal)
+    .filter(([hunterUid, shot]) => {
+      const hunterDead = game.players[hunterUid]?.alive === false;
+      const targetAlive = game.players[shot.target]?.alive === true;
+      return hunterDead && targetAlive;
+    })
+    .map(([, shot]) => shot.target);
+
+  if (pendingTargets.length === 0) return null;
+
+  const lovers = findLoverPair(privateState);
+  const deaths = applyLoverDeaths([...new Set(pendingTargets)], lovers);
+
+  const updates: Record<string, unknown> = {};
+  for (const uid of deaths) {
+    updates[`games/${gameId}/players/${uid}/alive`] = false;
+  }
+
+  // A game that already ended keeps its announced winner, full stop — see
+  // GameScreen's isDeadHunterWithUnfiredShot comment. The shot still marks
+  // its target dead for narrative completeness; it just can't reopen a
+  // result the table has already been told.
+  let newPhase = game.phase;
+  let winner: string | null = game.result?.winner ?? null;
+
+  if (game.phase.name !== "ENDED") {
+    const aliveRoles: RoleKey[] = [];
+    const deathsThisRoundRoles: RoleKey[] = [];
+    const deathSet = new Set(deaths);
+    for (const [uid, player] of Object.entries(game.players)) {
+      const role = privateState[uid]?.role;
+      if (!role) continue;
+      if (deathSet.has(uid) || !(player as GamePlayer).alive) {
+        if (deathSet.has(uid)) deathsThisRoundRoles.push(role);
+      } else {
+        aliveRoles.push(role);
+      }
+    }
+
+    winner = checkWinner({ deathsThisRoundRoles, aliveRoles });
+    if (winner) {
+      newPhase = { name: "ENDED", endsAt: Date.now(), version: game.phase.version + 1, requiredActors: [] };
+      updates[`games/${gameId}/phase`] = newPhase;
+      updates[`games/${gameId}/result`] = { winner };
+      updates[`rooms/${game.roomCode}/status`] = "LOBBY";
+      for (const uid of Object.keys(game.players)) {
+        updates[`rooms/${game.roomCode}/members/${uid}/ready`] = false;
+      }
+    }
+  }
+
+  await db.ref().update(updates);
+
+  return { phase: newPhase, deaths, winner };
 }
 
 function findLoverPair(
