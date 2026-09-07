@@ -71,7 +71,7 @@ database.rules.json           extended with /games and /private (v2)
 
 ---
 
-### Task 1: Game data types — STATUS: not started
+### Task 1: Game data types — STATUS: done
 
 `src/types/game.ts`: `RoleKey` (8 roles + the values already in
 `OPTIONAL_ROLE_KEYS`), `Faction` (`VILLAGE | WOLF | TANNER`), `PhaseName` (the 12
@@ -79,7 +79,7 @@ phases from spec §4.3), `GamePlayer { name, alive, muted, wasProtectedLastNight
 `GamePhase { name, endsAt, version, requiredActors }`, `NightActions` shape matching
 `actions/{phaseKey}/{uid}`.
 
-### Task 2: Role distribution — STATUS: not started
+### Task 2: Role distribution — STATUS: done
 
 `src/lib/game/roles.ts`: `wolfCount(n)`, `buildRoleList(n, rolesEnabled)`,
 `assignRoles(uids, rolesEnabled)`. Implements spec §4.2 exactly (wolf count formula,
@@ -88,7 +88,7 @@ Tanner → Villager, skipping disabled optional roles). Vitest covers every n fr
 16 and several `rolesEnabled` combinations, asserting the resulting role list has the
 exact expected composition.
 
-### Task 3: Phase sequence and skip logic — STATUS: not started
+### Task 3: Phase sequence and skip logic — STATUS: done
 
 `src/lib/game/phases.ts`: the ordered phase list with default durations from spec
 §4.3, and `nextPhase(current, activeRoles)` that skips a role's phase entirely when
@@ -97,7 +97,7 @@ DISCUSSION → VOTE → VOTE_RESULT back to NIGHT_FALLS. Tests cover a full lap 
 roles enabled, and a lap with several optional roles disabled to confirm their phases
 are skipped.
 
-### Task 4: Night resolution engine — STATUS: not started
+### Task 4: Night resolution engine — STATUS: done
 
 `src/lib/game/resolveNight.ts`: implements spec §4.4's exact ordered algorithm
 (protect vs. bite vs. cure vs. poison vs. first-bite-on-Cursed), explicitly as
@@ -107,20 +107,20 @@ target survives when protected or cured; Cursed target transforms instead of dyi
 first bite only; poison always kills regardless of protect/cure; a target hit by both
 wolves and poison dies once, not double-counted.
 
-### Task 5: Day vote resolution — STATUS: not started
+### Task 5: Day vote resolution — STATUS: done
 
 `src/lib/game/resolveVote.ts`: tally votes among alive players, most votes dies, ties
 (including all-abstain) mean nobody dies. Tests cover a clean majority, a tie, and an
 all-abstain round.
 
-### Task 6: Win condition check — STATUS: not started
+### Task 6: Win condition check — STATUS: done
 
 `src/lib/game/checkWinner.ts`: implements spec §4.6's ordered check (Tanner death ends
 the game immediately even if wolves/village conditions would also be true that same
 round; then no-wolves-left; then wolves≥rest). Tests cover all three winners plus the
 "game continues" case.
 
-### Task 7: Security Rules v2 (`/games`, `/private`) — STATUS: not started
+### Task 7: Security Rules v2 (`/games`, `/private`) — STATUS: done
 
 Extends `database.rules.json`: `actions/{phaseKey}/{uid}` writable only by that uid
 while the phase is live; `players`/`phase`/`result` client-read-only; `private/{uid}`
@@ -141,6 +141,19 @@ private-role data in one update. Guards re-entrancy with a `phase.version` trans
 the project owner sets in Vercel) — cannot be live-tested without it. Write the route
 and unit-test its pure decision logic (already covered by Tasks 2–6); mark live
 verification as a follow-up once the credential exists.
+
+### Task 6b: Roster expanded to 12 roles, plus seerCheck and death-extras — STATUS: done
+
+Not in the original task breakdown — added mid-plan at the user's explicit request to
+maximize role variety, prioritizing Wolf and Village over the Riêng (solo) faction.
+Added Traitor (wolf, Seer-invisible), Lycan (village, Seer-false-positive), Hunter
+(on-death revenge kill), and Cupid (one-time lover pairing, shared death). This
+touched every task above (`FACTION_BY_ROLE`, `OPTIONAL_ROLE_KEYS`, the rules
+validator, `createRoom`'s defaults) plus two new pure modules:
+`src/lib/game/seerCheck.ts` (the one place that knows Traitor/Lycan are exceptions)
+and `src/lib/game/resolveDeathExtras.ts` (lover heartbreak + Hunter revenge,
+composable, independently tested). Spec §4.1/4.2/4.3/4.4 updated to match. Full
+lovers-become-their-own-faction win condition explicitly deferred — noted in the spec.
 
 ### Task 9: Gameplay screens — STATUS: not started
 
