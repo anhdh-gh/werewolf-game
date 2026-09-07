@@ -200,3 +200,55 @@ anywhere in the schema, so there is nothing for a compromised client or a future
 mistake to leak. `GameEndScreen` shows the winning faction and who survived (already
 public all game) instead of a role list. Spec §4.6/§7 rewritten to state this as the
 "đừng gửi" principle from §12 applied without the usual end-of-game exception.
+
+### Task 10: Post-Task-9 correctness audit — STATUS: done
+
+Once the whole engine + UI existed end to end, went through it line by line looking
+for "the route reads or decides something but never persists the effect" bugs — the
+kind Vitest's unit tests can't catch because each pure function was individually
+correct; the gap was always in the route's read/write plumbing around them. Found and
+fixed, in order:
+
+1. **No readiness gate at all** — the route transitioned on every call, so the first
+   player to act would force-advance the whole table past everyone else.
+2. **Wolves didn't know their own pack**, and could target a teammate; **Bodyguard
+   could reshield the same person every night** — spec §7/§4.1 both violated.
+3. **CURSED phase demanded an action from a role with nothing to click**, stalling
+   every single night to its full duration for no reason.
+4. **A Hunter whose own death ended the game never got their revenge shot** —
+   GameScreen short-circuited straight to the end screen.
+5. **The Witch's potions were never consumed** — she could save and poison every
+   night, unlimited, for the whole game.
+6. **`dayNumber` never incremented** — permanently "Ngày 1" no matter how many
+   nights passed.
+7. **The Muter's pick was read nowhere** — `muted` never became true for anyone.
+8. **`packUids` never updated when a Cursed player transformed** — neither side of
+   the pack ever found out about the other.
+9. **The Hunter's shot was never applied at all**, in the general case, not just the
+   game-ending edge case from #4 — `planAdvance` only ever consults `hunterShots`
+   while resolving the transition that kills them, but the Hunter can't submit a
+   shot until after that transition already committed and they're dead. Needed its
+   own independent pass (`applyPendingHunterShots`), run on every request.
+10. **The single most serious one**: `GamePhase.requiredActors` — every uid who had
+    to act a given phase — was stored on the public `games/{gameId}/phase` node and
+    rendered as a literal per-player marker in `PlayerList`. For any role-specific
+    phase that list *is* the role membership (every Werewolf during WOLVES, the Seer
+    during SEER, ...) — this leaked exactly the information `/private` exists to
+    hide, to the entire table, every night. Root cause went deeper than one field:
+    RTDB read grants cascade from parent to child with no way for a child to opt
+    back out, so nesting `actions/{phaseKey}/{uid}` under `games/{gameId}` (which
+    has `.read: auth != null`) made every role-specific action publicly readable
+    too, regardless of what `.read` was written at the leaf — the mere existence of
+    an entry (only the real role-holder could have written it) outed them. Fixed by
+    moving `requiredActors` off the public object entirely (recomputed from
+    `/private` on every server call; each client derives its own "is it my turn"
+    from its own role only) and moving `actions` to its own top-level tree with
+    self-read-only rules (VOTE excepted, since voting isn't role-specific).
+11. **The Seer's check results were computed and stored but never displayed** —
+    `hints` existed in her private state with nothing in the UI ever reading it back.
+
+None of this was reachable by the unit tests, which only ever exercised the pure
+functions with hand-built inputs — it took reading planAdvance()'s actual callers end
+to end to find. Still not live-verified (same blockers as everything else in this
+plan) — this is as much correctness confidence as static reading and Vitest can buy
+without a real Firebase project and real concurrent players.
