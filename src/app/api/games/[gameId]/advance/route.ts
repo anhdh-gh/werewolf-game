@@ -38,11 +38,12 @@ export async function POST(
     return NextResponse.json({ phase: game.phase, result: game.result ?? null });
   }
 
-  const [privateSnap, currentPhaseActions, bodyguard, wolves, witchSave, witchKill, vote, hunterShot] =
+  const [privateSnap, currentPhaseActions, bodyguard, muter, wolves, witchSave, witchKill, vote, hunterShot] =
     await Promise.all([
       db.ref(`private/${gameId}`).get(),
       db.ref(`games/${gameId}/actions/${game.phase.name}`).get(),
       db.ref(`games/${gameId}/actions/BODYGUARD`).get(),
+      db.ref(`games/${gameId}/actions/MUTER`).get(),
       db.ref(`games/${gameId}/actions/WOLVES`).get(),
       db.ref(`games/${gameId}/actions/WITCH_SAVE`).get(),
       db.ref(`games/${gameId}/actions/WITCH_KILL`).get(),
@@ -98,6 +99,8 @@ export async function POST(
 
   const bodyguardVal = (bodyguard.val() ?? {}) as Record<string, { target: string }>;
   const protectTarget = Object.values(bodyguardVal)[0]?.target ?? null;
+  const muterVal = (muter.val() ?? {}) as Record<string, { target: string }>;
+  const muteTarget = Object.values(muterVal)[0]?.target ?? null;
   const wolfVal = (wolves.val() ?? {}) as Record<string, { target: string }>;
   const wolfVotes = Object.fromEntries(
     Object.entries(wolfVal).map(([uid, action]) => [uid, action.target]),
@@ -149,6 +152,18 @@ export async function POST(
   // the very first NIGHT_FALLS (from REVEAL_ROLE or PAIR_LOVERS) is still day 1.
   if (game.phase.name === "VOTE_RESULT" && decision.nextPhase === "NIGHT_FALLS") {
     updates[`games/${gameId}/dayNumber`] = game.dayNumber + 1;
+    // Spec §4.7: mute lasts one day ("hôm sau người đó không được nói") —
+    // clear last night's Muter pick before tonight's MUTER phase, if any,
+    // picks (or doesn't pick) a new one.
+    for (const playerUid of Object.keys(game.players)) {
+      updates[`games/${gameId}/players/${playerUid}/muted`] = false;
+    }
+  }
+
+  // Leaving MUTER: apply this night's pick so it's in effect before
+  // tomorrow's DISCUSSION (spec §4.7).
+  if (game.phase.name === "MUTER" && muteTarget) {
+    updates[`games/${gameId}/players/${muteTarget}/muted`] = true;
   }
 
   if (decision.nextPhase === "DAWN") {
