@@ -1,0 +1,18 @@
+{
+  "name": "Ma Sói",
+  "short_name": "Ma Sói",
+  "description": "Ma sói chơi cùng bàn hoặc từ xa",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
