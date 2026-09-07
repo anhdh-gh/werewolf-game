@@ -189,8 +189,23 @@ export async function POST(
   for (const uid of decision.deaths) {
     updates[`games/${gameId}/players/${uid}/alive`] = false;
   }
-  for (const uid of decision.transformedToWolf) {
-    updates[`private/${gameId}/${uid}/role`] = "WEREWOLF";
+  if (decision.transformedToWolf.length > 0) {
+    for (const uid of decision.transformedToWolf) {
+      updates[`private/${gameId}/${uid}/role`] = "WEREWOLF";
+    }
+    // Spec §7: the pack needs to know a newly-turned Cursed player, and the
+    // new wolf needs to know the rest of the pack — packUids was only ever
+    // set once at game start, so without this, neither side would ever
+    // find out about each other after tonight's transformation.
+    const newPack = [
+      ...Object.entries(privateState)
+        .filter(([, p]) => p.role === "WEREWOLF" || p.role === "TRAITOR")
+        .map(([packUid]) => packUid),
+      ...decision.transformedToWolf,
+    ];
+    for (const packUid of newPack) {
+      updates[`private/${gameId}/${packUid}/packUids`] = newPack.filter((u) => u !== packUid);
+    }
   }
   if (decision.winner) {
     // Winner only — no role reveal, ever, even at game end.
