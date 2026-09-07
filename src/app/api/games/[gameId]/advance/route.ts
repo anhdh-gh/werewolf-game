@@ -145,6 +145,12 @@ export async function POST(
     [`games/${gameId}/phase`]: newPhase,
   };
 
+  // Looping VOTE_RESULT -> NIGHT_FALLS (spec §4.3) is what starts a new day;
+  // the very first NIGHT_FALLS (from REVEAL_ROLE or PAIR_LOVERS) is still day 1.
+  if (game.phase.name === "VOTE_RESULT" && decision.nextPhase === "NIGHT_FALLS") {
+    updates[`games/${gameId}/dayNumber`] = game.dayNumber + 1;
+  }
+
   if (decision.nextPhase === "DAWN") {
     // Spec §4.1: the Bodyguard can't shield the same target two nights
     // running — the next BODYGUARD phase's UI reads this to exclude it.
