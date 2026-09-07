@@ -4,14 +4,22 @@ import type { PhaseName, RoleKey } from "@/types/game";
  * absent here (NIGHT_FALLS, DAWN, DISCUSSION, VOTE_RESULT, REVEAL_ROLE,
  * ENDED) are announcement/wait-only — nobody is "required", they just run
  * out their duration. VOTE is handled separately since everyone alive
- * votes, not one role. */
+ * votes, not one role.
+ *
+ * CURSED is deliberately absent even though it has its own phase (spec
+ * §4.3's PHASE_OPTIONAL_ROLE in game.ts, which is a *different* mapping —
+ * that one only controls whether the phase is skipped when nobody holds
+ * the role). The Cursed player has no active decision (spec §4.1: they
+ * just transform automatically on their first bite) — there is no action
+ * UI for them, so requiring an "action" from them here would just make
+ * the phase stall to its full duration with nothing for anyone to click,
+ * every single night. */
 const ACTING_ROLE_BY_PHASE: Partial<Record<PhaseName, RoleKey>> = {
   SEER: "SEER",
   BODYGUARD: "BODYGUARD",
   MUTER: "MUTER",
   WITCH_SAVE: "WITCH",
   WITCH_KILL: "WITCH",
-  CURSED: "CURSED",
   PAIR_LOVERS: "CUPID",
 };
 

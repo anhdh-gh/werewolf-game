@@ -12,6 +12,7 @@ const ROLES: Record<string, RoleKey> = {
   muter1: "MUTER",
   cupid1: "CUPID",
   hunter1: "HUNTER",
+  cursed1: "CURSED",
   villager1: "VILLAGER",
 };
 
@@ -46,6 +47,10 @@ describe("requiredActorsForPhase", () => {
     expect(requiredActorsForPhase("VOTE_RESULT", ROLES)).toEqual([]);
     expect(requiredActorsForPhase("REVEAL_ROLE", ROLES)).toEqual([]);
     expect(requiredActorsForPhase("ENDED", ROLES)).toEqual([]);
+  });
+
+  it("nobody is required during CURSED — the Cursed player has no active decision to make", () => {
+    expect(requiredActorsForPhase("CURSED", ROLES)).toEqual([]);
   });
 
   it("returns nobody for a role phase whose role isn't alive", () => {
