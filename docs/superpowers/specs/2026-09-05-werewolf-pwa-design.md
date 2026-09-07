@@ -49,9 +49,15 @@ bật thoại qua LiveKit.
 
 ## 3. Phạm vi
 
-**Trong phạm vi v1:** đăng nhập Google; tạo và vào phòng bằng mã; tám vai; luồng đêm/ngày
-đầy đủ có đếm ngược; chat sói và chat làng; dẫn truyện bằng giọng nói; chạy nền khi khoá
-màn hình; cài đặt như app (PWA); thông báo đẩy; thoại LiveKit cho phòng chơi xa.
+**Trong phạm vi v1:** đăng nhập Google; tạo và vào phòng bằng mã; mười hai vai (§4.1, mở
+rộng từ tám sau brainstorm ban đầu); luồng đêm/ngày đầy đủ có đếm ngược; chat sói và chat
+làng; dẫn truyện bằng giọng nói; chạy nền khi khoá màn hình; cài đặt như app (PWA); thông
+báo đẩy; thoại LiveKit cho phòng chơi xa.
+
+> Đăng nhập, phòng, vai, và luồng đêm/ngày (Game Engine — xem plan
+> `docs/superpowers/plans/2026-09-07-game-engine.md`) đã xong, chưa kiểm chứng trên
+> Firebase thật. Chat, dẫn truyện giọng nói, chạy nền, PWA, thông báo đẩy, thoại LiveKit
+> **chưa làm** — gộp lại thành sub-project Resilience, chưa được giao.
 
 **Ngoài phạm vi v1:** bảng xếp hạng, thống kê, lịch sử ván; kết bạn; tuỳ biến bộ vai ngoài
 mấy công tắc bật/tắt; khán giả; chống gian lận. Người chơi là bạn bè của nhau — mở DevTools
