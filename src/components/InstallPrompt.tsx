@@ -59,9 +59,9 @@ export function InstallPrompt() {
   if (showIosHint) {
     return (
       <div className="fixed inset-x-0 bottom-0 z-50 flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))] animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
-        <p className="flex items-center gap-2 rounded-full bg-card px-4 py-2 text-center text-xs text-card-foreground shadow-lg ring-1 ring-border">
+        <p className="flex max-w-[min(22rem,90vw)] items-center gap-2 rounded-2xl bg-card px-4 py-2.5 text-left text-xs text-card-foreground shadow-lg ring-1 ring-border">
           <Share className="size-3.5 shrink-0 text-muted-foreground" />
-          Để cài đặt, bấm Chia sẻ → Thêm vào MH chính
+          Bấm Chia sẻ → Thêm vào MH chính để nhận được thông báo đẩy trên iPhone
         </p>
       </div>
     );
