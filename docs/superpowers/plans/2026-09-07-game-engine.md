@@ -165,11 +165,11 @@ spec but required by §3's "anyone can press Start") and wired a Start button in
 RoomLobby. Every visual state was screenshotted through a temporary mock-data route
 (deleted before committing) to confirm it renders and responds to taps correctly.
 
-Known gaps, not silently skipped: no enforcement that the Bodyguard can't protect the
-same target on consecutive nights (spec §4.1), and the UI doesn't stop a wolf from
-targeting a fellow wolf. Both are missing *input guardrails* only — the tested
-resolution engine doesn't care who submitted what, so neither is a correctness bug,
-just a rule a player could currently break by hand.
+Two gaps flagged at first ("Bodyguard can repeat a target", "a wolf can target a
+fellow wolf") are now fixed: the pack sees each other via `packUids` in private state
+(spec §7 requires this explicitly — "danh sách đồng bọn cho Sói" — and it's also what
+lets the target picker exclude packmates), and `lastProtectedUid` on the public game
+object lets the Bodyguard screen exclude last night's target.
 
 ## What's left before any of this runs live
 
