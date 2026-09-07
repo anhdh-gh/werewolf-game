@@ -9,9 +9,10 @@
 // caught even though no live Firebase is reachable here (see
 // rulesGames.test.ts's network note — same constraint, same reason).
 //
-// The routes talk to Firebase only via `adminDb()` from
-// src/lib/firebase/admin.ts, so that's the only thing mocked — everything
-// downstream (planAdvance, resolveNight, checkWinner, ...) runs unmodified.
+// The routes talk to Firebase only via `adminDb()`/`adminMessaging()` from
+// src/lib/firebase/admin.ts, so those are the only things mocked —
+// everything downstream (planAdvance, resolveNight, checkWinner, ...) runs
+// unmodified.
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FakeAdminDatabase } from "./helpers/fakeAdminDb";
@@ -19,9 +20,11 @@ import type { Game, PrivatePlayerState } from "@/types/game";
 import type { Room } from "@/types/room";
 
 const fakeDb = new FakeAdminDatabase();
+const sendEachForMulticast = vi.fn().mockResolvedValue({});
 
 vi.mock("@/lib/firebase/admin", () => ({
   adminDb: () => fakeDb,
+  adminMessaging: () => ({ sendEachForMulticast }),
 }));
 
 const { POST: startGame } = await import("@/app/api/rooms/[code]/start/route");
@@ -118,6 +121,7 @@ async function expirePhaseTimer(gameId: string) {
 beforeEach(() => {
   fakeDb.root = {};
   fakeDb.counter = 0;
+  sendEachForMulticast.mockClear();
 });
 
 async function seedRoom(code: string, uids: string[], rolesEnabled: typeof NO_OPTIONAL_ROLES) {
@@ -872,5 +876,104 @@ describe("Spec §4.3 timing decoy: a dead role-holder's phase can't be told apar
     const durationMs = res.phase.endsAt - before;
     expect(durationMs).toBeGreaterThan(28_000);
     expect(durationMs).toBeLessThan(32_000);
+  });
+});
+
+describe("Resilience Task 6: push notifications for whoever's newly required to act", () => {
+  const gameId = "GAME-6";
+  const roomCode = "PUSH01";
+  const seer = "seer";
+  const witch = "witch";
+  const wolfA = "wolfA";
+  const villager1 = "villager1";
+  const uids = [seer, witch, wolfA, villager1];
+
+  beforeEach(async () => {
+    const players: Game["players"] = {};
+    for (const uid of uids) players[uid] = { name: uid, alive: true, muted: false };
+
+    const game: Game = {
+      roomCode,
+      startedAt: 1,
+      dayNumber: 1,
+      phase: { name: "NIGHT_FALLS", endsAt: Date.now() - 1, version: 0 },
+      players,
+    };
+    await fakeDb.ref(`games/${gameId}`).set(game);
+    await fakeDb.ref(`private/${gameId}`).set({
+      [seer]: { role: "SEER", initialRole: "SEER", potions: { heal: true, poison: true } },
+      [witch]: { role: "WITCH", initialRole: "WITCH", potions: { heal: true, poison: true } },
+      [wolfA]: {
+        role: "WEREWOLF",
+        initialRole: "WEREWOLF",
+        potions: { heal: true, poison: true },
+        packUids: [],
+      },
+      [villager1]: {
+        role: "VILLAGER",
+        initialRole: "VILLAGER",
+        potions: { heal: true, poison: true },
+      },
+    } satisfies Record<string, PrivatePlayerState>);
+    await seedRoom(roomCode, uids, NO_OPTIONAL_ROLES);
+    await fakeDb.ref(`rooms/${roomCode}/status`).set("PLAYING");
+  });
+
+  it("sends only to the newly-required uid(s) that actually registered a token", async () => {
+    await fakeDb.ref(`fcmTokens/${seer}`).set("seer-token-abc");
+    // wolfA deliberately has no token — proves the "no token, skip" path
+    // (already exercised implicitly by every other test in this file,
+    // which never seed one) doesn't also swallow a token that DOES exist.
+
+    const res = await callAdvance(gameId); // NIGHT_FALLS -> SEER, timer only
+    expect(res.phase.name).toBe("SEER");
+
+    expect(sendEachForMulticast).toHaveBeenCalledTimes(1);
+    expect(sendEachForMulticast).toHaveBeenCalledWith({
+      tokens: ["seer-token-abc"],
+      notification: { title: "Ma Sói", body: "Đến lượt bạn!" },
+    });
+  });
+
+  it("sends nothing when the newly-required uid never registered a token", async () => {
+    const res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("SEER");
+    expect(sendEachForMulticast).not.toHaveBeenCalled();
+  });
+
+  it("targets whoever the NEW phase actually requires, not a stale actor from the one just left", async () => {
+    // The Seer has a token but isn't required for WOLVES — proves this
+    // isn't just "does anyone with a token get notified" but specifically
+    // requiredActorsForPhase(nextPhase, ...), same source of truth every
+    // client already uses for its own "is it my turn".
+    await fakeDb.ref(`fcmTokens/${seer}`).set("seer-token-abc");
+    let res = await callAdvance(gameId); // NIGHT_FALLS -> SEER, timer only
+    expect(res.phase.name).toBe("SEER");
+    sendEachForMulticast.mockClear();
+
+    await writeAction(gameId, "SEER", seer, wolfA);
+    res = await callAdvance(gameId); // SEER -> WOLVES
+    expect(res.phase.name).toBe("WOLVES");
+    expect(sendEachForMulticast).not.toHaveBeenCalled(); // wolfA has no token
+    sendEachForMulticast.mockClear();
+
+    await fakeDb.ref(`fcmTokens/${witch}`).set("witch-token-xyz");
+    await writeAction(gameId, "WOLVES", wolfA, villager1);
+    const res2 = await callAdvance(gameId);
+    expect(res2.phase.name).toBe("WITCH_SAVE");
+    expect(sendEachForMulticast).toHaveBeenCalledWith({
+      tokens: ["witch-token-xyz"],
+      notification: { title: "Ma Sói", body: "Đến lượt bạn!" },
+    });
+  });
+
+  it("a notification failure never blocks the phase transition itself", async () => {
+    await fakeDb.ref(`fcmTokens/${seer}`).set("seer-token-abc");
+    sendEachForMulticast.mockRejectedValueOnce(new Error("FCM is down"));
+
+    const res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("SEER");
+    const game = await getGame(gameId);
+    expect(game.phase.name).toBe("SEER");
   });
 });

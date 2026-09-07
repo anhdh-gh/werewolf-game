@@ -1,5 +1,6 @@
 import { cert, getApps, initializeApp, type App } from "firebase-admin/app";
 import { getDatabase, type Database } from "firebase-admin/database";
+import { getMessaging, type Messaging } from "firebase-admin/messaging";
 
 let app: App | undefined;
 
@@ -36,4 +37,11 @@ function getAdminApp(): App {
 
 export function adminDb(): Database {
   return getDatabase(getAdminApp());
+}
+
+/** Spec §8.2's safety net: FCM, for whenever the audio-keepalive trick
+ * doesn't hold (OS killed the tab anyway). Same credential source as
+ * adminDb() — no separate setup. */
+export function adminMessaging(): Messaging {
+  return getMessaging(getAdminApp());
 }

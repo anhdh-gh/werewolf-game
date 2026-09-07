@@ -107,3 +107,39 @@ self.addEventListener("fetch", (event) => {
     ),
   );
 });
+
+// Spec §8.2's push safety net (Resilience Task 6). One service worker
+// handles both the shell/audio caching above and this — see
+// src/lib/notifications/push.ts's own comment for why the client reuses
+// this same registration instead of registering a separate
+// firebase-messaging-sw.js.
+self.addEventListener("push", (event) => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch {
+    payload = {};
+  }
+  const title = payload.notification?.title || payload.title || "Ma Sói";
+  const body = payload.notification?.body || payload.body || "Đến lượt bạn";
+
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if ("focus" in client) return client.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow("/");
+    }),
+  );
+});

@@ -28,6 +28,7 @@ import { PlayerList } from "./PlayerList";
 import { GameEndScreen } from "./GameEndScreen";
 import { HunterRevengePrompt } from "./HunterRevenge";
 import { ChatPanel } from "./ChatPanel";
+import { EnableNotificationsButton } from "@/components/EnableNotificationsButton";
 
 function CenteredState({ children }: { children: React.ReactNode }) {
   return (
@@ -210,6 +211,8 @@ function GameScreenInner({
               lockedReason={chatLockedReason}
             />
           )}
+
+          <EnableNotificationsButton uid={uid} />
 
           <PlayerList players={game.players} meUid={uid} />
         </div>

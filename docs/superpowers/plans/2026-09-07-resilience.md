@@ -179,12 +179,44 @@ the exact expected filenames). Nothing else needs to change once those files exi
 `useNarrationPlayback` already looks for them at those paths and will just start
 working.
 
-## Task 6: Push notifications (FCM) — STATUS: not started
+## Task 6: Push notifications (FCM) — STATUS: done (code-only, needs live credentials)
 
-§8.2 safety net. Needs `NEXT_PUBLIC_FIREBASE_VAPID_KEY` + a service worker push
-handler + subscribing clients writing their FCM token somewhere the server can read
-it to send from. Code-only, like Game Engine's Admin-SDK routes — cannot be
-live-verified here.
+§8.2's safety net. `fcmTokens/{uid}` is its own top-level tree, deliberately not
+nested under `presence/{uid}` — `attachPresence` writes that whole node with `set()`
+(replace, not merge) on every (re)connect, which would silently wipe a stored token;
+keeping it separate sidesteps that entirely. No `.read` rule for it at all (only
+self-`.write`) — no client ever needs to read a token, including its own owner, only
+the Admin SDK sends from it and that bypasses rules anyway.
+
+`src/lib/notifications/push.ts`'s `requestPushPermission` uses the client SDK's
+`getToken()`, despite this SDK version marking it deprecated in favor of a newer
+FID-based `register()`/`onRegistered()` flow — deliberately: no live Firebase
+project here to test either against, and whether `firebase-admin`'s send side even
+supports targeting an FID yet isn't something checkable from this sandbox either.
+`getToken()` is still fully functional and is what `firebase-admin`'s
+well-established `send({token})` definitely supports; flagged in the code for
+whoever has live access to revisit once the FID path is confirmed end to end.
+Reuses the Task 3 service worker's own registration (`ServiceWorkerRegister.tsx`)
+rather than the SDK's default of auto-registering a second, separate
+`firebase-messaging-sw.js` — `public/sw.js` grew `push`/`notificationclick` handlers
+instead. `EnableNotificationsButton` offers it (never forces it), shown only while
+`Notification.permission === "default"`.
+
+Server side: `advance/route.ts` sends best-effort (wrapped so a messaging failure
+can never take down the phase transition that already committed) to exactly
+`requiredActorsForPhase(nextPhase, aliveRolesByUid)` for whichever tokens exist —
+the same source of truth every client already uses for its own "is it my turn", so
+this can't tell anyone anything their own client wouldn't already show them.
+`adminMessaging()` added to `admin.ts` alongside `adminDb()`, same credential
+source.
+
+Covered by 4 new end-to-end tests (mocking `adminMessaging` in
+`gameFlowEndToEnd.test.ts` now, alongside `adminDb`): sends only to a uid that both
+needs to act AND has a token, sends nothing when no token exists, targets the NEW
+phase's actual requirement rather than a stale one from the phase just left, and a
+mocked send failure doesn't block the transition. Actual delivery — real device,
+real FCM project — is the one thing that couldn't be verified here, same ceiling as
+every other Admin-SDK-backed piece of this codebase.
 
 ## Task 7: LiveKit voice/video — STATUS: not started
 

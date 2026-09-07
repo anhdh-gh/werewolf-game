@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { Database, DataSnapshot } from "firebase-admin/database";
-import { adminDb } from "@/lib/firebase/admin";
+import { adminDb, adminMessaging } from "@/lib/firebase/admin";
 import { planAdvance } from "@/lib/game/planAdvance";
 import { tallyMajorityVote } from "@/lib/game/resolveNight";
 import { requiredActorsForPhase, ACTING_ROLE_BY_PHASE } from "@/lib/game/requiredActors";
@@ -395,7 +395,32 @@ export async function POST(
 
   await db.ref().update(updates);
 
+  // Spec §8.2's safety net — best-effort, never lets a notification problem
+  // take down the phase transition that already committed above. Only the
+  // uids requiredActorsForPhase names for the NEW phase get one; that's
+  // already every client's own "is it my turn" source of truth (see
+  // GameScreen's isRequired), so this can't tell anyone anything their own
+  // client wouldn't already have shown them.
+  const newlyRequired = requiredActorsForPhase(decision.nextPhase, aliveRolesByUid);
+  if (newlyRequired.length > 0) {
+    await notifyRequiredActors(db, newlyRequired).catch(() => {
+      // best-effort — the phase already advanced regardless of whether
+      // anyone gets woken up by a push notification
+    });
+  }
+
   return NextResponse.json({ phase: newPhase, deaths: decision.deaths, winner: decision.winner });
+}
+
+async function notifyRequiredActors(db: Database, uids: string[]): Promise<void> {
+  const tokenSnaps = await Promise.all(uids.map((uid) => db.ref(`fcmTokens/${uid}`).get()));
+  const tokens = tokenSnaps.map((snap) => snap.val() as string | null).filter((t) => !!t);
+  if (tokens.length === 0) return;
+
+  await adminMessaging().sendEachForMulticast({
+    tokens,
+    notification: { title: "Ma Sói", body: "Đến lượt bạn!" },
+  });
 }
 
 /**

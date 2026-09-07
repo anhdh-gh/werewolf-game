@@ -30,6 +30,11 @@
         ".write": "auth != null && auth.uid === $uid"
       }
     },
+    "fcmTokens": {
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid && newData.isString()"
+      }
+    },
     "games": {
       "$gameId": {
         ".read": "auth != null",
