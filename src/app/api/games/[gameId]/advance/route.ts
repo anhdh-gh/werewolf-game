@@ -158,12 +158,8 @@ export async function POST(
     updates[`private/${gameId}/${uid}/role`] = "WEREWOLF";
   }
   if (decision.winner) {
-    updates[`games/${gameId}/result`] = {
-      winner: decision.winner,
-      revealedRoles: Object.fromEntries(
-        Object.entries(privateState).map(([uid, p]) => [uid, p.role]),
-      ),
-    };
+    // Winner only — no role reveal, ever, even at game end.
+    updates[`games/${gameId}/result`] = { winner: decision.winner };
     // Spec §4.6: "Phòng quay về sảnh, giữ nguyên người chơi để chơi ván
     // mới." Only the Admin SDK can ever move status off LOBBY or back, so
     // this is the one place that happens.

@@ -79,7 +79,7 @@ describe("games/$gameId", () => {
   it("denies a client writing players, result, roomCode, startedAt, or dayNumber", async () => {
     const db = testEnv.authenticatedContext("uid-wolf").database();
     await assertFails(set(ref(db, "games/GAME1/players/uid-wolf/alive"), false));
-    await assertFails(set(ref(db, "games/GAME1/result"), { winner: "WOLF", revealedRoles: {} }));
+    await assertFails(set(ref(db, "games/GAME1/result"), { winner: "WOLF" }));
     await assertFails(set(ref(db, "games/GAME1/roomCode"), "HACKED"));
     await assertFails(set(ref(db, "games/GAME1/dayNumber"), 99));
   });

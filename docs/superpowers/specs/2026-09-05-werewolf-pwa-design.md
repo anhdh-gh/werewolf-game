@@ -178,8 +178,13 @@ Kiểm tra sau mỗi lần công bố người chết, theo thứ tự:
 2. Không còn sói → phe Làng thắng.
 3. Số sói ≥ số người còn lại không phải sói → phe Sói thắng.
 
-Kết thúc ván thì lật toàn bộ vai của mọi người. Phòng quay về sảnh, giữ nguyên người chơi
-để chơi ván mới.
+**Vai không bao giờ được tiết lộ, kể cả sau khi ván kết thúc.** Kết thúc ván chỉ công bố
+phe nào thắng và ai còn sống — không lật vai của bất kỳ ai. Đây là áp dụng triệt để nguyên
+tắc "đừng gửi" ở §12 (Server không bao giờ gửi vai của người khác cho một client) vào chính
+thời điểm mà hầu hết bản Ma Sói khác coi là ngoại lệ hợp lý. Lý do giữ nguyên tắc: vai chỉ nên
+lộ qua cách chơi và suy luận trong bàn, không nên có màn hình xác nhận đúng/sai sau ván — giữ
+được sự tò mò và tranh luận cho ván sau, và không có cơ chế nào để lộ sai vai vì máy chủ không
+bao giờ gửi trường đó đi. Phòng quay về sảnh, giữ nguyên người chơi để chơi ván mới.
 
 ### 4.7 Trạng thái câm được áp dụng thế nào
 
@@ -287,7 +292,7 @@ mà để xoá hẳn lớp lỗi lộ vai của bản cũ. Không có dữ liệ
   narration/{seq}              key, params{}          ← nhật ký dẫn truyện
   actions/{phaseKey}/{uid}     target, done, at       ← người chơi tự ghi
   chat/{scope}/{msgId}         scope = village | wolves
-  result/                      winner, revealedRoles{}
+  result/                      winner                  ← không có trường vai; xem §4.6
 
 /private/{gameId}/{uid}        role, initialRole, potions{}, hints[]
 

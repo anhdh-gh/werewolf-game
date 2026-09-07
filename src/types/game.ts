@@ -84,9 +84,11 @@ export interface GamePhase {
   requiredActors: string[];
 }
 
+/** Deliberately just the winning faction — no role reveal, ever. Roles stay
+ * private forever, even after the game ends (never sent, per §12's "đừng
+ * gửi" principle applied to the one place the old app still leaked it). */
 export interface GameResult {
   winner: Faction;
-  revealedRoles: Record<string, RoleKey>;
 }
 
 export interface Game {

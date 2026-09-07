@@ -2,14 +2,21 @@
 
 import { useRouter } from "next/navigation";
 import type { Game } from "@/types/game";
-import { ROLE_LABELS, FACTION_LABELS } from "@/lib/game/labels";
+import { FACTION_LABELS } from "@/lib/game/labels";
 import { Logo } from "@/components/Logo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
+/** No role reveal here, on purpose — not even at game end. Roles are never
+ * sent to a client that doesn't own them, full stop (spec §12's "đừng gửi"
+ * principle, applied without the usual end-of-game exception). Only the
+ * winning faction and who survived (already public all game) are shown. */
 export function GameEndScreen({ game }: { game: Game }) {
   const router = useRouter();
   if (!game.result) return null;
+
+  const players = Object.entries(game.players);
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center gap-6 p-6">
@@ -21,14 +28,22 @@ export function GameEndScreen({ game }: { game: Game }) {
 
         <Card className="w-full">
           <CardHeader>
-            <CardTitle>Vai trò mọi người</CardTitle>
+            <CardTitle>Ai còn sống</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="flex flex-col gap-1.5">
-              {Object.entries(game.result.revealedRoles).map(([uid, role]) => (
-                <li key={uid} className="flex justify-between text-sm">
-                  <span>{game.players[uid]?.name ?? uid}</span>
-                  <span className="text-muted-foreground">{ROLE_LABELS[role]}</span>
+              {players.map(([uid, player]) => (
+                <li
+                  key={uid}
+                  className={cn(
+                    "flex items-center justify-between text-sm",
+                    !player.alive && "text-muted-foreground line-through",
+                  )}
+                >
+                  <span>{player.name}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {player.alive ? "sống sót" : "đã chết"}
+                  </span>
                 </li>
               ))}
             </ul>
