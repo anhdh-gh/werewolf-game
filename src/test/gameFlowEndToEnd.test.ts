@@ -688,3 +688,70 @@ describe("Cupid + cross-faction lovers: PAIR_LOVERS through the real routes, dea
     expect(game.result).toBeUndefined();
   });
 });
+
+describe("Tanner: a solo win triggered by being voted out, overriding the headcount check", () => {
+  it("ends the game for TANNER the moment they're hanged, even with both wolves still alive", async () => {
+    // wolfCount(8) === 2; only TANNER enabled -> the one optional slot
+    // BODYGUARD/TRAITOR/HUNTER/CUPID/MUTER/CURSED/LYCAN all skip goes to
+    // TANNER (last in fill-priority order), rest fall to VILLAGER.
+    const uids = ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8"];
+    await seedRoom("TAN001", uids, { ...NO_OPTIONAL_ROLES, TANNER: true });
+
+    const { gameId } = await callStart("TAN001");
+    if (!gameId) throw new Error("start route did not return a gameId");
+
+    const priv = await getPrivate(gameId);
+    const wolfUids = uids.filter((u) => priv[u].role === "WEREWOLF");
+    const seerUid = uids.find((u) => priv[u].role === "SEER")!;
+    const witchUid = uids.find((u) => priv[u].role === "WITCH")!;
+    const tannerUid = uids.find((u) => priv[u].role === "TANNER")!;
+    const villagerUids = uids.filter((u) => priv[u].role === "VILLAGER");
+    expect(wolfUids.length).toBe(2);
+    expect(tannerUid).toBeTruthy();
+
+    await expirePhaseTimer(gameId); // REVEAL_ROLE -> NIGHT_FALLS (no CUPID)
+    let res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("NIGHT_FALLS");
+    await expirePhaseTimer(gameId);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("SEER");
+
+    await writeAction(gameId, "SEER", seerUid, wolfUids[0]);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WOLVES");
+    for (const w of wolfUids) await writeAction(gameId, "WOLVES", w, villagerUids[0]);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WITCH_SAVE");
+    await writeAction(gameId, "WITCH_SAVE", witchUid, null);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WITCH_KILL");
+    await writeAction(gameId, "WITCH_KILL", witchUid, null);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("DAWN");
+    expect(res.deaths).toEqual([villagerUids[0]]);
+
+    await expirePhaseTimer(gameId);
+    await callAdvance(gameId); // -> DISCUSSION
+    await expirePhaseTimer(gameId);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("VOTE");
+
+    // Everyone still alive hangs the Tanner — both wolves survive this
+    // round untouched, so a plain headcount check would say "no winner
+    // yet"; checkWinner must still return TANNER because that's who died.
+    const aliveNow = uids.filter((u) => u !== villagerUids[0]);
+    for (const voter of aliveNow) await writeAction(gameId, "VOTE", voter, tannerUid);
+    res = await callAdvance(gameId);
+    expect(res.deaths).toEqual([tannerUid]);
+    expect(res.winner).toBe("TANNER");
+    expect(res.phase.name).toBe("ENDED");
+
+    const game = await getGame(gameId);
+    expect(game.result).toEqual({ winner: "TANNER" });
+    assertPhaseShapeNeverLeaksRoles(game.phase);
+    for (const w of wolfUids) expect(game.players[w].alive).toBe(true);
+
+    const room = (await fakeDb.ref("rooms/TAN001").get()).val() as Room;
+    expect(room.status).toBe("LOBBY");
+  });
+});
