@@ -21,6 +21,7 @@ import { SeerHints } from "./SeerHints";
 import { PlayerList } from "./PlayerList";
 import { GameEndScreen } from "./GameEndScreen";
 import { HunterRevengePrompt } from "./HunterRevenge";
+import { ChatPanel } from "./ChatPanel";
 
 function CenteredState({ children }: { children: React.ReactNode }) {
   return (
@@ -51,10 +52,24 @@ export function GameScreen({ code }: { code: string }) {
     );
   }
 
-  return <GameScreenInner gameId={room.currentGameId} uid={user.uid} />;
+  return (
+    <GameScreenInner
+      gameId={room.currentGameId}
+      uid={user.uid}
+      remoteMode={room.settings.remoteMode}
+    />
+  );
 }
 
-function GameScreenInner({ gameId, uid }: { gameId: string; uid: string }) {
+function GameScreenInner({
+  gameId,
+  uid,
+  remoteMode,
+}: {
+  gameId: string;
+  uid: string;
+  remoteMode: boolean;
+}) {
   const { game, loading } = useGame(db, gameId);
   const { privateState } = usePrivateState(db, gameId, uid);
   const serverOffset = useServerTimeOffset(db);
@@ -109,6 +124,21 @@ function GameScreenInner({ gameId, uid }: { gameId: string; uid: string }) {
     requiredActorsForPhase(game.phase.name, { [uid]: privateState.role }).includes(uid);
   const alreadyDone = myAction?.done ?? false;
 
+  // Spec §0/§10: chat only exists in a "Chơi xa" room, and only mirrors the
+  // same rooms §10 would auto-join for voice — village during Discussion
+  // (everyone alive, matching the one shared call room), wolves during
+  // WOLVES (own faction only, derived from this uid's own known role only —
+  // see the isRequired comment above for why that's the only role a client
+  // can ever legitimately check itself against).
+  const isWolfFaction = privateState?.role === "WEREWOLF" || privateState?.role === "TRAITOR";
+  const showVillageChat = remoteMode && game.phase.name === "DISCUSSION";
+  const showWolvesChat = remoteMode && game.phase.name === "WOLVES" && isWolfFaction;
+  const chatLockedReason = !me?.alive
+    ? "Bạn đã chết — chỉ xem, không nhắn được nữa"
+    : me?.muted
+      ? "Hôm nay bạn không được nói"
+      : undefined;
+
   return (
     <main className="flex min-h-dvh flex-col items-center gap-5 p-6">
       <div className="w-full max-w-sm animate-in fade-in-0 slide-in-from-bottom-3 duration-500">
@@ -140,6 +170,29 @@ function GameScreenInner({ gameId, uid }: { gameId: string; uid: string }) {
             <p className="rounded-md bg-muted px-3 py-4 text-center text-sm text-muted-foreground">
               {me?.alive ? "Đang chờ những người khác…" : "Bạn đã chết — theo dõi ván đấu"}
             </p>
+          )}
+
+          {showVillageChat && (
+            <ChatPanel
+              db={db}
+              gameId={gameId}
+              scope="village"
+              uid={uid}
+              players={game.players}
+              title="Chat làng"
+              lockedReason={chatLockedReason}
+            />
+          )}
+          {showWolvesChat && (
+            <ChatPanel
+              db={db}
+              gameId={gameId}
+              scope="wolves"
+              uid={uid}
+              players={game.players}
+              title="Chat sói"
+              lockedReason={chatLockedReason}
+            />
           )}
 
           <PlayerList players={game.players} meUid={uid} />

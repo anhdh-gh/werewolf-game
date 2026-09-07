@@ -36,17 +36,34 @@ headless-Chromium screenshot (both deleted before the commit). This gates everyt
 else in this plan — chat, LiveKit auto-join, and mic/cam publish permission all read
 it.
 
-## Task 2: Chat (làng/sói scoped) — STATUS: not started
+## Task 2: Chat (làng/sói scoped) — STATUS: done
 
-`/games/{gameId}/chat/{scope}/{msgId}` per spec §7, scope = `village | wolves`.
-Wolves' chat readable only by wolf-faction uids (another role-hiding-shaped Security
-Rules problem, same family as Task 10's `actions` tree in Game Engine — a wolf-chat
-message's mere existence at a wolf-readable path doesn't leak anything since ALL
-wolves can already read it, but a non-wolf must never reach it even to prove it's
-non-empty). Rendered only when `room.settings.remoteMode` is on (§0: "ngồi cùng bàn
-thì nói bằng miệng — bật chat lúc đó chỉ tạo tiếng thông báo vô nghĩa"). Muted
-players (§4.7) get their chat input locked when remoteMode is on — the always-on
-`MutedBanner` (Game Engine) already covers the non-remote baseline.
+Built at `/chat/{gameId}/{scope}/{msgId}`, scope = `village | wolves` — deliberately
+NOT nested under `/games/{gameId}` the way the spec's §7 diagram literally shows,
+for exactly the reason Game Engine Task 10 moved `actions` out: `games/$gameId` has
+its own `".read": "auth != null"`, and RTDB read grants cascade from ancestor to
+descendant with no way for a nested, stricter rule to opt back out — nesting wolves'
+chat there would make it globally readable regardless of what rule sat on the leaf
+itself. `chat/$gameId/wolves` gates both read and write on the caller's own private
+role (`root.child('private').child($gameId).child(auth.uid).child('role')` —
+checking only the CALLER's own uid, so this never reads anyone else's role, just
+gates the caller's own access by it). `village` is readable/writable by anyone
+listed in `games/{gameId}/players`; both scopes require the sender to be alive and
+`newData.child('uid') === auth.uid` (no spoofing another sender), and messages are
+immutable (`!data.exists()` — no editing after the fact). Rendered only when
+`room.settings.remoteMode` is on (§0) and only during the phase §10 would auto-join
+the matching voice room for (village during DISCUSSION, wolves during WOLVES for
+wolf-faction uids only — derived from this client's own known role, same pattern as
+every other "is it my turn" check in Game Engine). A dead or muted player still sees
+the panel (read stays on) but gets a locked-input message instead of a send box.
+
+New `src/lib/game/chat.ts` (`useChatMessages`/`sendChatMessage`) and
+`ChatPanel.tsx`. 11 new Security Rules tests in `rulesGames.test.ts` (same
+can't-run-here caveat as the rest of that file). Rendering verified via a
+static-data preview mimicking the component's JSX (the real component's live
+`onValue()` subscription would try to hit a real Firebase project on mount, so a
+direct import wasn't screenshot-able here) + a real headless-Chromium screenshot,
+both removed before the commit.
 
 ## Task 3: Service worker (app shell + audio cache) — STATUS: not started
 

@@ -126,6 +126,19 @@ export interface SeerHint {
   dayNumber: number;
 }
 
+/** Spec §0/§7: chat only exists for a "Chơi xa" room, in two scopes.
+ * "village" is the public/day channel — every player in the game,
+ * regardless of faction (mirrors §10's single shared Discussion call room).
+ * "wolves" is the pack's own — see paths.ts's gameChatPath for why it lives
+ * on a separate top-level tree rather than under games/{gameId}. */
+export type ChatScope = "village" | "wolves";
+
+export interface ChatMessage {
+  uid: string;
+  text: string;
+  at: number;
+}
+
 /** /private/{gameId}/{uid} — never readable by anyone but that uid. */
 export interface PrivatePlayerState {
   role: RoleKey;

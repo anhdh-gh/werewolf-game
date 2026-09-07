@@ -180,3 +180,109 @@ describe("private/$gameId/$uid", () => {
     await assertFails(set(ref(db, "private/GAME1/uid-wolf/role"), "VILLAGER"));
   });
 });
+
+describe("chat/$gameId — Resilience Task 2", () => {
+  it("village: allows a live player in the game to send, with their own uid", async () => {
+    const db = testEnv.authenticatedContext("uid-wolf").database();
+    await assertSucceeds(
+      set(ref(db, "chat/GAME1/village/msg1"), { uid: "uid-wolf", text: "chào", at: 1 }),
+    );
+  });
+
+  it("village: denies a dead player from sending", async () => {
+    const db = testEnv.authenticatedContext("uid-dead-hunter").database();
+    await assertFails(
+      set(ref(db, "chat/GAME1/village/msg1"), { uid: "uid-dead-hunter", text: "chào", at: 1 }),
+    );
+  });
+
+  it("village: denies spoofing another uid as the sender", async () => {
+    const db = testEnv.authenticatedContext("uid-wolf").database();
+    await assertFails(
+      set(ref(db, "chat/GAME1/village/msg1"), { uid: "uid-seer", text: "chào", at: 1 }),
+    );
+  });
+
+  it("village: denies someone not in this game", async () => {
+    const db = testEnv.authenticatedContext("uid-outsider").database();
+    await assertFails(
+      set(ref(db, "chat/GAME1/village/msg1"), { uid: "uid-outsider", text: "chào", at: 1 }),
+    );
+  });
+
+  it("village: denies an empty or oversized message", async () => {
+    const db = testEnv.authenticatedContext("uid-wolf").database();
+    await assertFails(set(ref(db, "chat/GAME1/village/msg1"), { uid: "uid-wolf", text: "", at: 1 }));
+    await assertFails(
+      set(ref(db, "chat/GAME1/village/msg1"), {
+        uid: "uid-wolf",
+        text: "x".repeat(501),
+        at: 1,
+      }),
+    );
+  });
+
+  it("village: denies editing an existing message", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await set(ref(context.database(), "chat/GAME1/village/msg1"), {
+        uid: "uid-wolf",
+        text: "gốc",
+        at: 1,
+      });
+    });
+    const db = testEnv.authenticatedContext("uid-wolf").database();
+    await assertFails(
+      set(ref(db, "chat/GAME1/village/msg1"), { uid: "uid-wolf", text: "sửa", at: 2 }),
+    );
+  });
+
+  it("village: readable by anyone in the game, including a dead player", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await set(ref(context.database(), "chat/GAME1/village/msg1"), {
+        uid: "uid-wolf",
+        text: "chào",
+        at: 1,
+      });
+    });
+    const db = testEnv.authenticatedContext("uid-dead-hunter").database();
+    await assertSucceeds(get(ref(db, "chat/GAME1/village")));
+  });
+
+  it("village: denied to someone not in the game", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await set(ref(context.database(), "chat/GAME1/village/msg1"), {
+        uid: "uid-wolf",
+        text: "chào",
+        at: 1,
+      });
+    });
+    const db = testEnv.authenticatedContext("uid-outsider").database();
+    await assertFails(get(ref(db, "chat/GAME1/village")));
+  });
+
+  it("wolves: allows a live wolf-faction uid to send", async () => {
+    const db = testEnv.authenticatedContext("uid-wolf").database();
+    await assertSucceeds(
+      set(ref(db, "chat/GAME1/wolves/msg1"), { uid: "uid-wolf", text: "cắn ai", at: 1 }),
+    );
+  });
+
+  it("wolves: denies a non-wolf player in the same game, even the Seer", async () => {
+    const db = testEnv.authenticatedContext("uid-seer").database();
+    await assertFails(
+      set(ref(db, "chat/GAME1/wolves/msg1"), { uid: "uid-seer", text: "soi thấy gì", at: 1 }),
+    );
+  });
+
+  it("wolves: this is the whole point — a non-wolf can't even prove the room is non-empty", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await set(ref(context.database(), "chat/GAME1/wolves/msg1"), {
+        uid: "uid-wolf",
+        text: "cắn ai",
+        at: 1,
+      });
+    });
+    const db = testEnv.authenticatedContext("uid-seer").database();
+    await assertFails(get(ref(db, "chat/GAME1/wolves")));
+  });
+});

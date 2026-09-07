@@ -19,3 +19,13 @@ export const gameActionPath = (gameId: string, phaseKey: string, uid: string): s
 
 export const privatePlayerPath = (gameId: string, uid: string): string =>
   `private/${gameId}/${uid}`;
+
+// Same reasoning as actions/ above: a separate top-level tree, not nested
+// under games/{gameId}, specifically so the wolves' chat can carry its own
+// stricter-than-games read rule (only wolf-faction uids) without
+// games/$gameId's ".read": "auth != null" cascading down and overriding it.
+// village doesn't strictly need this (it's meant to be readable by every
+// player in the game anyway), but keeping both scopes on the same tree
+// avoids a third top-level root just for symmetry.
+export const gameChatPath = (gameId: string, scope: "village" | "wolves"): string =>
+  `chat/${gameId}/${scope}`;

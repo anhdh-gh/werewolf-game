@@ -284,17 +284,19 @@ mà để xoá hẳn lớp lỗi lộ vai của bản cũ. Không có dữ liệ
 
 ## 7. Mô hình dữ liệu
 
-> Cập nhật theo Task 10–12 của Game Engine (xem plan
-> `docs/superpowers/plans/2026-09-07-game-engine.md`): bản vẽ dưới đây là cây dữ liệu
+> Cập nhật theo Task 10–12 của Game Engine và Task 1–2 của Resilience (xem
+> `docs/superpowers/plans/2026-09-07-game-engine.md` và
+> `docs/superpowers/plans/2026-09-07-resilience.md`): bản vẽ dưới đây là cây dữ liệu
 > **thật đang chạy**, khác vài chỗ so với bản thiết kế ban đầu — lý do ghi ngay dưới
-> từng chỗ đổi. `narration/{seq}` và `chat/{scope}/{msgId}` **chưa làm** — cả hai
-> thuộc sub-project Resilience (âm thanh/chạy nền/thoại, §8) chưa được giao lúc viết
-> Game Engine, không phải bị bỏ sót.
+> từng chỗ đổi. `narration/{seq}` **chưa làm** — thuộc sub-project Resilience, chưa
+> tới lượt (xem Task 5 của plan Resilience).
 
 ```
 /rooms/{code}
   createdAt, status            LOBBY | PLAYING
-  settings/                    maxPlayers, timers{}, rolesEnabled{}
+  settings/                    maxPlayers, rolesEnabled{}, remoteMode  ← "Chơi xa"
+                                (Resilience Task 1); mặc định false, gạt luôn chat và
+                                thoại LiveKit ở trạng thái tắt cho tới khi bật
   members/{uid}                name, photoURL, joinedAt
   currentGameId
 
@@ -313,7 +315,6 @@ mà để xoá hẳn lớp lỗi lộ vai của bản cũ. Không có dữ liệ
                                 KẾT QUẢ BỎ PHIẾU) — Task 12, để máy khách công bố người
                                 chết thay vì bắt người chơi tự soi danh sách
   narration/{seq}              key, params{}          ← CHƯA LÀM, thuộc §8/Resilience
-  chat/{scope}/{msgId}         scope = village | wolves  ← CHƯA LÀM, thuộc §8/Resilience
   result/                      winner                  ← không có trường vai; xem §4.6
 
 /actions/{gameId}/{phaseKey}/{uid}   target, done, at   ← người chơi tự ghi. Cây riêng
@@ -324,13 +325,25 @@ mà để xoá hẳn lớp lỗi lộ vai của bản cũ. Không có dữ liệ
                                         một entry ở đó đã lộ ai là Tiên Tri (Task 10 bug
                                         #10, phần root cause).
 
+/chat/{gameId}/{scope}/{msgId}       uid, text, at. scope = village | wolves
+                                        (Resilience Task 2). Cùng lý do với actions/ ở
+                                        trên: cây riêng ở gốc, không lồng trong
+                                        /games/{gameId} — nếu lồng thì chat/wolves cũng
+                                        bị ".read": "auth != null" của games/$gameId đè
+                                        lên, một sói-chỉ-đọc-được sẽ thành ai-cũng-đọc-được.
+                                        village đọc/ghi được bởi bất kỳ ai trong
+                                        games/{gameId}/players; wolves chỉ đọc/ghi được
+                                        bởi uid có vai sói (tự kiểm tra vai CỦA CHÍNH
+                                        NGƯỜI GỌI qua private/{gameId}/{auth.uid}/role,
+                                        không đọc vai người khác).
+
 /private/{gameId}/{uid}        role, initialRole, potions{}, hints{}, loverUid,
                                 pendingWolfTarget, packUids[]
 
 /presence/{uid}                online, lastSeen, roomCode
 ```
 
-Ràng buộc Security Rules, chỉ ba điều:
+Ràng buộc Security Rules chính:
 
 - `actions/{gameId}/{phaseKey}/{uid}` — chỉ chính chủ ghi được, và chỉ khi phase đó
   đang chạy (riêng `VOTE` thì ai cũng đọc được — bỏ phiếu không phải thông tin vai;
@@ -339,6 +352,13 @@ Ràng buộc Security Rules, chỉ ba điều:
 - `private/{gameId}/{uid}` — chỉ chính chủ đọc được, không ai ghi được từ client.
 - `games/{gameId}/phase`, `players`, `result`, `lastProtectedUid`, `lastDeaths` —
   client chỉ đọc, chỉ Admin SDK ghi.
+- `chat/{gameId}/village` — đọc/ghi được bởi bất kỳ ai có mặt trong
+  `games/{gameId}/players`, miễn còn sống lúc ghi. `chat/{gameId}/wolves` — chỉ
+  đọc/ghi được bởi uid có vai sói (Ma Sói hoặc Kẻ Phản Bội), miễn còn sống lúc ghi.
+  Cả hai: không giả mạo người gửi (`uid` trong tin nhắn phải đúng `auth.uid`), không
+  sửa tin đã gửi.
+- `rooms/{code}/settings` — chỉ member của phòng ghi được, và chỉ khi phòng còn
+  ở LOBBY.
 
 ## 8. Âm thanh và chạy nền
 
