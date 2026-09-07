@@ -269,6 +269,16 @@ export async function POST(
     }
   }
 
+  // Spec §4.3: DAWN announces the night's dead, VOTE_RESULT announces the
+  // hang — these are the exact two points planAdvance actually resolves a
+  // death list (see its own doc comment), so this is where `decision.deaths`
+  // is meaningful. Not written on every transition — a later, unrelated
+  // transition (DAWN -> DISCUSSION, say) must not stomp this back to `[]`
+  // before players get to read it.
+  if (decision.nextPhase === "DAWN" || decision.nextPhase === "VOTE_RESULT") {
+    updates[`games/${gameId}/lastDeaths`] = decision.deaths;
+  }
+
   for (const uid of decision.deaths) {
     updates[`games/${gameId}/players/${uid}/alive`] = false;
   }

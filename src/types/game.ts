@@ -110,6 +110,14 @@ export interface Game {
    * who the Bodyguard IS, only who was shielded, same as the death
    * announcement already does implicitly by omission. */
   lastProtectedUid?: string | null;
+  /** Spec §4.3: DAWN's job is "công bố người chết" and VOTE_RESULT's is the
+   * hang result — both already implicit via players/{uid}/alive flipping,
+   * but a UX-only banner reading this is far clearer than expecting anyone
+   * to diff the player list against memory. Written once at the exact
+   * transition that resolved it (DAWN for the night, VOTE_RESULT for the
+   * vote) and left alone otherwise — reveals nothing `players` doesn't
+   * already reveal, since deaths are public regardless. */
+  lastDeaths?: string[];
 }
 
 export interface SeerHint {

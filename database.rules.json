@@ -39,7 +39,8 @@
         "phase": { ".write": false },
         "players": { ".write": false },
         "result": { ".write": false },
-        "lastProtectedUid": { ".write": false }
+        "lastProtectedUid": { ".write": false },
+        "lastDeaths": { ".write": false }
       }
     },
     "actions": {

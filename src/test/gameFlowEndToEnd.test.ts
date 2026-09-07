@@ -204,10 +204,17 @@ describe("full game, no optional roles — start -> ... -> VILLAGE win", () => {
     game = await getGame(gameId);
     expect(game.players[villagerUid].alive).toBe(false);
     expect(game.result).toBeUndefined();
+    // DAWN's job is "công bố người chết" (spec §4.3) — this is what the
+    // client actually reads to announce it.
+    expect(game.lastDeaths).toEqual([villagerUid]);
 
     await expirePhaseTimer(gameId);
     res = await callAdvance(gameId);
     expect(res.phase.name).toBe("DISCUSSION");
+    // Still readable through DISCUSSION — a later, unrelated transition
+    // must not have stomped it back to [].
+    game = await getGame(gameId);
+    expect(game.lastDeaths).toEqual([villagerUid]);
 
     await expirePhaseTimer(gameId);
     res = await callAdvance(gameId);
@@ -225,6 +232,8 @@ describe("full game, no optional roles — start -> ... -> VILLAGE win", () => {
     // yet (1 wolf vs 4 others) — the game must keep going, not end here.
     expect(res.winner).toBeNull();
     expect(game.result).toBeUndefined();
+    // VOTE_RESULT's own announcement, overwriting the night's.
+    expect(game.lastDeaths).toEqual([wolfUids[0]]);
 
     await expirePhaseTimer(gameId);
     res = await callAdvance(gameId);

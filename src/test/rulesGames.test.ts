@@ -76,13 +76,14 @@ describe("games/$gameId", () => {
     );
   });
 
-  it("denies a client writing players, result, roomCode, startedAt, dayNumber, or lastProtectedUid", async () => {
+  it("denies a client writing players, result, roomCode, startedAt, dayNumber, lastProtectedUid, or lastDeaths", async () => {
     const db = testEnv.authenticatedContext("uid-wolf").database();
     await assertFails(set(ref(db, "games/GAME1/players/uid-wolf/alive"), false));
     await assertFails(set(ref(db, "games/GAME1/result"), { winner: "WOLF" }));
     await assertFails(set(ref(db, "games/GAME1/roomCode"), "HACKED"));
     await assertFails(set(ref(db, "games/GAME1/dayNumber"), 99));
     await assertFails(set(ref(db, "games/GAME1/lastProtectedUid"), "uid-seer"));
+    await assertFails(set(ref(db, "games/GAME1/lastDeaths"), ["uid-seer"]));
   });
 });
 

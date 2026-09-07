@@ -16,6 +16,7 @@ import { ActionPanel } from "./ActionPanel";
 import { RoleCard } from "./RoleCard";
 import { PackInfo } from "./PackInfo";
 import { MutedBanner } from "./MutedBanner";
+import { DeathAnnouncement } from "./DeathAnnouncement";
 import { SeerHints } from "./SeerHints";
 import { PlayerList } from "./PlayerList";
 import { GameEndScreen } from "./GameEndScreen";
@@ -120,6 +121,7 @@ function GameScreenInner({ gameId, uid }: { gameId: string; uid: string }) {
         </div>
 
         <div className="flex flex-col gap-4">
+          <DeathAnnouncement game={game} />
           <MutedBanner muted={me?.muted ?? false} />
           <RoleCard privateState={privateState} />
           <PackInfo privateState={privateState} players={game.players} />

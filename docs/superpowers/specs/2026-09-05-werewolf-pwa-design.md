@@ -278,6 +278,13 @@ mà để xoá hẳn lớp lỗi lộ vai của bản cũ. Không có dữ liệ
 
 ## 7. Mô hình dữ liệu
 
+> Cập nhật theo Task 10–12 của Game Engine (xem plan
+> `docs/superpowers/plans/2026-09-07-game-engine.md`): bản vẽ dưới đây là cây dữ liệu
+> **thật đang chạy**, khác vài chỗ so với bản thiết kế ban đầu — lý do ghi ngay dưới
+> từng chỗ đổi. `narration/{seq}` và `chat/{scope}/{msgId}` **chưa làm** — cả hai
+> thuộc sub-project Resilience (âm thanh/chạy nền/thoại, §8) chưa được giao lúc viết
+> Game Engine, không phải bị bỏ sót.
+
 ```
 /rooms/{code}
   createdAt, status            LOBBY | PLAYING
@@ -287,23 +294,45 @@ mà để xoá hẳn lớp lỗi lộ vai của bản cũ. Không có dữ liệ
 
 /games/{gameId}
   roomCode, startedAt, dayNumber
-  phase/                       name, endsAt, version, requiredActors[]
-  players/{uid}                name, alive, muted, wasProtected
-  narration/{seq}              key, params{}          ← nhật ký dẫn truyện
-  actions/{phaseKey}/{uid}     target, done, at       ← người chơi tự ghi
-  chat/{scope}/{msgId}         scope = village | wolves
+  phase/                       name, endsAt, version   ← KHÔNG có requiredActors[]: đó
+                                                          chính là danh sách ai giữ vai
+                                                          gì cho phase riêng vai (SÓI,
+                                                          TIÊN TRI, ...) — xem Task 10
+                                                          bug #10.
+  players/{uid}                name, alive, muted
+  lastProtectedUid             uid Bảo Vệ che tối qua, hoặc null  ← mức ván đấu, không
+                                                                     phải mỗi người chơi
+                                                                     (đổi từ wasProtected)
+  lastDeaths[]                 uid vừa chết ở lần công bố gần nhất (RẠNG SÁNG hoặc
+                                KẾT QUẢ BỎ PHIẾU) — Task 12, để máy khách công bố người
+                                chết thay vì bắt người chơi tự soi danh sách
+  narration/{seq}              key, params{}          ← CHƯA LÀM, thuộc §8/Resilience
+  chat/{scope}/{msgId}         scope = village | wolves  ← CHƯA LÀM, thuộc §8/Resilience
   result/                      winner                  ← không có trường vai; xem §4.6
 
-/private/{gameId}/{uid}        role, initialRole, potions{}, hints[]
+/actions/{gameId}/{phaseKey}/{uid}   target, done, at   ← người chơi tự ghi. Cây riêng
+                                        ở gốc, KHÔNG lồng trong /games/{gameId}: Security
+                                        Rules đọc lan từ tổ tiên xuống, nên nếu lồng ở đây
+                                        thì ".read": "auth != null" của /games/{gameId}
+                                        áp luôn xuống actions/SEER/{uid} — sự tồn tại của
+                                        một entry ở đó đã lộ ai là Tiên Tri (Task 10 bug
+                                        #10, phần root cause).
+
+/private/{gameId}/{uid}        role, initialRole, potions{}, hints{}, loverUid,
+                                pendingWolfTarget, packUids[]
 
 /presence/{uid}                online, lastSeen, roomCode
 ```
 
 Ràng buộc Security Rules, chỉ ba điều:
 
-- `actions/{phaseKey}/{uid}` — chỉ chính chủ ghi được, và chỉ khi phase đó đang chạy.
+- `actions/{gameId}/{phaseKey}/{uid}` — chỉ chính chủ ghi được, và chỉ khi phase đó
+  đang chạy (riêng `VOTE` thì ai cũng đọc được — bỏ phiếu không phải thông tin vai;
+  riêng `HUNTER_SHOT` thì ghi được bất cứ lúc nào miễn người đó đã chết, không cần
+  đợi đúng phase).
 - `private/{gameId}/{uid}` — chỉ chính chủ đọc được, không ai ghi được từ client.
-- `games/{gameId}/phase`, `players`, `result` — client chỉ đọc, chỉ Admin SDK ghi.
+- `games/{gameId}/phase`, `players`, `result`, `lastProtectedUid`, `lastDeaths` —
+  client chỉ đọc, chỉ Admin SDK ghi.
 
 ## 8. Âm thanh và chạy nền
 

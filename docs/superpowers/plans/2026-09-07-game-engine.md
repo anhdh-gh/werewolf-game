@@ -360,3 +360,28 @@ sufficient on its own.)
 Both role-card-table requirements and the phase-flow requirements in §4.1–§4.7 are
 now cross-checked line by line against the implementation — not just re-read; each
 row was checked against actual code before deciding it needed no change.
+
+Continuing that same cross-check into §7's data model turned up a third item — not a
+spec violation this time (an existing code comment shows it was a deliberate original
+design choice), but a real UX gap given the user's own stated priority ("UI đẹp, UX
+tốt"): DAWN's and VOTE_RESULT's whole *point*, per their own names in §4.3, is to
+announce what happened ("công bố người chết", "kết quả bỏ phiếu") — but nothing ever
+actually announced it. The only signal was `players/{uid}/alive` quietly flipping,
+visible only if you happened to notice PlayerList's strikethrough change. No
+persisted, reactive "who died" data existed anywhere — `nudgeAdvance()` and
+`useAutoAdvance()` both fire-and-discard the advance() response, so even the one
+client whose request won the version race never displayed it.
+
+Added `Game.lastDeaths?: string[]` (public — reveals nothing `players` doesn't
+already reveal, since deaths are public regardless of role-hiding), written by the
+route at exactly the two points `decision.deaths` is meaningful (`nextPhase ===
+"DAWN"` for the night, `"VOTE_RESULT"` for the vote) and left untouched on every
+other transition, so it survives through DISCUSSION for players to actually read
+before a later, unrelated transition would otherwise stomp it back to `[]`. New
+`DeathAnnouncement` component renders it only during the phase window it's relevant
+to (DAWN/DISCUSSION for the night wording, VOTE_RESULT for the hang wording) so a
+stale previous round's announcement never lingers into an unrelated phase.
+`database.rules.json` and `rulesGames.test.ts` updated for the new field (client
+write denied, matching every other public-but-server-only `games/{gameId}` field).
+Covered by new end-to-end assertions on the existing full-game test, and rendering
+verified via a temporary dev-preview route (deleted before the commit).
