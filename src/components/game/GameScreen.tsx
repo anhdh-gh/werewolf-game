@@ -6,6 +6,7 @@ import { useRoom } from "@/lib/rooms/useRoom";
 import { useGame } from "@/lib/game/useGame";
 import { usePrivateState } from "@/lib/game/usePrivateState";
 import { useMyAction } from "@/lib/game/useMyAction";
+import { requiredActorsForPhase } from "@/lib/game/requiredActors";
 import { useServerTimeOffset, useCountdownSeconds, useAutoAdvance } from "@/lib/game/useGameClock";
 import { PHASE_LABELS } from "@/lib/game/labels";
 import { Logo } from "@/components/Logo";
@@ -92,7 +93,16 @@ function GameScreenInner({ gameId, uid }: { gameId: string; uid: string }) {
     );
   }
 
-  const isRequired = game.phase.requiredActors.includes(uid);
+  // requiredActorsForPhase takes a full aliveRolesByUid map elsewhere (the
+  // server has that from /private via the Admin SDK); here it's given a
+  // singleton map containing only this client's own role, which is all a
+  // client can ever legitimately know. Passing anyone else's role would
+  // require reading their /private state, which Security Rules simply
+  // don't allow — this never leaks anything beyond what this uid already has.
+  const isRequired =
+    !!privateState &&
+    !!me?.alive &&
+    requiredActorsForPhase(game.phase.name, { [uid]: privateState.role }).includes(uid);
   const alreadyDone = myAction?.done ?? false;
 
   return (
@@ -109,7 +119,7 @@ function GameScreenInner({ gameId, uid }: { gameId: string; uid: string }) {
         <div className="flex flex-col gap-4">
           <RoleCard privateState={privateState} />
 
-          {isRequired && !alreadyDone && me?.alive ? (
+          {isRequired && !alreadyDone ? (
             <Card>
               <CardHeader>
                 <CardTitle>Đến lượt bạn</CardTitle>
@@ -124,7 +134,7 @@ function GameScreenInner({ gameId, uid }: { gameId: string; uid: string }) {
             </p>
           )}
 
-          <PlayerList players={game.players} meUid={uid} requiredActors={game.phase.requiredActors} />
+          <PlayerList players={game.players} meUid={uid} />
         </div>
       </div>
     </main>

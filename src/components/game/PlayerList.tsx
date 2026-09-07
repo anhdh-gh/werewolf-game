@@ -6,11 +6,9 @@ import type { GamePlayer } from "@/types/game";
 export function PlayerList({
   players,
   meUid,
-  requiredActors,
 }: {
   players: Record<string, GamePlayer>;
   meUid: string;
-  requiredActors: string[];
 }) {
   const entries = Object.entries(players);
 
@@ -32,9 +30,6 @@ export function PlayerList({
             <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
               câm
             </span>
-          )}
-          {requiredActors.includes(uid) && player.alive && (
-            <span className="size-1.5 rounded-full bg-primary" aria-hidden="true" />
           )}
         </li>
       ))}

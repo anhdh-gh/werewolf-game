@@ -70,7 +70,6 @@ export async function POST(
         name: "REVEAL_ROLE",
         endsAt: now + PHASE_DURATIONS_MS.REVEAL_ROLE,
         version: 0,
-        requiredActors: [],
       },
       players,
     },

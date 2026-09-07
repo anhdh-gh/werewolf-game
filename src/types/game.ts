@@ -77,11 +77,18 @@ export interface GamePlayer {
   muted: boolean;
 }
 
+/** Deliberately no `requiredActors` field: earlier this held every uid who
+ * had to act this phase (e.g. every Werewolf during WOLVES) directly on the
+ * public game object — any authenticated client could read it and, for
+ * role-specific phases, that list *is* the role membership. The server
+ * (advance route) recomputes who's required from /private on every call
+ * instead of persisting it anywhere client-readable; each client
+ * independently derives "is it my turn" from its own role via
+ * requiredActorsForPhase(phase, {[myUid]: myRole}) — see GameScreen. */
 export interface GamePhase {
   name: PhaseName;
   endsAt: number;
   version: number;
-  requiredActors: string[];
 }
 
 /** Deliberately just the winning faction — no role reveal, ever. Roles stay

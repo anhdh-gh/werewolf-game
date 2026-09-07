@@ -62,17 +62,26 @@ export async function POST(
     return NextResponse.json({ phase: game.phase, result: game.result ?? null });
   }
 
-  const currentPhaseActionsSnap = await db.ref(`games/${gameId}/actions/${game.phase.name}`).get();
+  const aliveRolesByUid: Record<string, RoleKey> = {};
+  for (const [uid, player] of Object.entries(game.players)) {
+    if ((player as GamePlayer).alive) {
+      aliveRolesByUid[uid] = privateState[uid]?.role;
+    }
+  }
 
   // Spec §4.3: end the phase early only once every required actor is done;
-  // otherwise wait for endsAt. requiredActors is empty for announcement-only
-  // phases (NIGHT_FALLS, DAWN, DISCUSSION, VOTE_RESULT, REVEAL_ROLE) — those
-  // must never early-exit, so an empty list only counts as "ready" via the
-  // time check, never on its own.
+  // otherwise wait for endsAt. Who's required is recomputed here from
+  // /private on every call rather than ever being persisted to the public
+  // games/{gameId}/phase node — for a role-specific phase (WOLVES, SEER,
+  // ...) that list of uids *is* that role's membership, so writing it
+  // anywhere a client can read would undo everything /private exists for.
+  // An empty list (announcement-only phases) only counts as "ready" via
+  // the time check below, never on its own.
+  const currentPhaseActionsSnap = await db.ref(`games/${gameId}/actions/${game.phase.name}`).get();
   const currentActionsVal = (currentPhaseActionsSnap.val() ?? {}) as Record<string, { done?: boolean }>;
+  const requiredActors = requiredActorsForPhase(game.phase.name, aliveRolesByUid);
   const allRequiredDone =
-    game.phase.requiredActors.length > 0 &&
-    game.phase.requiredActors.every((uid) => currentActionsVal[uid]?.done);
+    requiredActors.length > 0 && requiredActors.every((uid) => currentActionsVal[uid]?.done);
   const timeUp = Date.now() >= game.phase.endsAt;
   if (!allRequiredDone && !timeUp) {
     return NextResponse.json({ phase: game.phase, notYet: true });
@@ -110,13 +119,6 @@ export async function POST(
     .map(([uid]) => uid);
 
   const lovers = findLoverPair(privateState);
-
-  const aliveRolesByUid: Record<string, RoleKey> = {};
-  for (const [uid, player] of Object.entries(game.players)) {
-    if ((player as GamePlayer).alive) {
-      aliveRolesByUid[uid] = privateState[uid]?.role;
-    }
-  }
 
   const bodyguardVal = (bodyguard.val() ?? {}) as Record<string, { target: string }>;
   const protectTarget = Object.values(bodyguardVal)[0]?.target ?? null;
@@ -156,20 +158,10 @@ export async function POST(
     lovers,
   });
 
-  const survivingRolesByUid: Record<string, RoleKey> = {};
-  const deathSet = new Set(decision.deaths);
-  const transformedSet = new Set(decision.transformedToWolf);
-  for (const [uid, role] of Object.entries(aliveRolesByUid)) {
-    if (!deathSet.has(uid)) {
-      survivingRolesByUid[uid] = transformedSet.has(uid) ? "WEREWOLF" : role;
-    }
-  }
-
   const newPhase = {
     name: decision.nextPhase,
     endsAt: Date.now() + (PHASE_DURATIONS_MS[decision.nextPhase] ?? 0),
     version: game.phase.version + 1,
-    requiredActors: requiredActorsForPhase(decision.nextPhase, survivingRolesByUid),
   };
 
   const updates: Record<string, unknown> = {
@@ -342,7 +334,7 @@ async function applyPendingHunterShots(
 
     winner = checkWinner({ deathsThisRoundRoles, aliveRoles });
     if (winner) {
-      newPhase = { name: "ENDED", endsAt: Date.now(), version: game.phase.version + 1, requiredActors: [] };
+      newPhase = { name: "ENDED", endsAt: Date.now(), version: game.phase.version + 1 };
       updates[`games/${gameId}/phase`] = newPhase;
       updates[`games/${gameId}/result`] = { winner };
       updates[`rooms/${game.roomCode}/status`] = "LOBBY";

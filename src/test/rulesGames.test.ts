@@ -21,7 +21,7 @@ const EXISTING_GAME = {
   roomCode: "EXIST1",
   startedAt: 1000,
   dayNumber: 1,
-  phase: { name: "WOLVES", endsAt: 9999999999999, version: 1, requiredActors: ["uid-wolf"] },
+  phase: { name: "WOLVES", endsAt: 9999999999999, version: 1 },
   players: {
     "uid-wolf": { name: "Wolf", alive: true, muted: false },
     "uid-seer": { name: "Seer", alive: true, muted: false },
@@ -72,7 +72,7 @@ describe("games/$gameId", () => {
   it("denies a client writing the phase directly, even the phase's own required actor", async () => {
     const db = testEnv.authenticatedContext("uid-wolf").database();
     await assertFails(
-      set(ref(db, "games/GAME1/phase"), { name: "DAWN", endsAt: 0, version: 2, requiredActors: [] }),
+      set(ref(db, "games/GAME1/phase"), { name: "DAWN", endsAt: 0, version: 2 }),
     );
   });
 

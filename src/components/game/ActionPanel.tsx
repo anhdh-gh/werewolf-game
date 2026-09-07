@@ -16,8 +16,10 @@ function alivePlayersExcept(game: Game, excludeUids: string[]): PickableTarget[]
 }
 
 /** Renders whichever action UI the current phase + role calls for. Only
- * rendered when the caller has already confirmed this uid is in
- * phase.requiredActors and hasn't submitted yet (see GameScreen). */
+ * rendered when the caller (GameScreen) has already confirmed this uid is
+ * required this phase — via requiredActorsForPhase() against its own role
+ * only, never a server-provided list of who's required (see GamePhase's
+ * doc comment for why that list is never persisted anywhere client-readable). */
 export function ActionPanel({
   db,
   gameId,
