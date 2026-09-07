@@ -85,6 +85,19 @@ async function getPrivate(gameId: string): Promise<Record<string, PrivatePlayerS
   >;
 }
 
+/** Narration entries are RTDB push() keys — sorted so index 0 is oldest,
+ * matching push()'s own chronological key ordering. */
+async function getNarrationKeys(gameId: string): Promise<string[]> {
+  const val = (await fakeDb.ref(`games/${gameId}/narration`).get()).val() as Record<
+    string,
+    { key: string; count?: number }
+  > | null;
+  if (!val) return [];
+  return Object.entries(val)
+    .sort(([a], [b]) => (a < b ? -1 : 1))
+    .map(([, event]) => event.key);
+}
+
 /** Every advance() response's `phase` (and the persisted one) must only ever
  * carry these three keys — Bug #10 of the audit was `requiredActors` living
  * here, which for a role-specific phase directly names the role's holders. */
@@ -136,6 +149,8 @@ describe("full game, no optional roles — start -> ... -> VILLAGE win", () => {
     expect(game.phase.name).toBe("REVEAL_ROLE");
     expect(game.dayNumber).toBe(1);
     assertPhaseShapeNeverLeaksRoles(game.phase);
+    // Resilience Task 5: start writes the very first narration event.
+    expect(await getNarrationKeys(gameId)).toEqual(["GAME_START"]);
 
     const priv = await getPrivate(gameId);
     const wolfUids = uids.filter((u) => priv[u].role === "WEREWOLF");
@@ -167,6 +182,8 @@ describe("full game, no optional roles — start -> ... -> VILLAGE win", () => {
     await writeAction(gameId, "SEER", seerUid, wolfUids[0]);
     res = await callAdvance(gameId);
     expect(res.phase.name).toBe("WOLVES"); // BODYGUARD/MUTER both disabled -> skipped
+    // Simple phase transitions push their matching PHASE_NARRATION_KEY.
+    expect(await getNarrationKeys(gameId)).toEqual(["GAME_START", "NIGHT_FALLS", "SEER", "WOLVES"]);
 
     // Bug #11 regression: the Seer's check actually got written somewhere
     // she can read it back from.
@@ -207,6 +224,10 @@ describe("full game, no optional roles — start -> ... -> VILLAGE win", () => {
     // DAWN's job is "công bố người chết" (spec §4.3) — this is what the
     // client actually reads to announce it.
     expect(game.lastDeaths).toEqual([villagerUid]);
+    // A night with a death pushes the count-carrying prefix key, not the
+    // no-death one — the client splices in a count word before the suffix.
+    const narrationAtDawn = await getNarrationKeys(gameId);
+    expect(narrationAtDawn[narrationAtDawn.length - 1]).toBe("DAWN_DEATHS_PREFIX");
 
     await expirePhaseTimer(gameId);
     res = await callAdvance(gameId);
@@ -234,6 +255,11 @@ describe("full game, no optional roles — start -> ... -> VILLAGE win", () => {
     expect(game.result).toBeUndefined();
     // VOTE_RESULT's own announcement, overwriting the night's.
     expect(game.lastDeaths).toEqual([wolfUids[0]]);
+    // Which is which is decided by the phase being LEFT (VOTE), not by
+    // decision.nextPhase alone — a hang gets the "hanged" wording, not the
+    // night's "bitten" one.
+    const narrationAtVoteResult = await getNarrationKeys(gameId);
+    expect(narrationAtVoteResult[narrationAtVoteResult.length - 1]).toBe("VOTE_RESULT_HANGED");
 
     await expirePhaseTimer(gameId);
     res = await callAdvance(gameId);
@@ -289,6 +315,11 @@ describe("full game, no optional roles — start -> ... -> VILLAGE win", () => {
     // NOTHING else — no role list, ever, even at game end.
     expect(game.result).toEqual({ winner: "VILLAGE" });
     assertPhaseShapeNeverLeaksRoles(game.phase);
+    // A round that both resolves a death AND ends the game pushes BOTH
+    // narration events, in order — the death announcement still plays,
+    // it doesn't get silently replaced by the win announcement.
+    const finalNarration = await getNarrationKeys(gameId);
+    expect(finalNarration.slice(-2)).toEqual(["VOTE_RESULT_HANGED", "GAME_END_VILLAGE"]);
 
     const room = (await fakeDb.ref("rooms/ABCDEF").get()).val() as Room;
     expect(room.status).toBe("LOBBY");

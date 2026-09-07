@@ -3,6 +3,12 @@ export const gamePhasePath = (gameId: string): string => `games/${gameId}/phase`
 export const gamePlayerPath = (gameId: string, uid: string): string =>
   `games/${gameId}/players/${uid}`;
 export const gameResultPath = (gameId: string): string => `games/${gameId}/result`;
+// Unlike actions/ and chat/ below, narration carries no role-specific
+// information at all — every announcement is something the whole table
+// already hears together (spec §8.3) — so nesting it under games/{gameId}
+// exactly as spec §7's diagram shows is fine; there's no cascade-leak risk
+// to design around here.
+export const gameNarrationPath = (gameId: string): string => `games/${gameId}/narration`;
 
 // Deliberately a separate top-level tree from games/{gameId}, not nested
 // under it. RTDB grants read access by walking from the requested path UP

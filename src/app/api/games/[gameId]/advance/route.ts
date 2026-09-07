@@ -8,6 +8,7 @@ import { checkWinner } from "@/lib/game/checkWinner";
 import { applyLoverDeaths } from "@/lib/game/resolveDeathExtras";
 import {
   seerCheck,
+  type Faction,
   type Game,
   type GamePlayer,
   type PhaseName,
@@ -15,6 +16,7 @@ import {
   type RoleKey,
 } from "@/types/game";
 import { PHASE_DURATIONS_MS, DEAD_HOLDER_PHASE_DURATION_MS } from "@/lib/game/phases";
+import { PHASE_NARRATION_KEY, GAME_END_NARRATION_KEY } from "@/lib/game/narration";
 
 /**
  * The single server-authoritative phase-transition endpoint (spec §6.2/§6.3).
@@ -351,6 +353,46 @@ export async function POST(
     }
   }
 
+  // Spec §8.3: one narration event per transition, plus a second one when
+  // this same transition also ends the game — a death announcement should
+  // still play even on the round that decides the winner, not get silently
+  // replaced by it. Which wording a resolution gets (bitten/no-death vs.
+  // hanged/no-hang) is decided by which phase we're LEAVING, not by
+  // decision.nextPhase alone: nextPhase collapses to "ENDED" once a winner
+  // is decided, whether that resolution came from a night or a vote, so
+  // game.phase.name === "VOTE" is the one signal that survives that collapse.
+  const resolvedDeathsThisCall =
+    decision.nextPhase === "DAWN" || decision.nextPhase === "VOTE_RESULT" || !!decision.winner;
+  if (resolvedDeathsThisCall) {
+    const isDayResolution = game.phase.name === "VOTE";
+    const seq = db.ref(`games/${gameId}/narration`).push().key;
+    if (seq) {
+      updates[`games/${gameId}/narration/${seq}`] = isDayResolution
+        ? {
+            key: decision.deaths.length > 0 ? "VOTE_RESULT_HANGED" : "VOTE_RESULT_NO_HANG",
+            at: Date.now(),
+          }
+        : decision.deaths.length > 0
+          ? { key: "DAWN_DEATHS_PREFIX", count: decision.deaths.length, at: Date.now() }
+          : { key: "DAWN_NO_DEATHS", at: Date.now() };
+    }
+  } else {
+    const simpleKey = PHASE_NARRATION_KEY[decision.nextPhase];
+    if (simpleKey) {
+      const seq = db.ref(`games/${gameId}/narration`).push().key;
+      if (seq) updates[`games/${gameId}/narration/${seq}`] = { key: simpleKey, at: Date.now() };
+    }
+  }
+  if (decision.winner) {
+    const seq = db.ref(`games/${gameId}/narration`).push().key;
+    if (seq) {
+      updates[`games/${gameId}/narration/${seq}`] = {
+        key: GAME_END_NARRATION_KEY[decision.winner],
+        at: Date.now(),
+      };
+    }
+  }
+
   await db.ref().update(updates);
 
   return NextResponse.json({ phase: newPhase, deaths: decision.deaths, winner: decision.winner });
@@ -372,7 +414,7 @@ async function applyPendingHunterShots(
   game: Game,
   privateState: Record<string, PrivatePlayerState>,
   hunterShotSnap: DataSnapshot,
-): Promise<{ phase: Game["phase"]; deaths: string[]; winner: string | null } | null> {
+): Promise<{ phase: Game["phase"]; deaths: string[]; winner: Faction | null } | null> {
   const hunterShotVal = (hunterShotSnap.val() ?? {}) as Record<string, { target: string }>;
 
   const pendingTargets = Object.entries(hunterShotVal)
@@ -398,7 +440,7 @@ async function applyPendingHunterShots(
   // its target dead for narrative completeness; it just can't reopen a
   // result the table has already been told.
   let newPhase = game.phase;
-  let winner: string | null = game.result?.winner ?? null;
+  let winner: Faction | null = game.result?.winner ?? null;
 
   if (game.phase.name !== "ENDED") {
     const aliveRoles: RoleKey[] = [];
@@ -422,6 +464,13 @@ async function applyPendingHunterShots(
       updates[`rooms/${game.roomCode}/status`] = "LOBBY";
       for (const uid of Object.keys(game.players)) {
         updates[`rooms/${game.roomCode}/members/${uid}/ready`] = false;
+      }
+      const seq = db.ref(`games/${gameId}/narration`).push().key;
+      if (seq) {
+        updates[`games/${gameId}/narration/${seq}`] = {
+          key: GAME_END_NARRATION_KEY[winner],
+          at: Date.now(),
+        };
       }
     }
   }

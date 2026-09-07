@@ -103,9 +103,13 @@ class FakeRef {
   /** Mirrors the Admin SDK's `ref.push(value)`: generates a new child key
    * and, when a value is given, writes it there immediately (real Firebase
    * does this asynchronously but `then()` above lets `await` wait for it
-   * all the same). */
+   * all the same). Real push() keys are timestamp-based and sort correctly
+   * as plain strings by construction — this fake's counter-based keys are
+   * zero-padded so the same "sort the keys, get chronological order"
+   * property holds for callers (e.g. reading narration/{seq} history back
+   * in order) regardless of how many pushes have happened. */
   push(value?: Json): FakeRef {
-    const key = `fake${++this.store.counter}`;
+    const key = `fake${String(++this.store.counter).padStart(8, "0")}`;
     const childPath = this.path ? `${this.path}/${key}` : key;
     if (value !== undefined) {
       setAt(this.store.root, childPath, structuredClone(value));

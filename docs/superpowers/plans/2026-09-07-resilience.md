@@ -130,14 +130,54 @@ WebSocket alive through a lock screen) still could not run here — that's real
 hardware, not something a CDP script can stand in for; flagged as the one remaining
 unverified assumption this task rests on.
 
-## Task 5: TTS narration — STATUS: not started
+## Task 5: TTS narration — STATUS: mechanism done, audio not rendered
 
-§8.3: ~20 fixed sentences + count variants (0-16) for "đêm qua có N người chết",
-pre-rendered to mp3 at build time, served from `/public/audio`, looked up by
-`narration/{seq}` (key + params) written to RTDB. Needs an actual TTS engine to
-produce real Vietnamese audio — this sandbox has no such tool available; will
-scaffold the RTDB write/read mechanism and the sentence-key catalog, and document
-exactly what audio-generation step remains for whoever has TTS access.
+Checked first rather than assuming: no espeak/espeak-ng/festival/pico2wave, no
+Python TTS package, nothing offline-capable in this sandbox. Calling an external TTS
+API at runtime was never on the table anyway — spec §8.3's own opening paragraph
+names that exact old-app mistake (Google Translate TTS via a spoofed User-Agent,
+network-dependent at the worst moment, no cache, broke once on a misread role name)
+as the reason this has to be pre-rendered at build time instead. So this genuinely
+cannot produce real audio here, unlike everything else in this plan which was
+blocked on credentials rather than on a tool that doesn't exist in this environment.
+
+Built everything up to that wall: `src/lib/game/narration.ts` is the full sentence
+catalog — 20 fixed-sentence keys (`NARRATION_SENTENCES`, exact Vietnamese script)
+covering every phase transition, both DAWN outcomes (no-death vs. a count-carrying
+prefix+suffix pair, spliced with a separate count-word clip instead of recording 17
+full sentences — spec's own stated reason for keeping the file count down), both
+VOTE_RESULT outcomes, and all three win screens, plus `NARRATION_COUNT_WORDS` (0-16,
+spec §4.2's max player count). `advance/route.ts` pushes one `NarrationEvent` to
+`games/{gameId}/narration/{seq}` per transition (`PHASE_NARRATION_KEY` for simple
+1:1 phases; DAWN/VOTE_RESULT get their wording from which phase was being LEFT —
+`game.phase.name === "VOTE"` is the signal that survives `decision.nextPhase`
+collapsing to `"ENDED"` once a winner is decided; a round that both resolves a death
+AND ends the game pushes both events, in order, so the death announcement isn't
+silently replaced by the win one); `start/route.ts` pushes `GAME_START` when the
+game is created; `applyPendingHunterShots` pushes the win event too, for the
+game-ending-Hunter-shot path the main handler never reaches. `useNarrationPlayback`
+subscribes to the latest event and plays it client-side, skipping the first snapshot
+delivered after mount (that's whatever was already latest — e.g. joining mid-game —
+not a new announcement) and sequencing prefix→count→suffix for the DAWN-with-deaths
+case.
+
+Server-side write logic covered by new end-to-end assertions in
+`gameFlowEndToEnd.test.ts` (GAME_START at creation, simple phase-key pushes, the
+DAWN/VOTE_RESULT wording split, and the death-then-win double-push at game end) —
+also fixed a latent ordering bug this surfaced in `fakeAdminDb.ts`'s `push()`: its
+counter-based keys weren't zero-padded, so sorting them as strings broke past 9
+pushes (`"fake10" < "fake2"` lexicographically) even though real Firebase push()
+keys sort correctly by construction. `useNarrationPlayback` itself needs a live RTDB
+subscription the same as `useGame`/`usePrivateState` — neither of those got
+individual CDP verification either, for the same reason (no real Firebase project
+reachable here); reviewed carefully instead, same standard as those.
+
+What's left for whoever has TTS access: render each `NARRATION_SENTENCES` entry and
+each `NARRATION_COUNT_WORDS` entry to `/public/audio/narration/{key}.mp3` /
+`/public/audio/narration/count-{n}.mp3` (see `narration.ts`'s own path helpers for
+the exact expected filenames). Nothing else needs to change once those files exist —
+`useNarrationPlayback` already looks for them at those paths and will just start
+working.
 
 ## Task 6: Push notifications (FCM) — STATUS: not started
 

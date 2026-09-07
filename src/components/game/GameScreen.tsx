@@ -13,6 +13,7 @@ import {
   usePhaseMediaSession,
   useAutoActionWakeLock,
 } from "@/lib/game/useKeepAlive";
+import { useNarrationPlayback } from "@/lib/game/useNarrationPlayback";
 import { PHASE_LABELS } from "@/lib/game/labels";
 import { Logo } from "@/components/Logo";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -104,6 +105,7 @@ function GameScreenInner({
   useBackgroundAudioKeepAlive(!!game && game.phase.name !== "ENDED");
   usePhaseMediaSession(game?.phase, game?.dayNumber);
   useAutoActionWakeLock(isRequired && !alreadyDone);
+  useNarrationPlayback(db, gameId, !!game && game.phase.name !== "ENDED");
 
   if (loading || !game) {
     return (

@@ -40,7 +40,8 @@
         "players": { ".write": false },
         "result": { ".write": false },
         "lastProtectedUid": { ".write": false },
-        "lastDeaths": { ".write": false }
+        "lastDeaths": { ".write": false },
+        "narration": { ".write": false }
       }
     },
     "actions": {

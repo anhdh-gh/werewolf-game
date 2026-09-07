@@ -40,6 +40,8 @@ export async function POST(
 
   const gameId = db.ref("games").push().key;
   if (!gameId) throw new Error("Không tạo được mã ván đấu");
+  const narrationSeqKey = db.ref(`games/${gameId}/narration`).push().key;
+  if (!narrationSeqKey) throw new Error("Không tạo được narration seq");
 
   const now = Date.now();
   // Spec §7: "danh sách đồng bọn cho Sói" — every wolf-faction uid (WEREWOLF
@@ -72,6 +74,7 @@ export async function POST(
         version: 0,
       },
       players,
+      narration: { [narrationSeqKey]: { key: "GAME_START", at: now } },
     },
     [`private/${gameId}`]: privateWrites,
     [`rooms/${code}/currentGameId`]: gameId,
