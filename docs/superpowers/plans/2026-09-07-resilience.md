@@ -260,13 +260,25 @@ gets a token; `canPublish` is `player.alive` — a dead player still gets a
 subscribe-only grant, matching "vẫn xem được hình để theo dõi ván"). Every other
 phase has no call room at all, matching spec's explicit list.
 
+**Later re-check found a real bug in that DISCUSSION grant**: spec §4.7 says a
+muted (but alive) player's LiveKit token also must not get publish permission —
+"token LiveKit của họ không được cấp quyền publish trong phase Thảo Luận, nên micro
+thật sự không phát được." The first pass only checked `player.alive`, missing
+`player.muted` entirely — a muted player would have kept full mic/cam publish
+rights over LiveKit even though ChatPanel already correctly locked their text
+input for the same rule. Fixed to `player.alive && !player.muted`; the Muter's
+whole point is worthless in a "Chơi xa" room without this half of §4.7, not just
+the chat half. Covered by a new test asserting a muted-but-alive uid gets
+`canPublish: false`, verified via the same real `TokenVerifier` decode as everything
+else in this file.
+
 Real, offline verification — not just "written," genuinely checked: LiveKit access
 tokens are self-contained JWTs, so `src/test/livekitToken.test.ts` signs and decodes
 real tokens with a throwaway key/secret pair, entirely locally (`@vitest-environment
 node` override on that one file — `jose`, which signs the JWT, needs Node's native
 WebCrypto/TextEncoder, and this project's default jsdom test environment overrides
 enough of that to break signing with "payload must be an instance of Uint8Array").
-10 tests cover: no/invalid auth rejected, remoteMode-off rejected, an alive Werewolf
+11 tests cover: no/invalid auth rejected, remoteMode-off rejected, an alive Werewolf
 gets a canPublish WOLVES token (`TokenVerifier.verify()` confirms the actual decoded
 grant), the Traitor and a non-wolf both denied a WOLVES token, an alive/dead player
 both get DISCUSSION tokens with the right canPublish, a solo-action phase (SEER) has

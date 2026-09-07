@@ -14,7 +14,7 @@ import type { Game, PrivatePlayerState, RoleKey } from "@/types/game";
  *
  * Unlike start/advance, this route DOES need to know who's calling — the
  * grant it mints (which room, canPublish or subscribe-only) depends on
- * this uid's own role and alive status. Spec §3 puts "chống gian lận"
+ * this uid's own role, alive, and muted status. Spec §3 puts "chống gian lận"
  * (anti-cheat) out of scope for the game's OWN state — a compromised
  * client can already only hurt its own play experience there — but a
  * forged uid here wouldn't just cheat the forger, it would let them join
@@ -112,6 +112,12 @@ export interface CallRoomGrant {
  * separated from the route itself so it's the thing under test in
  * livekitGrant.test.ts, without needing a mock NextRequest for the parts
  * that are pure decision logic.
+ *
+ * Spec §4.7: a muted (but alive) player's DISCUSSION token also doesn't
+ * get publish permission — "token LiveKit của họ không được cấp quyền
+ * publish trong phase Thảo Luận, nên micro thật sự không phát được." The
+ * Muter's whole point is worthless in a "Chơi xa" room without this;
+ * ChatPanel's text lock already covers the chat half of the same rule.
  */
 export async function resolveCallRoomGrant(
   db: ReturnType<typeof adminDb>,
@@ -135,7 +141,7 @@ export async function resolveCallRoomGrant(
   }
 
   if (game.phase.name === "DISCUSSION") {
-    return { roomName: `${gameId}-DISCUSSION`, canPublish: player.alive };
+    return { roomName: `${gameId}-DISCUSSION`, canPublish: player.alive && !player.muted };
   }
 
   return null;

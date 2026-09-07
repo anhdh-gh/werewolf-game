@@ -72,6 +72,7 @@ const wolfA = "wolfA";
 const traitor = "traitor";
 const seer = "seer";
 const deadVillager = "deadVillager";
+const mutedVillager = "mutedVillager";
 const gameId = "GAME-LK";
 const roomCode = "LKROOM";
 
@@ -81,6 +82,7 @@ async function seedGame(phaseName: Game["phase"]["name"], remoteMode: boolean) {
     [traitor]: { name: "Traitor", alive: true, muted: false },
     [seer]: { name: "Seer", alive: true, muted: false },
     [deadVillager]: { name: "Dead Villager", alive: false, muted: false },
+    [mutedVillager]: { name: "Muted Villager", alive: true, muted: true },
   };
   const game: Game = {
     roomCode,
@@ -95,6 +97,11 @@ async function seedGame(phaseName: Game["phase"]["name"], remoteMode: boolean) {
     [traitor]: { role: "TRAITOR", initialRole: "TRAITOR", potions: { heal: true, poison: true } },
     [seer]: { role: "SEER", initialRole: "SEER", potions: { heal: true, poison: true } },
     [deadVillager]: {
+      role: "VILLAGER",
+      initialRole: "VILLAGER",
+      potions: { heal: true, poison: true },
+    },
+    [mutedVillager]: {
       role: "VILLAGER",
       initialRole: "VILLAGER",
       potions: { heal: true, poison: true },
@@ -164,6 +171,17 @@ describe("POST /api/livekit/token", () => {
     const { status, body } = await callToken(deadVillager, gameId);
     expect(status).toBe(200);
     expect(body.room).toBe(`${gameId}-DISCUSSION`);
+    expect(body.canPublish).toBe(false);
+
+    const grants = await verifier.verify(body.token!);
+    expect(grants.video?.canPublish).toBeFalsy();
+    expect(grants.video?.canSubscribe).toBe(true);
+  });
+
+  it("mints a subscribe-only DISCUSSION token for an alive but muted player — spec §4.7's mic lockout", async () => {
+    await seedGame("DISCUSSION", true);
+    const { status, body } = await callToken(mutedVillager, gameId);
+    expect(status).toBe(200);
     expect(body.canPublish).toBe(false);
 
     const grants = await verifier.verify(body.token!);
