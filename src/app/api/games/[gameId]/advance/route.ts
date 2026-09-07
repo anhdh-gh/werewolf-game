@@ -149,6 +149,20 @@ export async function POST(
     // Spec §4.1: the Bodyguard can't shield the same target two nights
     // running — the next BODYGUARD phase's UI reads this to exclude it.
     updates[`games/${gameId}/lastProtectedUid`] = protectTarget;
+
+    // Spec §4.1: each potion is a single use for the whole game. Without
+    // this, the Witch's private potions flags never change, and the
+    // WITCH_SAVE/WITCH_KILL screens (which gate on them) would let her
+    // save and poison every single night.
+    const witchUid = Object.entries(privateState).find(([, p]) => p.role === "WITCH")?.[0];
+    if (witchUid) {
+      if (witchSaveTarget !== null) {
+        updates[`private/${gameId}/${witchUid}/potions/heal`] = false;
+      }
+      if (witchPoisonTarget !== null) {
+        updates[`private/${gameId}/${witchUid}/potions/poison`] = false;
+      }
+    }
   }
 
   for (const uid of decision.deaths) {
