@@ -10,7 +10,7 @@
         },
         "settings": {
           ".write": "auth != null && newData.exists() && newData.parent().child('members').child(auth.uid).exists() && newData.parent().child('status').val() === 'LOBBY'",
-          ".validate": "newData.hasChildren(['maxPlayers', 'rolesEnabled']) && newData.child('maxPlayers').isNumber() && newData.child('maxPlayers').val() >= 4 && newData.child('maxPlayers').val() <= 16 && newData.child('rolesEnabled').hasChildren(['BODYGUARD', 'CURSED', 'MUTER', 'TANNER'])"
+          ".validate": "newData.hasChildren(['maxPlayers', 'rolesEnabled']) && newData.child('maxPlayers').isNumber() && newData.child('maxPlayers').val() >= 4 && newData.child('maxPlayers').val() <= 16 && newData.child('rolesEnabled').hasChildren(['BODYGUARD', 'TRAITOR', 'HUNTER', 'CUPID', 'MUTER', 'CURSED', 'LYCAN', 'TANNER'])"
         },
         "status": {
           ".write": "auth != null && !data.exists()",

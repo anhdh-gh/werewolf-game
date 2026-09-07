@@ -1,8 +1,13 @@
 import { type Database, ref, runTransaction, update } from "firebase/database";
 import { generateRoomCode } from "./roomCode";
 import { roomPath, roomStatusPath, roomMemberPath } from "./paths";
+import { OPTIONAL_ROLE_KEYS, type RoomSettings } from "@/types/room";
 
 const MAX_ATTEMPTS = 5;
+
+const DEFAULT_ROLES_ENABLED: RoomSettings["rolesEnabled"] = Object.fromEntries(
+  OPTIONAL_ROLE_KEYS.map((key) => [key, true]),
+) as RoomSettings["rolesEnabled"];
 
 export interface CreateRoomInput {
   uid: string;
@@ -50,7 +55,7 @@ async function tryCreateAt(
     [`${roomPath(code)}/createdAt`]: now,
     [`${roomPath(code)}/settings`]: {
       maxPlayers: input.maxPlayers,
-      rolesEnabled: { BODYGUARD: true, CURSED: true, MUTER: true, TANNER: true },
+      rolesEnabled: DEFAULT_ROLES_ENABLED,
     },
     [roomMemberPath(code, input.uid)]: {
       name: input.name,

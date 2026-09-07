@@ -4,15 +4,23 @@ import type { OptionalRoleKey } from "@/types/room";
 
 const ALL_ENABLED: Record<OptionalRoleKey, boolean> = {
   BODYGUARD: true,
-  CURSED: true,
+  TRAITOR: true,
+  HUNTER: true,
+  CUPID: true,
   MUTER: true,
+  CURSED: true,
+  LYCAN: true,
   TANNER: true,
 };
 
 const ALL_DISABLED: Record<OptionalRoleKey, boolean> = {
   BODYGUARD: false,
-  CURSED: false,
+  TRAITOR: false,
+  HUNTER: false,
+  CUPID: false,
   MUTER: false,
+  CURSED: false,
+  LYCAN: false,
   TANNER: false,
 };
 
@@ -46,7 +54,7 @@ describe("buildRoleList", () => {
     expect(countRoles(roles)).toEqual({ WEREWOLF: 1, SEER: 1, WITCH: 1, VILLAGER: 1 });
   });
 
-  it("at 8 players with everything enabled, fills Bodyguard/Cursed/Muter before running out of slots", () => {
+  it("at 8 players with everything enabled, fills Bodyguard/Traitor/Hunter before running out of slots", () => {
     const roles = buildRoleList(8, ALL_ENABLED);
     expect(roles).toHaveLength(8);
     expect(countRoles(roles)).toEqual({
@@ -54,8 +62,8 @@ describe("buildRoleList", () => {
       SEER: 1,
       WITCH: 1,
       BODYGUARD: 1,
-      CURSED: 1,
-      MUTER: 1,
+      TRAITOR: 1,
+      HUNTER: 1,
       VILLAGER: 1,
     });
   });
@@ -68,10 +76,14 @@ describe("buildRoleList", () => {
       SEER: 1,
       WITCH: 1,
       BODYGUARD: 1,
-      CURSED: 1,
+      TRAITOR: 1,
+      HUNTER: 1,
+      CUPID: 1,
       MUTER: 1,
+      CURSED: 1,
+      LYCAN: 1,
       TANNER: 1,
-      VILLAGER: 6,
+      VILLAGER: 2,
     });
   });
 
@@ -88,9 +100,9 @@ describe("buildRoleList", () => {
       WEREWOLF: 2,
       SEER: 1,
       WITCH: 1,
-      CURSED: 1,
-      MUTER: 1,
-      TANNER: 1,
+      TRAITOR: 1,
+      HUNTER: 1,
+      CUPID: 1,
       VILLAGER: 1,
     });
   });
@@ -100,6 +112,27 @@ describe("buildRoleList", () => {
       const counts = countRoles(buildRoleList(n, ALL_ENABLED));
       expect(counts.VILLAGER ?? 0).toBeGreaterThanOrEqual(1);
     }
+  });
+
+  it("fills every Wolf- and Village-faction optional role before ever dealing the sole Riêng role (Tanner)", () => {
+    // 11 players, everything enabled: 5 optional slots are available, and
+    // Tanner sits last in the fill order (spec §4.2's explicit priority) —
+    // so with only 5 slots to hand out, Tanner must not appear yet.
+    const counts = countRoles(buildRoleList(11, ALL_ENABLED));
+    expect(counts.TANNER).toBeUndefined();
+    expect(counts.CURSED).toBeUndefined();
+    expect(counts.LYCAN).toBeUndefined();
+    expect(counts).toEqual({
+      WEREWOLF: 3,
+      SEER: 1,
+      WITCH: 1,
+      BODYGUARD: 1,
+      TRAITOR: 1,
+      HUNTER: 1,
+      CUPID: 1,
+      MUTER: 1,
+      VILLAGER: 1,
+    });
   });
 });
 

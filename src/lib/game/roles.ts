@@ -12,8 +12,11 @@ function assertValidSize(n: number): void {
 }
 
 /** Spec §4.2: wolves, then Seer + Witch + ≥1 Villager are mandatory, then the
- * remaining slots are filled Bodyguard → Cursed → Muter → Tanner → Villager,
- * skipping any optional role the room disabled. */
+ * remaining slots are filled in OPTIONAL_ROLE_KEYS order — Wolf- and
+ * Village-faction roles first, the sole Riêng (solo) role TANNER always
+ * last — skipping any optional role the room disabled. A disabled role's
+ * slot rolls over to the next one in line rather than going straight to
+ * Villager. */
 export function buildRoleList(
   n: number,
   rolesEnabled: Record<OptionalRoleKey, boolean>,

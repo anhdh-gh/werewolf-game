@@ -1,8 +1,11 @@
 import { PHASE_SEQUENCE, PHASE_OPTIONAL_ROLE, type PhaseName, type RoleKey } from "@/types/game";
 
-/** REVEAL_ROLE only ever happens once, at game start (spec §4.3) — it is not
- * part of the repeating night/day loop, so it's excluded here. */
-const LOOP: PhaseName[] = PHASE_SEQUENCE.filter((phase) => phase !== "REVEAL_ROLE");
+/** REVEAL_ROLE and PAIR_LOVERS only ever happen once, at game start (spec
+ * §4.3) — they are not part of the repeating night/day loop, so they're
+ * excluded here and handled as special-cased transitions below instead. */
+const LOOP: PhaseName[] = PHASE_SEQUENCE.filter(
+  (phase) => phase !== "REVEAL_ROLE" && phase !== "PAIR_LOVERS",
+);
 
 /** Spec §4.3's default durations. DAWN and VOTE_RESULT are announcement-only
  * (no player action, nothing in PHASE_OPTIONAL_ROLE requires input there) and
@@ -10,6 +13,7 @@ const LOOP: PhaseName[] = PHASE_SEQUENCE.filter((phase) => phase !== "REVEAL_ROL
  * long enough for the narration line to play, tune once real audio exists. */
 export const PHASE_DURATIONS_MS: Record<PhaseName, number> = {
   REVEAL_ROLE: 20_000,
+  PAIR_LOVERS: 20_000,
   NIGHT_FALLS: 8_000,
   SEER: 30_000,
   BODYGUARD: 30_000,
@@ -31,7 +35,10 @@ export const PHASE_DURATIONS_MS: Record<PhaseName, number> = {
  * optional-role phases in PHASE_OPTIONAL_ROLE can be skipped. Looping past
  * VOTE_RESULT lands back on NIGHT_FALLS for the next day. */
 export function nextPhase(current: PhaseName, activeRoles: RoleKey[]): PhaseName {
-  if (current === "REVEAL_ROLE") return "NIGHT_FALLS";
+  if (current === "REVEAL_ROLE") {
+    return activeRoles.includes("CUPID") ? "PAIR_LOVERS" : "NIGHT_FALLS";
+  }
+  if (current === "PAIR_LOVERS") return "NIGHT_FALLS";
   if (current === "ENDED") return "ENDED";
 
   let idx = LOOP.indexOf(current);

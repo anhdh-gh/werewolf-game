@@ -65,27 +65,46 @@ gì. Ai cũng bấm Bắt đầu được, miễn đủ người. Mọi thứ c�
 
 ### 4.1 Các vai
 
+Thêm vào bản đầu 4 vai mới (Kẻ Phản Bội, Thợ Săn, Thần Tình Yêu, Sói Giả) để đôi bên Sói và
+Làng đều có chiều sâu — xem lý do sắp xếp ở §4.2. Vẫn chỉ một vai phe Riêng (Chán Đời); phe
+thứ 3 luôn là phần thêm sau cùng, không phải trọng tâm.
+
 | Vai | Phe | Năng lực |
 |---|---|---|
 | Ma Sói | Sói | Mỗi đêm cả bầy cùng chọn một người để cắn. Đa số thắng. |
-| Tiên Tri | Làng | Mỗi đêm soi một người, biết người đó có phải sói không. |
+| Kẻ Phản Bội | Sói | Biết hết đồng bọn sói và thắng cùng phe Sói, nhưng không thức đêm, không tham gia cắn. Tiên Tri soi vào thấy là **dân thường** — đây chính là vai sói mà Tiên Tri soi không ra. |
+| Tiên Tri | Làng | Mỗi đêm soi một người, biết người đó có phải sói không (Kẻ Phản Bội và Sói Giả là hai ngoại lệ cố ý — xem cột năng lực của chúng). |
 | Bảo Vệ | Làng | Mỗi đêm che chở một người khỏi bị sói cắn. Không được che cùng một người hai đêm liên tiếp. |
 | Phù Thuỷ | Làng | Có một bình cứu và một bình độc, mỗi bình dùng một lần cả ván. Được biết nạn nhân của sói đêm đó trước khi quyết định cứu. |
+| Thợ Săn | Làng | Chết vì bất kỳ lý do gì (đêm, bị treo cổ, bị đầu độc) thì được bắn chết ngay một người khác trước khi rời ván. |
+| Thần Tình Yêu | Làng | Đêm đầu tiên (trước cả Đêm Xuống) chọn ghép hai người — kể cả chính mình — thành một cặp đôi. Một trong hai chết vì bất kỳ lý do gì thì người còn lại chết theo vì đau lòng, bất kể người đó thuộc phe nào. |
 | Kẻ Bịt Miệng | Làng | Mỗi đêm chọn một người; hôm sau người đó không được nói. Xem §4.7 về cách áp dụng. |
 | Bị Nguyền | Làng | Khởi đầu là dân. Lần đầu bị sói cắn thì không chết mà **hoá thành sói**. |
-| Chán Đời | Riêng | Thắng một mình nếu chết, bằng bất kỳ cách nào. |
+| Sói Giả | Làng | Không có năng lực gì — nhưng Tiên Tri soi vào thấy là **sói** dù thực ra là dân. Đây chính là vai dân mà Tiên Tri soi nhầm ra sói. |
 | Dân Làng | Làng | Không có năng lực. |
+| Chán Đời | Riêng | Thắng một mình nếu chết, bằng bất kỳ cách nào. |
 
 > Đổi tên so với bản cũ: vai `SILENCED` ("Bị câm") được đổi thành **Kẻ Bịt Miệng**. Tên cũ sai
 > nghĩa — đây là người *gây* câm cho kẻ khác, không phải người bị câm.
 
+> Thần Tình Yêu v1 chỉ làm đúng phần "chết theo nhau". Luật đầy đủ của vai này (nếu hai người
+> yêu nhau khác phe thì họ tách thành phe thứ ba riêng, thắng nếu chỉ còn lại đúng hai người đó)
+> **chưa làm** — ghi lại ở đây để không quên, cân nhắc thêm khi phe Riêng cần mở rộng tiếp.
+
 ### 4.2 Chia vai
+
+**Thứ tự ưu tiên khi mở rộng bộ vai: Sói và Làng lấp đầy trước, phe Riêng luôn lấp sau
+cùng.** Lý do: Sói và Làng là hai phe phải đối đầu nhau mỗi ván, thêm vai ở đây làm phong phú
+thế trận chính. Phe Riêng chỉ thắng một mình, thêm vai ở đó không làm ván đấu chính (Sói và
+Làng) sâu hơn — nên chỉ nên lấp khi phòng đã đủ đông để cả hai phe chính đã có đủ vai.
 
 Với `n` người chơi (4 ≤ n ≤ 16):
 
-- Số sói: `floor((n - 1) / 4) + 1`
+- Số Ma Sói (vai cắn đêm thật sự — Kẻ Phản Bội không tính vào đây): `floor((n - 1) / 4) + 1`
 - Luôn có: Tiên Tri, Phù Thuỷ, ít nhất một Dân Làng
-- Chỗ còn lại lấp theo thứ tự: Bảo Vệ → Bị Nguyền → Kẻ Bịt Miệng → Chán Đời → Dân Làng
+- Chỗ còn lại lấp theo thứ tự (Sói và Làng lấp hết trước, Chán Đời — phe Riêng — luôn ở cuối):
+  Bảo Vệ → Kẻ Phản Bội → Thợ Săn → Thần Tình Yêu → Kẻ Bịt Miệng → Bị Nguyền → Sói Giả →
+  Chán Đời → Dân Làng
 
 Trước khi bắt đầu, phòng có mấy công tắc bật/tắt từng vai phụ. Không cần chỉnh gì cũng chơi
 được — mặc định là bật hết.
@@ -96,15 +115,20 @@ Trình tự một vòng, kèm thời lượng mặc định:
 
 ```
 SẢNH  →  XEM VAI (20s, chỉ một lần đầu ván)
+       →  GHÉP ĐÔI (20s, chỉ một lần đầu ván, chỉ khi có Thần Tình Yêu)
        →  ĐÊM XUỐNG (8s)
        →  TIÊN TRI (30s)  →  BẢO VỆ (30s)  →  BỊT MIỆNG (30s)
        →  SÓI (40s)       →  PHÙ THUỶ CỨU (30s)  →  PHÙ THUỶ GIẾT (30s)
        →  BỊ NGUYỀN (15s)
-       →  RẠNG SÁNG (công bố người chết)
-       →  THẢO LUẬN (180s)  →  BỎ PHIẾU (60s)  →  KẾT QUẢ BỎ PHIẾU
+       →  RẠNG SÁNG (công bố người chết, xử lý Thợ Săn và cặp đôi nếu có)
+       →  THẢO LUẬN (180s)  →  BỎ PHIẾU (60s)  →  KẾT QUẢ BỎ PHIẾU (xử lý Thợ Săn nếu có)
        →  quay lại ĐÊM XUỐNG
 KẾT THÚC (20s)
 ```
+
+GHÉP ĐÔI giống XEM VAI ở chỗ chỉ chạy đúng một lần, trước đêm đầu tiên — không phải vai nào
+cũng có, và **Kẻ Phản Bội, Sói Giả không có phase riêng nào cả** (không thức đêm, không hành
+động, chỉ ảnh hưởng tới cách Tiên Tri soi và cách chia vai).
 
 Phase của một vai bị **bỏ hẳn** nếu vai đó không có trong ván. Nếu vai có mặt nhưng người
 giữ vai đã chết, phase vẫn chạy với thời lượng giả 15 giây — nếu không, người khác sẽ suy ra
@@ -129,6 +153,17 @@ vai của bạn luôn tra lại được bất cứ lúc nào bằng một nút 
 
 > Sửa lỗi bản cũ: bản cũ dùng phép trừ tập hợp `{cắn, độc} − {bảo vệ, cứu}`, khiến bảo vệ và
 > bình cứu vô tình hoá giải luôn cả thuốc độc. Sai luật.
+
+Sau khi có danh sách người chết đêm đó (bước 1–5), áp thêm hai lớp không phụ thuộc vai nào
+gây ra cái chết, theo thứ tự:
+
+7. **Thần Tình Yêu:** nếu đúng một trong hai người của cặp đôi nằm trong danh sách chết, thêm
+   người còn lại vào danh sách chết vì đau lòng — dù người đó không bị sói cắn, không bị độc,
+   không bị treo cổ. Áp dụng lại bước này ở cả RẠNG SÁNG lẫn KẾT QUẢ BỎ PHIẾU, vì cặp đôi có
+   thể chết cách nhau một ngày.
+8. **Thợ Săn:** với mỗi người trong danh sách chết đang giữ vai Thợ Săn, hỏi họ chọn một người
+   còn sống để bắn chết ngay, trước khi công bố cả danh sách. Người bị bắn cũng có thể kéo
+   theo người yêu của họ (áp lại bước 7). Một Thợ Săn tự bắn mình là lựa chọn hợp lệ (không bắn ai).
 
 ### 4.5 Bỏ phiếu ban ngày
 

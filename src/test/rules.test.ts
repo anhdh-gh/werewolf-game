@@ -13,7 +13,7 @@ let testEnv: RulesTestEnvironment;
 const EXISTING_ROOM = {
   createdAt: 1000,
   status: "LOBBY",
-  settings: { maxPlayers: 8, rolesEnabled: { BODYGUARD: true, CURSED: true, MUTER: true, TANNER: true } },
+  settings: { maxPlayers: 8, rolesEnabled: { BODYGUARD: true, TRAITOR: true, HUNTER: true, CUPID: true, MUTER: true, CURSED: true, LYCAN: true, TANNER: true } },
   members: {
     "uid-owner": { name: "Owner", photoURL: null, joinedAt: 1000, ready: false, online: true },
   },
@@ -123,7 +123,7 @@ describe("rooms/$code", () => {
         status: "LOBBY",
         settings: {
           maxPlayers: 8,
-          rolesEnabled: { BODYGUARD: true, CURSED: true, MUTER: true, TANNER: true },
+          rolesEnabled: { BODYGUARD: true, TRAITOR: true, HUNTER: true, CUPID: true, MUTER: true, CURSED: true, LYCAN: true, TANNER: true },
         },
         members: {
           "uid-solo2": {
@@ -155,7 +155,7 @@ describe("rooms/$code", () => {
         "rooms/SOLO01/createdAt": 5000,
         "rooms/SOLO01/settings": {
           maxPlayers: 8,
-          rolesEnabled: { BODYGUARD: true, CURSED: true, MUTER: true, TANNER: true },
+          rolesEnabled: { BODYGUARD: true, TRAITOR: true, HUNTER: true, CUPID: true, MUTER: true, CURSED: true, LYCAN: true, TANNER: true },
         },
         "rooms/SOLO01/members/uid-solo": {
           name: "Solo",
