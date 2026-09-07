@@ -9,9 +9,16 @@ const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 const cinzel = Cinzel({ subsets: ["latin"], variable: "--font-display" });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://wolf.anhdh.net"),
   title: "Ma Sói",
-  description: "Ma sói chơi cùng bàn hoặc từ xa",
+  description: "Ma sói chơi cùng bàn hoặc từ xa, chỉ cần một mã phòng",
   manifest: "/manifest.webmanifest",
+  openGraph: {
+    title: "Ma Sói",
+    description: "Ma sói chơi cùng bàn hoặc từ xa, chỉ cần một mã phòng",
+    locale: "vi_VN",
+    type: "website",
+  },
 };
 
 export const viewport: Viewport = {
