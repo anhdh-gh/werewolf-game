@@ -128,6 +128,11 @@ export interface PrivatePlayerState {
   /** The Seer's own check history — RTDB push() keys, so this is a map, not
    * an array. Only ever present for a uid dealt the Seer role. */
   hints?: Record<string, SeerHint>;
+  /** Spec §6.5: the wolves' current-night pick, written here (not anywhere
+   * publicly readable) the moment the WOLVES phase ends, so the Witch can
+   * decide whether to save them. null when the pack didn't agree on
+   * anyone. Only ever present for a uid dealt the Witch role. */
+  pendingWolfTarget?: string | null;
   /** Spec §7: "danh sách đồng bọn cho Sói" — every other wolf-faction uid
    * (WEREWOLF or TRAITOR), so the pack can coordinate who to bite. Only
    * ever present for a uid dealt a wolf-faction role. */

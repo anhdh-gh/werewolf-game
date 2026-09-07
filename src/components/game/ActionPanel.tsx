@@ -5,7 +5,6 @@ import { type Database, ref, set } from "firebase/database";
 import type { Game, PrivatePlayerState } from "@/types/game";
 import { submitAction, nudgeAdvance } from "@/lib/game/actions";
 import { gameActionPath } from "@/lib/game/paths";
-import { useWolfTarget } from "@/lib/game/usePhaseActions";
 import { TargetPicker, type PickableTarget } from "./TargetPicker";
 import { Loader2 } from "lucide-react";
 
@@ -36,7 +35,10 @@ export function ActionPanel({
   const [selected, setSelected] = useState<string | null | undefined>(undefined);
   const [selectedB, setSelectedB] = useState<string | undefined>(undefined);
   const [submitting, setSubmitting] = useState(false);
-  const wolfTarget = useWolfTarget(db, gameId);
+  // Spec §6.5: the server writes this into the Witch's own private state
+  // when the WOLVES phase ends — never read from a publicly-visible path
+  // (see the advance route's "Leaving WOLVES" comment for why).
+  const wolfTarget = privateState?.pendingWolfTarget ?? null;
 
   const phase = game.phase.name;
 

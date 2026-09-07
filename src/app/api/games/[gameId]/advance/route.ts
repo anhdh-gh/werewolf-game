@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { Database, DataSnapshot } from "firebase-admin/database";
 import { adminDb } from "@/lib/firebase/admin";
 import { planAdvance } from "@/lib/game/planAdvance";
+import { tallyMajorityVote } from "@/lib/game/resolveNight";
 import { requiredActorsForPhase } from "@/lib/game/requiredActors";
 import { checkWinner } from "@/lib/game/checkWinner";
 import { applyLoverDeaths } from "@/lib/game/resolveDeathExtras";
@@ -39,7 +40,7 @@ export async function POST(
 
   const [privateSnap, hunterShotSnap] = await Promise.all([
     db.ref(`private/${gameId}`).get(),
-    db.ref(`games/${gameId}/actions/HUNTER_SHOT`).get(),
+    db.ref(`actions/${gameId}/HUNTER_SHOT`).get(),
   ]);
   const privateState = (privateSnap.val() ?? {}) as Record<string, PrivatePlayerState>;
 
@@ -77,7 +78,7 @@ export async function POST(
   // anywhere a client can read would undo everything /private exists for.
   // An empty list (announcement-only phases) only counts as "ready" via
   // the time check below, never on its own.
-  const currentPhaseActionsSnap = await db.ref(`games/${gameId}/actions/${game.phase.name}`).get();
+  const currentPhaseActionsSnap = await db.ref(`actions/${gameId}/${game.phase.name}`).get();
   const currentActionsVal = (currentPhaseActionsSnap.val() ?? {}) as Record<string, { done?: boolean }>;
   const requiredActors = requiredActorsForPhase(game.phase.name, aliveRolesByUid);
   const allRequiredDone =
@@ -100,12 +101,12 @@ export async function POST(
   }
 
   const [bodyguard, muter, wolves, witchSave, witchKill, vote] = await Promise.all([
-    db.ref(`games/${gameId}/actions/BODYGUARD`).get(),
-    db.ref(`games/${gameId}/actions/MUTER`).get(),
-    db.ref(`games/${gameId}/actions/WOLVES`).get(),
-    db.ref(`games/${gameId}/actions/WITCH_SAVE`).get(),
-    db.ref(`games/${gameId}/actions/WITCH_KILL`).get(),
-    db.ref(`games/${gameId}/actions/VOTE`).get(),
+    db.ref(`actions/${gameId}/BODYGUARD`).get(),
+    db.ref(`actions/${gameId}/MUTER`).get(),
+    db.ref(`actions/${gameId}/WOLVES`).get(),
+    db.ref(`actions/${gameId}/WITCH_SAVE`).get(),
+    db.ref(`actions/${gameId}/WITCH_KILL`).get(),
+    db.ref(`actions/${gameId}/VOTE`).get(),
   ]);
 
   const activeRoles: RoleKey[] = Object.values(privateState).map((p) => p.role);
@@ -186,6 +187,18 @@ export async function POST(
     updates[`games/${gameId}/players/${muteTarget}/muted`] = true;
   }
 
+  // Leaving WOLVES: spec §6.5 has the server write "nạn nhân đêm nay cho
+  // Phù Thuỷ" into her own private state — not a publicly-readable field,
+  // which is exactly what would leak the wolves' identities (see the
+  // requiredActors fix). The Witch's client reads this instead of ever
+  // touching actions/WOLVES/* directly.
+  if (game.phase.name === "WOLVES") {
+    const witchUid = Object.entries(privateState).find(([, p]) => p.role === "WITCH")?.[0];
+    if (witchUid) {
+      updates[`private/${gameId}/${witchUid}/pendingWolfTarget`] = tallyMajorityVote(wolfVotes);
+    }
+  }
+
   if (decision.nextPhase === "DAWN") {
     // Spec §4.1: the Bodyguard can't shield the same target two nights
     // running — the next BODYGUARD phase's UI reads this to exclude it.
@@ -242,7 +255,7 @@ export async function POST(
   // Leaving SEER: the Seer's check result is theirs to know immediately,
   // not something to hold until dawn (spec §4.1's Tiên Tri entry).
   if (game.phase.name === "SEER") {
-    const seerActionSnap = await db.ref(`games/${gameId}/actions/SEER`).get();
+    const seerActionSnap = await db.ref(`actions/${gameId}/SEER`).get();
     const seerActionVal = (seerActionSnap.val() ?? {}) as Record<string, { target: string }>;
     const [seerUid, seerAction] = Object.entries(seerActionVal)[0] ?? [];
     const targetRole = seerAction ? privateState[seerAction.target]?.role : undefined;
@@ -260,7 +273,7 @@ export async function POST(
   // after this — resolveDeathExtras only needs the resulting `lovers` pair,
   // which future advance() calls derive by scanning /private (findLoverPair).
   if (game.phase.name === "PAIR_LOVERS") {
-    const pairSnap = await db.ref(`games/${gameId}/actions/PAIR_LOVERS`).get();
+    const pairSnap = await db.ref(`actions/${gameId}/PAIR_LOVERS`).get();
     const pairVal = pairSnap.val() as Record<string, { targetA: string; targetB: string }> | null;
     const pair = pairVal ? Object.values(pairVal)[0] : null;
     if (pair) {

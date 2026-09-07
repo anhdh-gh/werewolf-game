@@ -39,16 +39,27 @@
         "phase": { ".write": false },
         "players": { ".write": false },
         "result": { ".write": false },
-        "actions": {
-          "HUNTER_SHOT": {
-            "$uid": {
-              ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('players').child($uid).child('alive').val() === false"
-            }
-          },
-          "$phaseKey": {
-            "$uid": {
-              ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('phase').child('name').val() === $phaseKey"
-            }
+        "lastProtectedUid": { ".write": false }
+      }
+    },
+    "actions": {
+      "$gameId": {
+        "VOTE": {
+          ".read": "auth != null",
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('phase').child('name').val() === 'VOTE'"
+          }
+        },
+        "HUNTER_SHOT": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('players').child($uid).child('alive').val() === false"
+          }
+        },
+        "$phaseKey": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('phase').child('name').val() === $phaseKey"
           }
         }
       }

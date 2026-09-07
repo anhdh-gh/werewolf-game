@@ -76,47 +76,42 @@ describe("games/$gameId", () => {
     );
   });
 
-  it("denies a client writing players, result, roomCode, startedAt, or dayNumber", async () => {
+  it("denies a client writing players, result, roomCode, startedAt, dayNumber, or lastProtectedUid", async () => {
     const db = testEnv.authenticatedContext("uid-wolf").database();
     await assertFails(set(ref(db, "games/GAME1/players/uid-wolf/alive"), false));
     await assertFails(set(ref(db, "games/GAME1/result"), { winner: "WOLF" }));
     await assertFails(set(ref(db, "games/GAME1/roomCode"), "HACKED"));
     await assertFails(set(ref(db, "games/GAME1/dayNumber"), 99));
+    await assertFails(set(ref(db, "games/GAME1/lastProtectedUid"), "uid-seer"));
   });
+});
 
+describe("actions/$gameId — the role-hiding tree (spec §6.5)", () => {
   it("allows a player to write their own action while their phase is live", async () => {
     const db = testEnv.authenticatedContext("uid-wolf").database();
     await assertSucceeds(
-      set(ref(db, "games/GAME1/actions/WOLVES/uid-wolf"), {
-        target: "uid-seer",
-        done: true,
-        at: 1234,
-      }),
+      set(ref(db, "actions/GAME1/WOLVES/uid-wolf"), { target: "uid-seer", done: true, at: 1234 }),
     );
   });
 
   it("denies writing an action for a phase that isn't the current one", async () => {
     const db = testEnv.authenticatedContext("uid-wolf").database();
     await assertFails(
-      set(ref(db, "games/GAME1/actions/SEER/uid-wolf"), { target: "x", done: true, at: 1 }),
+      set(ref(db, "actions/GAME1/SEER/uid-wolf"), { target: "x", done: true, at: 1 }),
     );
   });
 
   it("denies writing someone else's action", async () => {
     const db = testEnv.authenticatedContext("uid-wolf").database();
     await assertFails(
-      set(ref(db, "games/GAME1/actions/WOLVES/uid-seer"), {
-        target: "uid-wolf",
-        done: true,
-        at: 1,
-      }),
+      set(ref(db, "actions/GAME1/WOLVES/uid-seer"), { target: "uid-wolf", done: true, at: 1 }),
     );
   });
 
   it("allows a dead Hunter to write their revenge shot regardless of the current phase", async () => {
     const db = testEnv.authenticatedContext("uid-dead-hunter").database();
     await assertSucceeds(
-      set(ref(db, "games/GAME1/actions/HUNTER_SHOT/uid-dead-hunter"), {
+      set(ref(db, "actions/GAME1/HUNTER_SHOT/uid-dead-hunter"), {
         target: "uid-seer",
         done: true,
         at: 1234,
@@ -127,12 +122,44 @@ describe("games/$gameId", () => {
   it("denies a still-alive player from writing a Hunter revenge shot", async () => {
     const db = testEnv.authenticatedContext("uid-wolf").database();
     await assertFails(
-      set(ref(db, "games/GAME1/actions/HUNTER_SHOT/uid-wolf"), {
+      set(ref(db, "actions/GAME1/HUNTER_SHOT/uid-wolf"), {
         target: "uid-seer",
         done: true,
         at: 1234,
       }),
     );
+  });
+
+  it("this is the whole point: a role-specific action is readable only by its own writer, never anyone else", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await set(ref(context.database(), "actions/GAME1/SEER/uid-seer"), {
+        target: "uid-wolf",
+        done: true,
+        at: 1,
+      });
+    });
+
+    const owner = testEnv.authenticatedContext("uid-seer").database();
+    await assertSucceeds(get(ref(owner, "actions/GAME1/SEER/uid-seer")));
+
+    // The mere existence of an entry at actions/GAME1/SEER/{uid} already
+    // identifies {uid} as the Seer — this must be undiscoverable by anyone
+    // else, including a direct fetch of a uid they already suspect.
+    const someoneElse = testEnv.authenticatedContext("uid-wolf").database();
+    await assertFails(get(ref(someoneElse, "actions/GAME1/SEER/uid-seer")));
+  });
+
+  it("VOTE is the one phase readable by everyone — voting is public information, not a role", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await set(ref(context.database(), "actions/GAME1/VOTE/uid-wolf"), {
+        target: "uid-seer",
+        done: true,
+        at: 1,
+      });
+    });
+
+    const db = testEnv.authenticatedContext("uid-seer").database();
+    await assertSucceeds(get(ref(db, "actions/GAME1/VOTE/uid-wolf")));
   });
 });
 

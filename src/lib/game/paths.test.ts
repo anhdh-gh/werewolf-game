@@ -17,9 +17,9 @@ describe("game rtdb paths", () => {
     expect(gameResultPath("g1")).toBe("games/g1/result");
   });
 
-  it("builds action paths", () => {
-    expect(gameActionsPath("g1", "WOLVES")).toBe("games/g1/actions/WOLVES");
-    expect(gameActionPath("g1", "WOLVES", "uid-1")).toBe("games/g1/actions/WOLVES/uid-1");
+  it("builds action paths under their own top-level tree, not nested in games/", () => {
+    expect(gameActionsPath("g1", "WOLVES")).toBe("actions/g1/WOLVES");
+    expect(gameActionPath("g1", "WOLVES", "uid-1")).toBe("actions/g1/WOLVES/uid-1");
   });
 
   it("builds the private-state path", () => {
