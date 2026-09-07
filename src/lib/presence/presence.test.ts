@@ -99,6 +99,19 @@ describe("detachPresence", () => {
   it("explicitly marks the user offline", async () => {
     const db = getDatabase(app);
     const uid = await signInAs();
+    // detachPresence only ever updates the `online` leaf of an existing member
+    // (see RoomLobby.tsx's leave(), which removes the member outright instead
+    // for an actual departure). The member must already exist with the rest of
+    // its required fields, or the new closed schema on members/$uid correctly
+    // rejects the bare {online: false} update — the same protection that
+    // closes the C2 phantom-member exploit.
+    await set(ref(db, roomMemberPath("ROOM02", uid)), {
+      name: "Anh",
+      photoURL: null,
+      joinedAt: 1,
+      ready: false,
+      online: true,
+    });
     await detachPresence(db, uid, "ROOM02");
     const snap = await get(ref(db, presencePath(uid)));
     expect(snap.val()?.online).toBe(false);

@@ -31,6 +31,9 @@ export async function joinRoom(
   if (room.status === "PLAYING") {
     throw new JoinRoomError("ALREADY_PLAYING", "Phòng đang chơi, không vào được");
   }
+  if (!room.settings || !room.members) {
+    throw new JoinRoomError("NOT_FOUND", `Phòng ${roomCode} không tồn tại`);
+  }
 
   const alreadyMember = Boolean(room.members?.[input.uid]);
   if (alreadyMember) return;

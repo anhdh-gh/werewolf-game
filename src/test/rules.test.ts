@@ -196,6 +196,63 @@ describe("rooms/$code", () => {
     const db = testEnv.authenticatedContext("uid-owner").database();
     await assertFails(set(ref(db, "rooms/EXIST1/settings/maxPlayers"), 99));
   });
+
+  it("allows a member write with all required fields and correct types", async () => {
+    const db = testEnv.authenticatedContext("uid-owner").database();
+    await assertSucceeds(
+      set(ref(db, "rooms/EXIST1/members/uid-owner"), {
+        name: "Owner",
+        photoURL: null,
+        joinedAt: 1000,
+        ready: false,
+        online: true,
+      }),
+    );
+  });
+
+  // The literal proof C1 is closed: a non-string name (a nested object)
+  // used to crash RoomLobby.tsx's render for every player in the room —
+  // {member.name} rendered as a raw object. The closed schema below now
+  // rejects it at the data layer before it can ever reach the client.
+  it("denies a member write with name as a nested object instead of a string", async () => {
+    const db = testEnv.authenticatedContext("uid-owner").database();
+    await assertFails(
+      set(ref(db, "rooms/EXIST1/members/uid-owner"), {
+        name: { a: "b" },
+        photoURL: null,
+        joinedAt: 1000,
+        ready: false,
+        online: true,
+      }),
+    );
+  });
+
+  it("denies a member write with an extra unknown key", async () => {
+    const db = testEnv.authenticatedContext("uid-owner").database();
+    await assertFails(
+      set(ref(db, "rooms/EXIST1/members/uid-owner"), {
+        name: "Owner",
+        photoURL: null,
+        joinedAt: 1000,
+        ready: false,
+        online: true,
+        junk: "x",
+      }),
+    );
+  });
+
+  // Proof that C2 is also closed at the data layer, not just in application
+  // code: a bare {online: true} write to a member path that has never
+  // existed before (no prior name/joinedAt/ready) can no longer satisfy the
+  // hasChildren(['name', 'joinedAt', 'ready', 'online']) check, so the
+  // phantom-member write RoomLobby.tsx's presence effect used to make on
+  // every direct room-URL visit is rejected outright.
+  it("denies a bare {online: true} write to a member path that never existed", async () => {
+    const db = testEnv.authenticatedContext("uid-ghost").database();
+    await assertFails(
+      set(ref(db, "rooms/EXIST1/members/uid-ghost"), { online: true }),
+    );
+  });
 });
 
 describe("presence/$uid", () => {

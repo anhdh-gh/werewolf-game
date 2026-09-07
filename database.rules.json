@@ -5,7 +5,26 @@
         ".read": "auth != null",
         "members": {
           "$uid": {
-            ".write": "auth != null && auth.uid === $uid"
+            ".write": "auth != null && auth.uid === $uid",
+            ".validate": "newData.hasChildren(['name', 'joinedAt', 'ready', 'online'])",
+            "name": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 40"
+            },
+            "photoURL": {
+              ".validate": "newData.val() === null || newData.isString()"
+            },
+            "joinedAt": {
+              ".validate": "newData.isNumber()"
+            },
+            "ready": {
+              ".validate": "newData.isBoolean()"
+            },
+            "online": {
+              ".validate": "newData.isBoolean()"
+            },
+            "$other": {
+              ".validate": false
+            }
           }
         },
         "settings": {

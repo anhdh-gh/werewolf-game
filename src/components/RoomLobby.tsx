@@ -5,7 +5,7 @@ import { db } from "@/lib/firebase/client";
 import { useAuth } from "@/lib/auth/useAuth";
 import { useRoom } from "@/lib/rooms/useRoom";
 import { attachPresence, detachPresence } from "@/lib/presence/presence";
-import { ref, update } from "firebase/database";
+import { ref, update, remove } from "firebase/database";
 import { roomMemberPath } from "@/lib/rooms/paths";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -17,13 +17,15 @@ export function RoomLobby({ code }: { code: string }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !room?.members?.[user.uid]) return;
     const detach = attachPresence(db, user.uid, code);
     return () => detach();
-  }, [user, code]);
+  }, [user, code, room]);
 
   if (loading) return <p className="p-6 text-muted-foreground">Đang tải phòng...</p>;
   if (!room) return <p className="p-6 text-muted-foreground">Không tìm thấy phòng {code}</p>;
+  if (!room.members || !room.settings)
+    return <p className="p-6 text-muted-foreground">Không tìm thấy phòng {code}</p>;
   if (!user) return null;
 
   const toggleReady = () => {
@@ -32,6 +34,7 @@ export function RoomLobby({ code }: { code: string }) {
   };
 
   const leave = async () => {
+    await remove(ref(db, roomMemberPath(code, user.uid)));
     await detachPresence(db, user.uid, code);
     router.push("/");
   };
