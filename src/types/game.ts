@@ -96,6 +96,11 @@ export interface Game {
   phase: GamePhase;
   players: Record<string, GamePlayer>;
   result?: GameResult;
+  /** Who the Bodyguard protected last night (spec §4.1: can't repeat the
+   * same target on consecutive nights). Public — it reveals nothing about
+   * who the Bodyguard IS, only who was shielded, same as the death
+   * announcement already does implicitly by omission. */
+  lastProtectedUid?: string | null;
 }
 
 export interface SeerHint {
@@ -114,6 +119,10 @@ export interface PrivatePlayerState {
   /** The Seer's own check history — RTDB push() keys, so this is a map, not
    * an array. Only ever present for a uid dealt the Seer role. */
   hints?: Record<string, SeerHint>;
+  /** Spec §7: "danh sách đồng bọn cho Sói" — every other wolf-faction uid
+   * (WEREWOLF or TRAITOR), so the pack can coordinate who to bite. Only
+   * ever present for a uid dealt a wolf-faction role. */
+  packUids?: string[];
 }
 
 export interface NightActions {

@@ -112,9 +112,11 @@ export function ActionPanel({
   }
 
   if (phase === "BODYGUARD") {
+    // Spec §4.1: can't shield the same person two nights running.
+    const excluded = game.lastProtectedUid ? [game.lastProtectedUid] : [];
     return (
       <TargetPicker
-        targets={alivePlayersExcept(game, [])}
+        targets={alivePlayersExcept(game, excluded)}
         selected={selected}
         onSelect={setSelected}
         onSubmit={() => selected && submit("BODYGUARD", selected)}
@@ -136,14 +138,25 @@ export function ActionPanel({
   }
 
   if (phase === "WOLVES") {
+    // Never bite a fellow pack member (spec §7's packUids exists exactly so
+    // the pack can see each other — not so they can target each other).
+    const packmates = privateState?.packUids ?? [];
+    const packmateNames = packmates.map((packUid) => game.players[packUid]?.name).filter(Boolean);
     return (
-      <TargetPicker
-        targets={alivePlayersExcept(game, [uid])}
-        selected={selected}
-        onSelect={setSelected}
-        onSubmit={() => selected && submit("WOLVES", selected)}
-        submitLabel="Cắn"
-      />
+      <div className="flex flex-col gap-3">
+        {packmateNames.length > 0 && (
+          <p className="text-sm text-muted-foreground">
+            Đồng bọn của bạn: <span className="text-foreground">{packmateNames.join(", ")}</span>
+          </p>
+        )}
+        <TargetPicker
+          targets={alivePlayersExcept(game, [uid, ...packmates])}
+          selected={selected}
+          onSelect={setSelected}
+          onSubmit={() => selected && submit("WOLVES", selected)}
+          submitLabel="Cắn"
+        />
+      </div>
     );
   }
 

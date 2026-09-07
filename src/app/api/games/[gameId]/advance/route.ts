@@ -145,6 +145,12 @@ export async function POST(
     [`games/${gameId}/phase`]: newPhase,
   };
 
+  if (decision.nextPhase === "DAWN") {
+    // Spec §4.1: the Bodyguard can't shield the same target two nights
+    // running — the next BODYGUARD phase's UI reads this to exclude it.
+    updates[`games/${gameId}/lastProtectedUid`] = protectTarget;
+  }
+
   for (const uid of decision.deaths) {
     updates[`games/${gameId}/players/${uid}/alive`] = false;
   }

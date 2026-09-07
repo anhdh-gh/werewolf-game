@@ -3,7 +3,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { assignRoles } from "@/lib/game/roles";
 import { PHASE_DURATIONS_MS } from "@/lib/game/phases";
 import type { Room } from "@/types/room";
-import type { PrivatePlayerState } from "@/types/game";
+import { FACTION_BY_ROLE, type PrivatePlayerState } from "@/types/game";
 
 /**
  * Deals roles and creates the game (spec §3: anyone in the room can start it
@@ -42,11 +42,22 @@ export async function POST(
   if (!gameId) throw new Error("Không tạo được mã ván đấu");
 
   const now = Date.now();
+  // Spec §7: "danh sách đồng bọn cho Sói" — every wolf-faction uid (WEREWOLF
+  // and TRAITOR both) needs to know the rest of the pack.
+  const wolfFactionUids = uids.filter((uid) => FACTION_BY_ROLE[assignment[uid]] === "WOLF");
+
   const privateWrites: Record<string, PrivatePlayerState> = {};
   const players: Record<string, { name: string; alive: boolean; muted: boolean }> = {};
   for (const uid of uids) {
     const role = assignment[uid];
-    privateWrites[uid] = { role, initialRole: role, potions: { heal: true, poison: true } };
+    privateWrites[uid] = {
+      role,
+      initialRole: role,
+      potions: { heal: true, poison: true },
+      ...(FACTION_BY_ROLE[role] === "WOLF"
+        ? { packUids: wolfFactionUids.filter((packUid) => packUid !== uid) }
+        : {}),
+    };
     players[uid] = { name: room.members[uid].name, alive: true, muted: false };
   }
 
