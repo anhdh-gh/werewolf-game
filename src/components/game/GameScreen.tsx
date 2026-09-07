@@ -56,6 +56,7 @@ function GameScreenInner({ gameId, uid }: { gameId: string; uid: string }) {
   useAutoAdvance(gameId, game?.phase, serverOffset);
   const secondsLeft = useCountdownSeconds(game?.phase.endsAt ?? 0, serverOffset);
   const myAction = useMyAction(db, gameId, game?.phase.name ?? "", uid);
+  const myHunterShot = useMyAction(db, gameId, "HUNTER_SHOT", uid);
 
   if (loading || !game) {
     return (
@@ -66,11 +67,31 @@ function GameScreenInner({ gameId, uid }: { gameId: string; uid: string }) {
     );
   }
 
-  if (game.phase.name === "ENDED") {
+  const me = game.players[uid];
+  const isDeadHunterWithUnfiredShot =
+    !!me && !me.alive && privateState?.role === "HUNTER" && !myHunterShot?.done;
+
+  // Spec §4.4 step 8: a dead Hunter always gets their shot — even when
+  // their own death is the one that just ended the game. Their shot still
+  // fires for narrative completeness (a name they choose gets marked
+  // dead), but it deliberately does not reopen an already-decided winner:
+  // announcing a result and then retracting it moments later would be a
+  // worse experience than the rare case where the shot could in theory
+  // have changed the outcome.
+  if (game.phase.name === "ENDED" && !isDeadHunterWithUnfiredShot) {
     return <GameEndScreen game={game} />;
   }
 
-  const me = game.players[uid];
+  if (isDeadHunterWithUnfiredShot) {
+    return (
+      <main className="flex min-h-dvh flex-col items-center gap-5 p-6">
+        <div className="w-full max-w-sm animate-in fade-in-0 slide-in-from-bottom-3 duration-500">
+          <HunterRevengePrompt db={db} gameId={gameId} uid={uid} game={game} />
+        </div>
+      </main>
+    );
+  }
+
   const isRequired = game.phase.requiredActors.includes(uid);
   const alreadyDone = myAction?.done ?? false;
 
@@ -88,9 +109,7 @@ function GameScreenInner({ gameId, uid }: { gameId: string; uid: string }) {
         <div className="flex flex-col gap-4">
           <RoleCard privateState={privateState} />
 
-          {me && !me.alive && privateState?.role === "HUNTER" ? (
-            <HunterRevengePrompt db={db} gameId={gameId} uid={uid} game={game} />
-          ) : isRequired && !alreadyDone && me?.alive ? (
+          {isRequired && !alreadyDone && me?.alive ? (
             <Card>
               <CardHeader>
                 <CardTitle>Đến lượt bạn</CardTitle>
