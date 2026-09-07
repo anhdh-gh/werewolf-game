@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Download, Share } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -38,23 +40,30 @@ export function InstallPrompt() {
 
   if (deferredPrompt) {
     return (
-      <button
-        onClick={async () => {
-          await deferredPrompt.prompt();
-          setDeferredPrompt(null);
-        }}
-        className="fixed bottom-4 left-1/2 -translate-x-1/2 rounded bg-red-700 px-4 py-2 text-sm"
-      >
-        Cài đặt Ma Sói
-      </button>
+      <div className="fixed inset-x-0 bottom-0 z-50 flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))] animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
+        <Button
+          onClick={async () => {
+            await deferredPrompt.prompt();
+            setDeferredPrompt(null);
+          }}
+          size="lg"
+          className="gap-2 rounded-full shadow-lg"
+        >
+          <Download className="size-4" />
+          Cài đặt Ma Sói
+        </Button>
+      </div>
     );
   }
 
   if (showIosHint) {
     return (
-      <p className="fixed bottom-4 left-1/2 -translate-x-1/2 rounded bg-neutral-800 px-4 py-2 text-center text-xs">
-        Để nhận thông báo, bấm Chia sẻ → Thêm vào MH chính
-      </p>
+      <div className="fixed inset-x-0 bottom-0 z-50 flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))] animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
+        <p className="flex items-center gap-2 rounded-full bg-card px-4 py-2 text-center text-xs text-card-foreground shadow-lg ring-1 ring-border">
+          <Share className="size-3.5 shrink-0 text-muted-foreground" />
+          Để cài đặt, bấm Chia sẻ → Thêm vào MH chính
+        </p>
+      </div>
     );
   }
 
