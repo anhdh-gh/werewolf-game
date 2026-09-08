@@ -25,6 +25,7 @@ const baseInput: PlanAdvanceInput = {
   lovers: null,
   wolfCubBonusNightPending: false,
   diseasedSuppressNextBite: false,
+  toughGuyDeathPending: false,
 };
 
 describe("planAdvance", () => {
@@ -233,5 +234,106 @@ describe("planAdvance", () => {
       diseasedSuppressNextBite: true,
     });
     expect(result.deaths).toEqual(["seer1"]);
+  });
+
+  // Epic 1b (Tough Guy): a successful bite this night hides the death and
+  // arms toughGuyDeathPending for the *next* DAWN instead.
+  it("hides tonight's death and arms toughGuyDeathPending when the wolves successfully bite Tough Guy", () => {
+    const result = planAdvance({
+      ...baseInput,
+      currentPhase: "CURSED",
+      aliveRolesByUid: { ...baseInput.aliveRolesByUid, tough1: "TOUGH_GUY" },
+      activeRoles: [...baseInput.activeRoles, "TOUGH_GUY"],
+      actions: { ...NIGHT_ACTIONS_EMPTY, wolfVotes: { wolf1: "tough1" } },
+    });
+    expect(result.deaths).toEqual([]);
+    expect(result.toughGuyDeathPending).toBe(true);
+  });
+
+  it("does not arm toughGuyDeathPending when Tough Guy is protected", () => {
+    const result = planAdvance({
+      ...baseInput,
+      currentPhase: "CURSED",
+      aliveRolesByUid: { ...baseInput.aliveRolesByUid, tough1: "TOUGH_GUY" },
+      activeRoles: [...baseInput.activeRoles, "TOUGH_GUY"],
+      actions: {
+        ...NIGHT_ACTIONS_EMPTY,
+        wolfVotes: { wolf1: "tough1" },
+        protectTarget: "tough1",
+      },
+    });
+    expect(result.deaths).toEqual([]);
+    expect(result.toughGuyDeathPending).toBe(false);
+  });
+
+  it("does not arm toughGuyDeathPending on a night the wolves' bite is Diseased-suppressed", () => {
+    const result = planAdvance({
+      ...baseInput,
+      currentPhase: "CURSED",
+      aliveRolesByUid: { ...baseInput.aliveRolesByUid, tough1: "TOUGH_GUY" },
+      activeRoles: [...baseInput.activeRoles, "TOUGH_GUY"],
+      actions: { ...NIGHT_ACTIONS_EMPTY, wolfVotes: { wolf1: "tough1" } },
+      diseasedSuppressNextBite: true,
+    });
+    expect(result.deaths).toEqual([]);
+    expect(result.toughGuyDeathPending).toBe(false);
+  });
+
+  it("pays off a pending Tough Guy death the following DAWN, merged with that night's other deaths", () => {
+    const result = planAdvance({
+      ...baseInput,
+      currentPhase: "CURSED",
+      aliveRolesByUid: { ...baseInput.aliveRolesByUid, tough1: "TOUGH_GUY" },
+      activeRoles: [...baseInput.activeRoles, "TOUGH_GUY"],
+      actions: { ...NIGHT_ACTIONS_EMPTY, wolfVotes: { wolf1: "villager1" } },
+      toughGuyDeathPending: true,
+    });
+    expect(result.deaths.sort()).toEqual(["tough1", "villager1"]);
+    // No new bite landed on Tough Guy this night, so the debt isn't renewed.
+    expect(result.toughGuyDeathPending).toBe(false);
+  });
+
+  it("applies the lover cascade to a paid-off Tough Guy death", () => {
+    const result = planAdvance({
+      ...baseInput,
+      currentPhase: "CURSED",
+      aliveRolesByUid: { ...baseInput.aliveRolesByUid, tough1: "TOUGH_GUY", lover1: "VILLAGER" },
+      activeRoles: [...baseInput.activeRoles, "TOUGH_GUY"],
+      actions: NIGHT_ACTIONS_EMPTY,
+      lovers: ["tough1", "lover1"],
+      toughGuyDeathPending: true,
+    });
+    expect(result.deaths.sort()).toEqual(["lover1", "tough1"]);
+  });
+
+  it("dies this night and re-arms a fresh pending death when bitten again the very next night", () => {
+    const result = planAdvance({
+      ...baseInput,
+      currentPhase: "CURSED",
+      aliveRolesByUid: { ...baseInput.aliveRolesByUid, tough1: "TOUGH_GUY" },
+      activeRoles: [...baseInput.activeRoles, "TOUGH_GUY"],
+      actions: { ...NIGHT_ACTIONS_EMPTY, wolfVotes: { wolf1: "tough1" } },
+      toughGuyDeathPending: true,
+    });
+    // Last night's debt is paid off tonight...
+    expect(result.deaths).toEqual(["tough1"]);
+    // ...even though tonight's fresh bite queues up a new debt for tomorrow.
+    expect(result.toughGuyDeathPending).toBe(true);
+  });
+
+  it("a same-night Witch poison on Tough Guy is not deferred by a same-night wolf bite on someone else", () => {
+    const result = planAdvance({
+      ...baseInput,
+      currentPhase: "CURSED",
+      aliveRolesByUid: { ...baseInput.aliveRolesByUid, tough1: "TOUGH_GUY" },
+      activeRoles: [...baseInput.activeRoles, "TOUGH_GUY"],
+      actions: {
+        ...NIGHT_ACTIONS_EMPTY,
+        wolfVotes: { wolf1: "villager1" },
+        witchPoisonTarget: "tough1",
+      },
+    });
+    expect(result.deaths.sort()).toEqual(["tough1", "villager1"]);
+    expect(result.toughGuyDeathPending).toBe(false);
   });
 });

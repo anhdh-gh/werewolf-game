@@ -31,7 +31,7 @@ rõ ràng chứ không giấu.
 | Epic | Nội dung | Số vai | Trạng thái | Tài liệu |
 |---|---|---|---|---|
 | **Epic 1** | Vai Làng thụ động, không cần phase đêm mới (Mason, Prince, Pacifist) | 3 | **`done`** — cả 3 story CI xanh, merged vào main, rules RTDB live đã deploy và byte-compare khớp repo (2026-09-08) | `2026-09-08-roles-epic-1.md` |
-| **Epic 1b** | Vai Làng có trạng thái xuyên đêm (Tough Guy, Diseased, Old Hag — xem lý do treo ở cuối mục này) | 3 | Story 1b.2 (Diseased): **`done`** — CI xanh (run 34262380766, commit 9352c16), rules RTDB live đã deploy và byte-compare khớp repo (2026-09-08, iteration 9); Tough Guy/Old Hag: `story ready`, chưa implement | `2026-09-08-roles-epic-1b.md` |
+| **Epic 1b** | Vai Làng có trạng thái xuyên đêm (Tough Guy, Diseased, Old Hag — xem lý do treo ở cuối mục này) | 3 | Story 1b.2 (Diseased): **`done`**; Story 1b.1 (Tough Guy): implemented in code (2026-09-08, iteration 10) — CI/rules RTDB live verify pending; Old Hag: `story ready`, chưa implement | `2026-09-08-roles-epic-1b.md` |
 | **Epic 2** | Vai Sói đồng minh cần phase đêm mới, cơ chế đủ rõ để viết story ngay (Sorcerer/Sorceress) | 1 | **`done`** — CI xanh (run 34219156728, commit 9395543, `typecheck`/`test`/`build` đều `success`), rules RTDB live đã deploy và byte-compare khớp repo (2026-09-08) | `2026-09-08-roles-epic-2.md` |
 | **Epic 2b** | Vai có khái niệm rõ nhưng paraphrase để lại mơ hồ thời điểm/trạng thái xuyên đêm hoặc điều kiện thắng chính xác — cùng loại vấn đề đã chặn Epic 1b (Doppelgänger, Hoodlum) | 2 | Chưa viết story — cần rulebook gốc | chưa có |
 | **Epic 3** | Vai Sói thật tham gia cắn cùng bầy WOLVES, cơ chế đủ rõ để viết story ngay (Wolf Man → "Lang Nhân") | 1 | **`done`** — CI xanh (run 34221621075, commit 62e1052, `typecheck`/`test`/`build` đều `success`, sau khi iteration 14 sửa 1 bug đếm quân trong test fixture của run trước đó bị fail), rules RTDB live đã deploy và byte-compare khớp repo (2026-09-08) | `2026-09-08-roles-epic-3.md` |
@@ -115,7 +115,7 @@ liệt kê vai đã có epic xác định (không lặp lại toàn bộ ~141 va
 | Mason | 1 | `done` — CI xanh (run 34215788171, commit 6c6e469), merged vào main |
 | Prince | 1 | `done` — CI xanh (run trên commit 7917ac9, `typecheck`/`test`/`build` đều `success`), merged vào main |
 | Pacifist | 1 | `done` — CI xanh (run 34216872017, commit 85c9299, `typecheck`/`test`/`build` đều `success`), merged vào main. Rules RTDB live đã deploy (`firebase deploy --only database --project werewolf-game-2026`, 2026-09-08) và byte-compare khớp 100% với `database.rules.json` trong repo (`firebase database:get /.settings/rules` sau deploy diff rỗng) |
-| Tough Guy | 1b | `story ready` (2026-09-08, iteration 7) — thiết kế "chết trễ 1 đêm" xong (`2026-09-08-roles-epic-1b.md` §1), chờ implement |
+| Tough Guy | 1b | implemented in code (2026-09-08, iteration 10) — `toughGuyDeathPending` wired through planAdvance/advance route (no `resolveNight` signature change needed, unlike Diseased — deferred death computed/filtered in `planAdvance` itself per the design doc), unit tests (7 new cases incl. protect, Diseased-suppression interaction, 2-consecutive-night re-arm, poison-vs-bite non-conflation) + 1 full e2e test added; CI green + live RTDB rules deploy/byte-verify pending for the next iteration |
 | Diseased | 1b | **`done`** (2026-09-08, iteration 9) — `diseasedSuppressNextBite`/`suppressBite` wired through planAdvance/resolveNight/advance route, unit + e2e tests added; CI green (run 34262380766, commit 9352c16) and live RTDB rules deployed + byte-verified against repo (deck-builder's `roleCounts` shape check extended for the new `DISEASED` RoleKey, matching Story 4a.2's precedent) |
 | Old Hag | 1b | `story ready` (2026-09-08, iteration 7) — thiết kế phase OLD_HAG + pox mới xong, cần owner duyệt 2 quyết định (#6/#7) trước implement (`2026-09-08-roles-epic-1b.md` §3) |
 | Sorcerer/Sorceress ("Pháp Sư") | 2 | `done` — CI xanh (run 34219156728, commit 9395543, `typecheck`/`test`/`build` đều `success`), merged vào main. Rules RTDB live đã deploy (`firebase deploy --only database --project werewolf-game-2026`, 2026-09-08) và byte-compare khớp 100% với `database.rules.json` trong repo (node action `SORCERER` xác nhận có mặt sau deploy, diff chỉ lệch newline cuối file) |
@@ -422,3 +422,34 @@ gốc mới — tất cả cần owner theo dõi, không chỉ Epic Z.
     story trước. Việc kế tiếp: implement Tough Guy (vai thứ 2 Epic 1b, thiết kế đã có sẵn trong
     `2026-09-08-roles-epic-1b.md` — "sống thêm 1 ngày sau khi bị sói cắn" qua cờ boolean public
     không nhúng uid, merge vào deaths của DAWN kế tiếp trước `applyDeathExtras`).
+
+20. **Xong (gnhf run `stop-read-this-first-98c7ba` iteration 10, 2026-09-08)**: implement Story
+    1b.1 (Tough Guy) end-to-end trong code, theo đúng thiết kế đã duyệt ở
+    `2026-09-08-roles-epic-1b.md` §1. Thêm `TOUGH_GUY` là `RoleKey` thứ 22 (faction VILLAGE) +
+    nhãn "Người Cứng Cựa"; `Game.toughGuyDeathPending?: boolean` public, không nhúng uid, cùng
+    khuôn `wolfCubBonusNightPending`/`diseasedSuppressNextBite`. Khác Diseased: không cần sửa
+    `resolveNight.ts` — thiết kế yêu cầu tính "đêm nay có bị cắn trúng thật không" ngay trong
+    `planAdvance` (tái dùng công thức `bittenSurvives` của `resolveNight` từ bên ngoài) rồi tự
+    lọc uid đó ra khỏi/thêm vào `nightDeaths` trước khi gọi `applyDeathExtras`, tránh đọc thẳng
+    `nightResult.deaths` (để không nhầm cái chết do Phù Thuỷ đầu độc cùng đêm với cái chết do
+    sói cắn — 2 nguyên nhân độc lập, chỉ nguyên nhân cắn mới bị hoãn). Một khoảng trống thiết kế
+    doc gốc chưa lường tới đã được xử lý bằng phán đoán có ghi rõ lý do (comment trong code):
+    nếu đêm đó `diseasedSuppressNextBite` đang hiệu lực (Diseased khiến bầy sói "không giết được
+    ai" đêm đó), Tough Guy bị cắn đêm đó KHÔNG kích hoạt cờ chờ chết — vì đúng theo tiêu chí Q1
+    của thiết kế gốc ("resolveNight's wolf-bite loop đáng lẽ đã add uid vào deaths"), và
+    `suppressBite=true` khiến `resolveNight` không add bất kỳ ai vào `deaths` từ cắn đêm đó, kể
+    cả nếu không có Diseased/Tough Guy tương tác trực tiếp. Thêm 7 test case mới trong
+    `planAdvance.test.ts` (ẩn cái chết + set cờ, không set cờ khi được Bảo Vệ, không set cờ khi
+    bị Diseased-suppress, trả nợ đêm sau gộp cùng nạn nhân mới, trả nợ kéo theo dây chuyền người
+    yêu, chết đêm này + vay nợ mới nếu bị cắn 2 đêm liên tiếp, đầu độc cùng đêm không bị nhầm
+    thành cắn) và 1 test e2e đầy đủ 2 đêm trong `gameFlowEndToEnd.test.ts` chạy qua route thật.
+    Đã cập nhật `database.rules.json`'s `roleCounts` `.validate` (thêm khoá `TOUGH_GUY` thứ 22
+    vào `hasChildren`/range-check/cả 2 tổng deck-size) và 3 fixture literal
+    (`page.tsx`'s `DEFAULT_DECK`, `rules.test.ts`'s `VALID_ROLE_COUNTS`,
+    `multiClientGame.test.ts`'s `DECK_7_NO_OPTIONAL_ROLES`) — các fixture khác đã tự động nhận
+    `TOUGH_GUY: 0` vì đã build từ `ALL_ROLE_KEYS.map(...)` thay vì literal object (thói quen đã
+    thiết lập từ iteration 8). Không cần UI mới — `RoleCard`/`DeckBuilder` đọc `ROLE_LABELS`
+    động, giống Diseased. CI xanh + deploy/byte-verify rules RTDB live để lại cho iteration kế
+    tiếp, đúng cadence "implement rồi verify" đã dùng cho mọi story trước. Việc kế tiếp sau khi
+    verify: Old Hag (vai thứ 3 và cuối cùng của Epic 1b, cần phase đêm mới + owner duyệt 2 quyết
+    định #6/#7 trong `2026-09-08-roles-epic-1b.md` §3 trước khi implement).

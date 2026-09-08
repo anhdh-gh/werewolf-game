@@ -18,6 +18,7 @@ export type RoleKey =
   | "WOLF_MAN"
   | "WOLF_CUB"
   | "DISEASED"
+  | "TOUGH_GUY"
   | "TANNER"
   | "VILLAGER";
 
@@ -46,6 +47,7 @@ export const FACTION_BY_ROLE: Record<RoleKey, Faction> = {
   WOLF_MAN: "WOLF",
   WOLF_CUB: "WOLF",
   DISEASED: "VILLAGE",
+  TOUGH_GUY: "VILLAGE",
   TANNER: "TANNER",
   VILLAGER: "VILLAGE",
 };
@@ -74,6 +76,7 @@ export const ALL_ROLE_KEYS: RoleKey[] = [
   "VILLAGE_IDIOT",
   "BEHOLDER",
   "DISEASED",
+  "TOUGH_GUY",
   "VILLAGER",
   "TANNER",
 ];
@@ -204,6 +207,16 @@ export interface Game {
    * Set/read/cleared entirely at the route layer, same pattern as
    * wolfCubBonusNightPending. */
   diseasedSuppressNextBite?: boolean;
+  /** Epic 1b (Tough Guy / "Người Cứng Cựa"): true for exactly the one DAWN
+   * right after the wolves successfully bite the Tough Guy player — that
+   * night's death is hidden (nobody is announced dead unless someone else
+   * also died independently that night), and the Tough Guy actually dies
+   * the *following* night instead, merged into whatever else dies that
+   * night before lover/Hunter cascades run (design doc §1.1.2, decisions
+   * Q1-Q3). Public and safe: a plain boolean maps to no uid — same
+   * reasoning as wolfCubBonusNightPending/diseasedSuppressNextBite. Set/
+   * read/cleared entirely at the route layer, same pattern as those two. */
+  toughGuyDeathPending?: boolean;
 }
 
 export interface SeerHint {

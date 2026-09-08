@@ -30,6 +30,11 @@ export interface PlanAdvanceInput {
    * after the wolves bit the Diseased player — tonight's bite is voided
    * (see resolveNight's suppressBite). Ignored outside a DAWN resolution. */
   diseasedSuppressNextBite: boolean;
+  /** Epic 1b (Tough Guy): true when this DAWN resolution is the one owed a
+   * previously-deferred Tough Guy death — see PlanAdvanceResult's field of
+   * the same name for the full mechanic. Ignored outside a DAWN
+   * resolution. */
+  toughGuyDeathPending: boolean;
 }
 
 export interface PlanAdvanceResult {
@@ -50,6 +55,14 @@ export interface PlanAdvanceResult {
    * death itself. Only meaningful when `nextPhase` resolved via DAWN;
    * false on every other transition (route only writes it on DAWN). */
   diseasedSuppressNextBite: boolean;
+  /** Epic 1b (Tough Guy): the new value to persist for the *next* DAWN's
+   * `toughGuyDeathPending` input — true iff tonight's wolf bite actually
+   * landed on the (still-alive) Tough Guy player and wasn't saved by
+   * Bodyguard/Witch/Diseased-suppression, regardless of whether a
+   * previously-owed death was also paid off this same call. Only
+   * meaningful when `nextPhase` resolved via DAWN; false on every other
+   * transition (route only writes it on DAWN). */
+  toughGuyDeathPending: boolean;
 }
 
 /**
@@ -70,6 +83,7 @@ export function planAdvance(input: PlanAdvanceInput): PlanAdvanceResult {
   let deaths: string[] = [];
   let transformedToWolf: string[] = [];
   let diseasedSuppressNextBite = false;
+  let toughGuyDeathPending = false;
 
   if (next === "DAWN") {
     const wolfTargets = tallyTopNVotes(
@@ -85,8 +99,40 @@ export function planAdvance(input: PlanAdvanceInput): PlanAdvanceResult {
       alreadyTransformedCursed: input.alreadyTransformedCursed,
       suppressBite: input.diseasedSuppressNextBite,
     });
-    deaths = applyDeathExtras(nightResult.deaths, input.lovers, input.actions.hunterShots);
+
+    // Epic 1b (Tough Guy): "targeted" = the bite would actually have killed
+    // tonight per resolveNight's own bittenSurvives rule (not saved by
+    // Bodyguard/Witch, and — a case the design doc didn't anticipate but
+    // resolveNight's suppressBite already models correctly — not voided by
+    // a Diseased-suppressed night either, since nobody's bite kills anyone
+    // on that specific night regardless of who it landed on). Recomputed
+    // here rather than read off nightResult.deaths so a same-night Witch
+    // poison on the same uid (a wholly separate death cause) never gets
+    // mistaken for the wolf bite and deferred.
+    const toughGuyUid = Object.entries(input.aliveRolesByUid).find(
+      ([, role]) => role === "TOUGH_GUY",
+    )?.[0];
+    const toughGuyBiteWouldKill =
+      toughGuyUid !== undefined &&
+      wolfTargets.includes(toughGuyUid) &&
+      toughGuyUid !== input.actions.protectTarget &&
+      toughGuyUid !== input.actions.witchSaveTarget &&
+      !input.diseasedSuppressNextBite;
+
+    const nightDeaths = new Set(nightResult.deaths);
+    if (toughGuyBiteWouldKill && toughGuyUid !== undefined) {
+      // Hide tonight's death — it's paid off on the following DAWN instead.
+      nightDeaths.delete(toughGuyUid);
+    }
+    if (input.toughGuyDeathPending && toughGuyUid !== undefined) {
+      // Pay off a death deferred from the previous DAWN, merged in before
+      // applyDeathExtras so lover/Hunter cascades still apply to it.
+      nightDeaths.add(toughGuyUid);
+    }
+
+    deaths = applyDeathExtras([...nightDeaths], input.lovers, input.actions.hunterShots);
     transformedToWolf = nightResult.transformed;
+    toughGuyDeathPending = toughGuyBiteWouldKill;
 
     const diseasedUid = Object.entries(input.aliveRolesByUid).find(
       ([, role]) => role === "DISEASED",
@@ -123,5 +169,6 @@ export function planAdvance(input: PlanAdvanceInput): PlanAdvanceResult {
     winner,
     deathsThisRoundRoles,
     diseasedSuppressNextBite,
+    toughGuyDeathPending,
   };
 }

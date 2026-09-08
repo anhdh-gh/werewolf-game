@@ -1474,6 +1474,123 @@ describe("Epic 1b Story 1b.2: Diseased voids the wolves' next bite after a succe
   });
 });
 
+describe("Epic 1b Story 1b.1: Tough Guy dies one night late instead of the night he's bitten", () => {
+  const gameId = "GAME-TOUGHGUY";
+  const roomCode = "TOUGHGY1";
+  const wolf1 = "wolf1";
+  const seer = "seer";
+  const witch = "witch";
+  const tough = "tough1";
+  const villagers = ["villager1", "villager2", "villager3"];
+  const uids = [wolf1, seer, witch, tough, ...villagers];
+
+  beforeEach(async () => {
+    const players: Game["players"] = {};
+    for (const uid of uids) players[uid] = { name: uid, alive: true, muted: false };
+
+    const game: Game = {
+      roomCode,
+      startedAt: 1,
+      dayNumber: 1,
+      phase: { name: "SEER", endsAt: Date.now() - 1, version: 0 },
+      players,
+    };
+    await fakeDb.ref(`games/${gameId}`).set(game);
+
+    const priv: Record<string, PrivatePlayerState> = {
+      [wolf1]: { role: "WEREWOLF", initialRole: "WEREWOLF", potions: { heal: true, poison: true } },
+      [seer]: { role: "SEER", initialRole: "SEER", potions: { heal: true, poison: true } },
+      [witch]: { role: "WITCH", initialRole: "WITCH", potions: { heal: true, poison: true } },
+      [tough]: { role: "TOUGH_GUY", initialRole: "TOUGH_GUY", potions: { heal: true, poison: true } },
+    };
+    for (const uid of villagers) {
+      priv[uid] = { role: "VILLAGER", initialRole: "VILLAGER", potions: { heal: true, poison: true } };
+    }
+    await fakeDb.ref(`private/${gameId}`).set(priv);
+    // Same reasoning as the Diseased test above: TOUGH_GUY isn't part of the
+    // old auto-fill formula seedRoom()'s fixture leans on, but this test
+    // drives the game entirely through games/private + callAdvance (never
+    // callStart), so the exact deck seedRoom() records is never read.
+    await seedRoom(roomCode, uids, NO_OPTIONAL_ROLES);
+    await fakeDb.ref(`rooms/${roomCode}/status`).set("PLAYING");
+  });
+
+  it("hides the death the night Tough Guy is bitten, then kills him the following night merged with a fresh victim", async () => {
+    // Night 1: the pack bites Tough Guy — no death is announced at all.
+    await writeAction(gameId, "SEER", seer, wolf1);
+    let res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WOLVES");
+
+    await writeAction(gameId, "WOLVES", wolf1, tough);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WITCH_SAVE");
+
+    await writeAction(gameId, "WITCH_SAVE", witch, null);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WITCH_KILL");
+
+    await writeAction(gameId, "WITCH_KILL", witch, null);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("DAWN");
+    expect(res.deaths).toEqual([]);
+
+    let game = await getGame(gameId);
+    expect(game.toughGuyDeathPending).toBe(true);
+    expect((await getGame(gameId)).players[tough].alive).toBe(true);
+
+    // Day 1: nobody votes — no majority, nobody hangs — and the just-armed
+    // flag must survive this unrelated VOTE_RESULT untouched.
+    await expirePhaseTimer(gameId);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("DISCUSSION");
+
+    await expirePhaseTimer(gameId);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("VOTE");
+
+    await expirePhaseTimer(gameId);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("VOTE_RESULT");
+    expect(res.deaths).toEqual([]);
+
+    game = await getGame(gameId);
+    expect(game.toughGuyDeathPending).toBe(true);
+
+    await expirePhaseTimer(gameId);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("NIGHT_FALLS");
+    expect((await getGame(gameId)).dayNumber).toBe(2);
+
+    await expirePhaseTimer(gameId);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("SEER");
+
+    // Night 2: the pack bites villager1 instead — Tough Guy's deferred death
+    // from last night lands tonight, merged with villager1's fresh kill.
+    await writeAction(gameId, "SEER", seer, wolf1);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WOLVES");
+
+    await writeAction(gameId, "WOLVES", wolf1, "villager1");
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WITCH_SAVE");
+
+    await writeAction(gameId, "WITCH_SAVE", witch, null);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WITCH_KILL");
+
+    await writeAction(gameId, "WITCH_KILL", witch, null);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("DAWN");
+    expect(res.deaths?.slice().sort()).toEqual(["tough1", "villager1"]);
+
+    // Consumed exactly once — back to false, no new bite landed on Tough Guy.
+    game = await getGame(gameId);
+    expect(game.toughGuyDeathPending).toBe(false);
+    expect((await getGame(gameId)).players[tough].alive).toBe(false);
+  });
+});
+
 describe("Resilience Task 6: push notifications for whoever's newly required to act", () => {
   const gameId = "GAME-6";
   const roomCode = "PUSH01";

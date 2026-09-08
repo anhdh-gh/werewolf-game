@@ -346,3 +346,44 @@ liên tiếp trong `gameFlowEndToEnd.test.ts` (đêm 1 cắn trúng → chết +
 khác → không ai chết, cờ tự tắt). CI xanh + live rules deploy/byte-verify để ở iteration sau,
 đúng cadence toàn dự án. Tough Guy và Old Hag (Story 1b.1, 1b.3) vẫn `story ready`, chưa
 implement.
+
+## 8. Đã xong — Story 1b.1 (Tough Guy) implementation (gnhf run `stop-read-this-first-98c7ba`
+iteration 10, 2026-09-08)
+
+Implement đúng thiết kế cuối cùng ở §1.2, với một khoảng trống nhỏ thiết kế gốc chưa lường tới
+được xử lý bằng phán đoán có ghi chú (không phải suy đoán im lặng): `RoleKey` `TOUGH_GUY` mới
+(VILLAGE faction, khoá thứ 22), `Game.toughGuyDeathPending?: boolean` (public, thuần boolean,
+không nhúng uid — đúng thiết kế "phương án đơn giản nhất" ở §1.2). Khác Diseased:
+**không đụng `resolveNight.ts`** — thiết kế §1.2 không yêu cầu tham số mới ở đó, chỉ yêu cầu
+`planAdvance` tự tính "đêm nay cắn trúng thật không" (tái dùng đúng công thức `bittenSurvives`
+của `resolveNight` — so `wolfTarget` với `protectTarget`/`witchSaveTarget`) rồi lọc/thêm uid vào
+tập `deaths` của đêm đó trước khi gọi `applyDeathExtras`, thay vì đọc thẳng
+`nightResult.deaths` (tránh nhầm cái chết do Phù Thuỷ đầu độc cùng đêm — nguyên nhân độc lập —
+với cái chết do sói cắn, vì cả hai gộp chung vào 1 Set không phân biệt nguyên nhân).
+
+**Khoảng trống thiết kế gốc chưa lường tới, đã xử lý bằng phán đoán (ghi rõ trong code
+comment, `planAdvance.ts`):** §1.2 viết tiêu chí kích hoạt là "resolveNight's wolf-bite loop
+hiện có đáng lẽ đã add uid này vào `deaths`" — nhưng không nói rõ điều gì xảy ra nếu đêm đó
+`diseasedSuppressNextBite` (Story 1b.2) đang hiệu lực, tức bầy sói "không giết được ai" đêm đó
+vì lý do hoàn toàn khác (Diseased, không phải Tough Guy). Quyết định: đọc tiêu chí Q1 theo đúng
+nghĩa đen — "đáng lẽ đã add vào deaths" phải tính cả `suppressBite`, vì đó chính là hành vi thật
+của `resolveNight` đêm đó — nên nếu `diseasedSuppressNextBite=true`, Tough Guy bị cắn đêm đó
+**không** kích hoạt cờ chờ chết (không ai chết đêm đó vì lý do Diseased, không phải vì được cứu,
+nhưng kết quả cuối cùng giống nhau: không có cái chết thật nào để hoãn). Đây là tương tác 2 vai
+mới × nhau mà §0 nói "không cần xét" (mỗi người 1 vai, nhưng Diseased's hiệu ứng ảnh hưởng cắn
+của TOÀN BẦY, không riêng người bị nhiễm) — trường hợp hiếm (cả 2 vai cùng có trong deck, đúng
+đêm suppression đang hiệu lực, sói lại nhắm trúng Tough Guy) nhưng đã xử lý nhất quán thay vì bỏ
+qua.
+
+Test: 7 case mới trong `planAdvance.test.ts` (ẩn chết + arm cờ; không arm khi được Bảo Vệ; không
+arm khi bị Diseased-suppress; trả nợ đêm sau gộp cùng nạn nhân mới đêm đó; trả nợ kéo theo dây
+chuyền người yêu; chết đêm này + vay nợ mới nếu bị cắn 2 đêm liên tiếp; đầu độc cùng đêm bởi Phù
+Thuỷ không bị nhầm thành cắn) và 1 test e2e đầy đủ 2 đêm trong `gameFlowEndToEnd.test.ts` (đêm 1
+cắn trúng → không công bố ai chết, arm cờ, `players/{tough}/alive` vẫn `true`; đêm 2 cắn người
+khác → cả 2 cùng chết, cờ tự tắt vì không bị cắn lại). `database.rules.json`'s `roleCounts`
+`.validate` mở rộng cho `RoleKey` thứ 22, 3 fixture `Record<RoleKey, number>` literal cập nhật
+(`page.tsx`, `rules.test.ts`, `multiClientGame.test.ts` — các file khác đã build từ
+`ALL_ROLE_KEYS.map(...)` nên tự động nhận khoá mới). Không cần UI mới (thụ động, giống Diseased —
+`RoleCard` đọc `ROLE_LABELS` động). CI xanh + live rules deploy/byte-verify để ở iteration sau,
+đúng cadence toàn dự án. Old Hag (Story 1b.3, vai cuối cùng của epic) vẫn `story ready`, chưa
+implement — cần phase đêm mới + owner duyệt quyết định #6/#7 trước khi bắt đầu.

@@ -169,6 +169,7 @@ export async function POST(
     lovers,
     wolfCubBonusNightPending: game.wolfCubBonusNightPending ?? false,
     diseasedSuppressNextBite: game.diseasedSuppressNextBite ?? false,
+    toughGuyDeathPending: game.toughGuyDeathPending ?? false,
   });
 
   // Spec §4.3: a role-specific phase whose actor is alive ends the moment
@@ -311,6 +312,14 @@ export async function POST(
   // tonight's bite just landed on Diseased) gets persisted for next time.
   if (decision.nextPhase === "DAWN") {
     updates[`games/${gameId}/diseasedSuppressNextBite`] = decision.diseasedSuppressNextBite;
+  }
+  // Epic 1b (Tough Guy): same DAWN-only consume/re-arm pattern as the two
+  // writes above — this is the one call that just used toughGuyDeathPending
+  // as planAdvance's input (paying it off into decision.deaths if owed), so
+  // it's also where the new value (armed iff tonight's bite just landed on
+  // the still-alive Tough Guy) gets persisted for the following DAWN.
+  if (decision.nextPhase === "DAWN") {
+    updates[`games/${gameId}/toughGuyDeathPending`] = decision.toughGuyDeathPending;
   }
 
   for (const uid of decision.deaths) {
