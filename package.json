@@ -8,6 +8,8 @@
   },
   "scripts": {
     "test": "vitest run",
+    "test:ci": "firebase emulators:exec --only database,auth --project werewolf-game-2026 \"vitest run\"",
+    "typecheck": "tsc --noEmit",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

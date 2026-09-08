@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      # src/test/rules.test.ts runs the real database.rules.json against the
+      # RTDB emulator, which is a Java process — hence setup-java rather than
+      # trusting whatever JDK the runner image happens to ship this month.
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - run: npm run test:ci
+
+  build:
+    runs-on: ubuntu-latest
+    # src/lib/firebase/client.ts calls getFirebaseConfig() at module scope, so
+    # prerendering throws unless every NEXT_PUBLIC_FIREBASE_* key is present.
+    # These are deliberately fake: the build only needs them to exist, and no
+    # real project's credentials belong in a public workflow file. The real
+    # values live in Vercel's own env (see scripts/preflight.mjs once it lands).
+    env:
+      NEXT_PUBLIC_FIREBASE_API_KEY: ci-build-placeholder
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ci-build-placeholder.firebaseapp.com
+      NEXT_PUBLIC_FIREBASE_DATABASE_URL: https://ci-build-placeholder.firebaseio.com
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: ci-build-placeholder
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ci-build-placeholder.appspot.com
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "000000000000"
+      NEXT_PUBLIC_FIREBASE_APP_ID: "1:000000000000:web:0000000000000000000000"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
