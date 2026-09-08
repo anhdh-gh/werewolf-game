@@ -1,0 +1,193 @@
+{
+  "clips": {
+    "GAME_START": {
+      "text": "Ván đấu bắt đầu. Xin mời tất cả nhắm mắt lại.",
+      "textHash": "d5ab1f1bd4ab5bb2",
+      "bytes": 31680
+    },
+    "PAIR_LOVERS": {
+      "text": "Thần Tình Yêu, xin hãy thức dậy và chọn một cặp đôi.",
+      "textHash": "88248123ec16518c",
+      "bytes": 37632
+    },
+    "NIGHT_FALLS": {
+      "text": "Đêm xuống, cả làng chìm vào giấc ngủ.",
+      "textHash": "b884f4bed1a406e5",
+      "bytes": 27072
+    },
+    "SEER": {
+      "text": "Tiên Tri, xin hãy thức dậy và chọn một người để soi.",
+      "textHash": "4297d9faf4870ddf",
+      "bytes": 36864
+    },
+    "BODYGUARD": {
+      "text": "Bảo Vệ, xin hãy thức dậy và chọn một người để che chở.",
+      "textHash": "f0ebce44caa37687",
+      "bytes": 38976
+    },
+    "MUTER": {
+      "text": "Kẻ Bịt Miệng, xin hãy thức dậy và chọn một người.",
+      "textHash": "2a0bae3ed64e72e5",
+      "bytes": 34176
+    },
+    "WOLVES": {
+      "text": "Bầy Sói, xin hãy thức dậy và chọn con mồi.",
+      "textHash": "77799959a8ecf8c7",
+      "bytes": 30528
+    },
+    "WITCH_SAVE": {
+      "text": "Phù Thuỷ, xin hãy thức dậy. Bạn có muốn cứu nạn nhân đêm nay không?",
+      "textHash": "0dcece8b5c09eabb",
+      "bytes": 43200
+    },
+    "WITCH_KILL": {
+      "text": "Bạn có muốn dùng thuốc độc đêm nay không?",
+      "textHash": "f677feb8d5aef9b0",
+      "bytes": 23424
+    },
+    "CURSED": {
+      "text": "Trời sắp sáng.",
+      "textHash": "0575d000b0ea1c80",
+      "bytes": 11520
+    },
+    "DAWN_NO_DEATHS": {
+      "text": "Trời đã sáng. Đêm qua không có ai chết.",
+      "textHash": "83e00df4e3f044f1",
+      "bytes": 27840
+    },
+    "DAWN_DEATHS_PREFIX": {
+      "text": "Trời đã sáng. Đêm qua có",
+      "textHash": "882452e40f643dad",
+      "bytes": 21888
+    },
+    "DAWN_DEATHS_SUFFIX": {
+      "text": "người đã chết.",
+      "textHash": "8cfb069b3a033800",
+      "bytes": 10176
+    },
+    "DISCUSSION": {
+      "text": "Cả làng hãy cùng thảo luận.",
+      "textHash": "d247911c673060ce",
+      "bytes": 17856
+    },
+    "VOTE": {
+      "text": "Đến giờ bỏ phiếu.",
+      "textHash": "29e3ade673b2801c",
+      "bytes": 12864
+    },
+    "VOTE_RESULT_NO_HANG": {
+      "text": "Cả làng bỏ phiếu hoà, không ai bị treo cổ.",
+      "textHash": "f2a6350a8aad7d6f",
+      "bytes": 29568
+    },
+    "VOTE_RESULT_HANGED": {
+      "text": "Một người vừa bị treo cổ.",
+      "textHash": "174757dbdc54092e",
+      "bytes": 18624
+    },
+    "GAME_END_VILLAGE": {
+      "text": "Phe Làng đã chiến thắng!",
+      "textHash": "fbc89b94dda21f6e",
+      "bytes": 16320
+    },
+    "GAME_END_WOLF": {
+      "text": "Phe Sói đã chiến thắng!",
+      "textHash": "0f4b4257aed35fcf",
+      "bytes": 16704
+    },
+    "GAME_END_TANNER": {
+      "text": "Chán Đời đã chiến thắng!",
+      "textHash": "abe7d2a56eb61c79",
+      "bytes": 16704
+    },
+    "count-0": {
+      "text": "không",
+      "textHash": "0ec84c3fdadbdb8c",
+      "bytes": 6336
+    },
+    "count-1": {
+      "text": "một",
+      "textHash": "0231bfca9ba02e81",
+      "bytes": 5568
+    },
+    "count-2": {
+      "text": "hai",
+      "textHash": "739b9d664d77db3e",
+      "bytes": 6336
+    },
+    "count-3": {
+      "text": "ba",
+      "textHash": "970f519c2cadbcef",
+      "bytes": 6336
+    },
+    "count-4": {
+      "text": "bốn",
+      "textHash": "dd0bfdcc0de1415c",
+      "bytes": 6528
+    },
+    "count-5": {
+      "text": "năm",
+      "textHash": "22629a25845a64c1",
+      "bytes": 5952
+    },
+    "count-6": {
+      "text": "sáu",
+      "textHash": "81f089091a3e3bf9",
+      "bytes": 6720
+    },
+    "count-7": {
+      "text": "bảy",
+      "textHash": "2b617348a15fc840",
+      "bytes": 6144
+    },
+    "count-8": {
+      "text": "tám",
+      "textHash": "e36b1cb6966e7722",
+      "bytes": 6336
+    },
+    "count-9": {
+      "text": "chín",
+      "textHash": "888dfa55aca7bcb5",
+      "bytes": 6720
+    },
+    "count-10": {
+      "text": "mười",
+      "textHash": "35c274e20def60b1",
+      "bytes": 6912
+    },
+    "count-11": {
+      "text": "mười một",
+      "textHash": "fb8bb5a0dfe2d76d",
+      "bytes": 7104
+    },
+    "count-12": {
+      "text": "mười hai",
+      "textHash": "ad095192bff670b7",
+      "bytes": 8448
+    },
+    "count-13": {
+      "text": "mười ba",
+      "textHash": "b19cfdc729c74a39",
+      "bytes": 8064
+    },
+    "count-14": {
+      "text": "mười bốn",
+      "textHash": "e4ea328d318a2806",
+      "bytes": 8256
+    },
+    "count-15": {
+      "text": "mười lăm",
+      "textHash": "7e994ec977632bb6",
+      "bytes": 7488
+    },
+    "count-16": {
+      "text": "mười sáu",
+      "textHash": "60ed271c574b4677",
+      "bytes": 9024
+    }
+  },
+  "provider": "google-translate",
+  "voice": "vi (translate.google.com, unofficial)",
+  "rate": 1,
+  "renderedAt": "2026-09-08T07:08:44.723Z"
+}

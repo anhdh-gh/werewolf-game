@@ -559,3 +559,44 @@ Covered by `src/test/livekitToken.test.ts` (a rejected token still 401s; an
 probe presents a token that cannot possibly validate, expects 401, and FAILs on 500 —
 and every probe now has a distinct id and report line, since path alone no longer
 identifies one).
+
+### The client half of the same outage: a table that freezes and says nothing (2026-09-08)
+
+Everything above is about making the *server* tell the truth. The client was still
+throwing that truth away.
+
+`useAutoAdvance` (spec §6.3, "mọi máy đều gọi") armed exactly one `setTimeout` per phase
+instance and fired one `fetch(...).catch(() => {})` at `endsAt`. Two things were wrong
+with that, and they compound:
+
+- **`.catch` never ran for the outage.** `fetch` rejects only on a transport failure. A
+  `500` — the whole two-hour outage — resolves normally, so the failure was not merely
+  swallowed by the `catch`, it never reached one. Nothing was logged anywhere.
+- **There is no "next tick".** The comment said another client's call or the next tick
+  would cover it. The effect re-arms only when the phase object changes, and the phase
+  changes only when an advance call succeeds. So one failed call at `endsAt` meant the
+  timer was gone for good — and a 500 is not one client's bad luck, it hits every client
+  in the room in the same second. Every table alive during the outage would have hung at
+  its first phase boundary, permanently, with a countdown reading 0 and no error on
+  screen or in the console.
+
+That directly contradicts what §6.3 promises: "một người rớt mạng không làm treo bàn …
+chỉ cần còn đúng một máy online là ván chạy tiếp". The no-single-referee design only
+delivers that if the calls keep coming.
+
+The fix keeps the design and makes it hold. `requestAdvance()` in `src/lib/game/actions.ts`
+checks `res.ok` (not just rejection) and `console.error`s both failure modes.
+`useAutoAdvance` re-arms on failure with capped exponential backoff — 1s, 2s, 4s, 8s, then
+15s — each attempt carrying its own 0–400ms jitter so a room full of clients retrying a
+failing endpoint stays staggered, and cancels the moment the phase moves or the player
+leaves the screen. `nudgeAdvance` (the everyone-pressed-done early nudge) stays
+fire-and-forget on purpose: if it fails, the `endsAt` timer still covers it, and that one
+now retries.
+
+Why this was invisible everywhere the outage was: CI never renders `GameScreen` against a
+failing endpoint; the emulator tests drive the engine through `submitAction` and the route
+handler directly, never through the browser timer; and preflight probes the server, which
+is exactly the half that was already reporting correctly. Covered by
+`src/lib/game/useAutoAdvance.test.tsx` (a 500 and a transport failure each retry, the
+backoff sequence and its cap, a success stops the loop, and both a phase change and an
+unmount cancel a pending retry).

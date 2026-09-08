@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { type Database, ref, onValue } from "firebase/database";
+import { requestAdvance } from "./actions";
 
 /** Spec §6.4: the phase clock is an absolute server timestamp. Every client
  * corrects its local clock against RTDB's own drift estimate rather than
@@ -32,6 +33,17 @@ export function useCountdownSeconds(endsAt: number, serverOffset: number): numbe
   return Math.max(0, Math.ceil((endsAt - serverNow) / 1000));
 }
 
+/** Spec §6.3 promises "một người rớt mạng không làm treo bàn": one call
+ * getting through is enough. The converse is what bites — a phase only
+ * re-arms this effect by *changing*, and it only changes when a call
+ * succeeds, so a single swallowed failure at endsAt freezes the table for
+ * good. A 500 from the server hits every client at once, which is exactly
+ * the shape of the ERR_REQUIRE_ESM outage: the game would have hung at the
+ * first phase boundary with nothing on screen and nothing in the console.
+ * So keep asking, backing off, until the phase moves or the player leaves. */
+export const ADVANCE_RETRY_BASE_MS = 1_000;
+export const ADVANCE_RETRY_MAX_MS = 15_000;
+
 /** Spec §6.3: "mọi máy đều gọi" advance() once its own clock crosses
  * endsAt, with a small random delay so every client in the room doesn't
  * hit the endpoint in the same instant. Re-arms whenever the phase itself
@@ -44,17 +56,32 @@ export function useAutoAdvance(
   useEffect(() => {
     if (!phase || phase.name === "ENDED") return;
 
-    const msUntilEnd = phase.endsAt - (Date.now() + serverOffset);
-    const jitter = Math.random() * 400;
-    const timer = setTimeout(
-      () => {
-        fetch(`/api/games/${gameId}/advance`, { method: "POST" }).catch(() => {
-          // best-effort — another client's call, or the next tick, covers it
-        });
-      },
-      Math.max(0, msUntilEnd) + jitter,
-    );
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+    let failures = 0;
 
-    return () => clearTimeout(timer);
+    // 0–400ms of spread on every attempt, not just the first, so a room full
+    // of clients retrying a failing endpoint stays staggered.
+    const jitter = () => Math.random() * 400;
+
+    const attempt = () => {
+      void requestAdvance(gameId).then((ok) => {
+        if (cancelled || ok) return;
+        failures += 1;
+        const backoff = Math.min(
+          ADVANCE_RETRY_BASE_MS * 2 ** (failures - 1),
+          ADVANCE_RETRY_MAX_MS,
+        );
+        timer = setTimeout(attempt, backoff + jitter());
+      });
+    };
+
+    const msUntilEnd = phase.endsAt - (Date.now() + serverOffset);
+    timer = setTimeout(attempt, Math.max(0, msUntilEnd) + jitter());
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [gameId, phase?.name, phase?.version, phase?.endsAt, serverOffset]);
 }

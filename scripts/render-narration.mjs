@@ -102,6 +102,42 @@ const PROVIDERS = {
       return Buffer.from(await response.arrayBuffer());
     },
   },
+
+  // Free, no credential needed: the same unofficial translate.google.com speaker-button
+  // endpoint this repo's own `website` branch already used in production
+  // (src/app/api/v1/tts/route.js) — a real neural Google voice, not the offline
+  // espeak/flite/pico2wave engines this file's own header comment rejects on tonal-language
+  // quality grounds. §8.3's objection to that branch's approach was calling it at RUNTIME
+  // (network-dependent mid-game, no cache, one bad read). Using it here instead — once,
+  // offline, to render static files — keeps the free voice and drops the runtime dependency
+  // entirely; the rendered mp3 is what ships, this endpoint is never called again after.
+  // Unofficial: no SLA, could rate-limit or change shape without notice. Every catalog line
+  // is well under its ~200-char practical limit (longest is 67), so no chunking needed.
+  "google-translate": {
+    // Not a selectable voice name — this endpoint has no voice parameter, this is just a
+    // label so the manifest/`--check` output says which engine actually spoke the clips.
+    defaultVoice: "vi (translate.google.com, unofficial)",
+    requiredEnv: [],
+    async synthesize(text, { rate }) {
+      if (rate !== 1) {
+        console.warn(
+          `google-translate provider ignores --rate (${rate}); this endpoint has no speed param.`,
+        );
+      }
+      const url = `https://translate.google.com/translate_tts?ie=UTF-8&q=${encodeURIComponent(text)}&tl=vi&client=tw-ob`;
+      const response = await fetch(url, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36",
+          Referer: "https://translate.google.com/",
+        },
+      });
+      if (!response.ok) {
+        throw new Error(`google-translate TTS ${response.status}: ${await response.text()}`);
+      }
+      return Buffer.from(await response.arrayBuffer());
+    },
+  },
 };
 
 function escapeXml(text) {
