@@ -349,12 +349,17 @@ LiveKit values, and the narration audio.
   LiveKit call rooms actually work together the way the phase-gating logic assumes.
   Everything about that which does not need real hardware is now automated:
   `src/test/multiClientGame.test.ts` plays one full game (two nights, one hang, a
-  wolf win) with five independent, separately-authenticated client connections and
+  wolf win) with seven independent, separately-authenticated client connections and
   the real `database.rules.json` against the RTDB emulator, while the real
   `start`/`advance` routes drive it through a rules-bypassing connection standing in
   for the Admin SDK (`src/test/helpers/emulatorAdminDb.ts`). It asserts phase gating
   on every action write, village-vs-wolf chat scoping, that a dead player can read
   the table but not speak, that two simultaneous `advance` calls commit exactly one
-  transition, and that all five clients converge on byte-identical game state.
+  transition, and that all seven clients converge on byte-identical game state.
+  Seven players and not fewer is forced by §4.2/§4.6 together: `wolfCount` is
+  `floor((n - 1) / 4) + 1`, so a 5-player room already deals 2 wolves and the first
+  night kill makes it 2 vs 2 — the wolves win at DAWN and DISCUSSION/VOTE never
+  run. Seven is the smallest deal that reaches a day phase and still ends in a wolf
+  win on night two.
   What still genuinely needs devices: push notifications, the LiveKit call room, and
   audio playback — none of which the emulator can stand in for.

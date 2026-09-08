@@ -11,7 +11,7 @@
  *     hand-written state; here the state is whatever a real game produced.
  *   - gameFlowEndToEnd.test.ts plays whole games through the real routes,
  *     but against an in-memory fake with no rules and a single caller.
- *   Only here do the routes' writes and five rule-enforced clients' reads
+ *   Only here do the routes' writes and seven rule-enforced clients' reads
  *   and writes hit the same live database, so "every client ends up seeing
  *   the same game" is something that can be asserted rather than assumed.
  *
@@ -50,12 +50,21 @@ import type { ChatMessage, Game, PrivatePlayerState, RoleKey } from "@/types/gam
 
 const PROJECT_ID = "werewolf-multiclient-test";
 
-/** Spec §4.2 with every optional role off and 5 players deals exactly
- * 2 WEREWOLF + SEER + WITCH + VILLAGER, so the only phases in play are
+/** Spec §4.2 with every optional role off and 7 players deals exactly
+ * 2 WEREWOLF + SEER + WITCH + 3 VILLAGER (`wolfCount` is
+ * `floor((n - 1) / 4) + 1`), so the only phases in play are
  * NIGHT_FALLS / SEER / WOLVES / WITCH_SAVE / WITCH_KILL / DAWN /
  * DISCUSSION / VOTE / VOTE_RESULT. Which uid gets which role is still
  * random (assignRoles shuffles) — this file reads the deal back out of
- * /private rather than forcing it, so it exercises the real dealer. */
+ * /private rather than forcing it, so it exercises the real dealer.
+ *
+ * SEVEN and not fewer, because §4.6's headcount decides how long a game
+ * can last: a 5-player deal is also 2 wolves, so the very first night kill
+ * leaves 2 wolves against 2 villagers and the wolves win at DAWN before
+ * DISCUSSION/VOTE ever happen. Seven gives 5 non-wolves, which is exactly
+ * enough for the night-kill / day-hang / night-kill arc below to reach a
+ * wolf win on night two — the shortest game that still exercises a full
+ * day phase. */
 const NO_OPTIONAL_ROLES = {
   BODYGUARD: false,
   TRAITOR: false,
@@ -113,7 +122,7 @@ let roles: Record<string, RoleKey> = {};
 let wolves: string[] = [];
 let seerUid: string;
 let witchUid: string;
-let villagerUid: string;
+let villagers: string[] = [];
 
 /**
  * Every `${phaseName}#${version}` a client is allowed to have been shown,
@@ -280,7 +289,7 @@ async function waitUntil(label: string, predicate: () => boolean, timeoutMs = 15
 /**
  * Blocks until every client's own live subscription has landed on exactly
  * the phase the server just committed — the point at which comparing what
- * the five of them believe is meaningful rather than a race.
+ * the seven of them believe is meaningful rather than a race.
  *
  * Matching on the name AND the version, never the version alone, is what
  * makes this safe: the version-claim transaction described above bumps the
@@ -319,7 +328,7 @@ beforeAll(async () => {
   });
   await testEnv.clearDatabase();
 
-  clients = ["u1", "u2", "u3", "u4", "u5"].map((uid, index) => ({
+  clients = ["u1", "u2", "u3", "u4", "u5", "u6", "u7"].map((uid, index) => ({
     uid,
     name: `Người ${index + 1}`,
     db: testEnv.authenticatedContext(uid).database() as unknown as Database,
@@ -327,7 +336,7 @@ beforeAll(async () => {
     phaseLog: [],
     detach: null,
   }));
-  outsiderDb = testEnv.authenticatedContext("u6-outsider").database() as unknown as Database;
+  outsiderDb = testEnv.authenticatedContext("u8-outsider").database() as unknown as Database;
 }, 60_000);
 
 afterAll(async () => {
@@ -335,13 +344,13 @@ afterAll(async () => {
   await testEnv?.cleanup();
 });
 
-describe("five clients, one server, one game", () => {
+describe("seven clients, one server, one game", () => {
   it("builds the room together under the real rules", async () => {
     roomCode = await createRoom(clients[0].db, {
       uid: clients[0].uid,
       name: clients[0].name,
       photoURL: null,
-      maxPlayers: 5,
+      maxPlayers: 7,
     });
 
     for (const client of clients.slice(1)) {
@@ -356,7 +365,7 @@ describe("five clients, one server, one game", () => {
     // while the room is still in the lobby, and only then.
     await assertSucceeds(
       set(ref(clients[1].db, roomSettingsPath(roomCode)), {
-        maxPlayers: 5,
+        maxPlayers: 7,
         rolesEnabled: NO_OPTIONAL_ROLES,
         remoteMode: true,
       }),
@@ -386,10 +395,11 @@ describe("five clients, one server, one game", () => {
     wolves = clients.filter((c) => roles[c.uid] === "WEREWOLF").map((c) => c.uid);
     seerUid = clients.find((c) => roles[c.uid] === "SEER")!.uid;
     witchUid = clients.find((c) => roles[c.uid] === "WITCH")!.uid;
-    villagerUid = clients.find((c) => roles[c.uid] === "VILLAGER")!.uid;
+    villagers = clients.filter((c) => roles[c.uid] === "VILLAGER").map((c) => c.uid);
 
     expect(wolves).toHaveLength(2);
-    expect([seerUid, witchUid, villagerUid].every(Boolean)).toBe(true);
+    expect(villagers).toHaveLength(3);
+    expect([seerUid, witchUid].every(Boolean)).toBe(true);
 
     for (const client of clients) {
       client.detach = onValue(ref(client.db, gamePath(gameId)), (snapshot) => {
@@ -412,7 +422,7 @@ describe("five clients, one server, one game", () => {
     // The room is PLAYING now, so its settings are frozen even for members.
     await assertFails(
       set(ref(clients[1].db, roomSettingsPath(roomCode)), {
-        maxPlayers: 5,
+        maxPlayers: 7,
         rolesEnabled: NO_OPTIONAL_ROLES,
         remoteMode: false,
       }),
@@ -424,7 +434,7 @@ describe("five clients, one server, one game", () => {
     // the phase, before anyone has had a chance to look at roles.
     await assertFails(
       set(ref(clientFor(seerUid).db, gameActionPath(gameId, "SEER", seerUid)), {
-        target: villagerUid,
+        target: villagers[0],
         done: true,
         at: Date.now(),
       }),
@@ -437,14 +447,14 @@ describe("five clients, one server, one game", () => {
     // writable only by its owner — otherwise its mere existence would out
     // the Seer to the table.
     await assertFails(
-      set(ref(clientFor(villagerUid).db, gameActionPath(gameId, "SEER", seerUid)), {
+      set(ref(clientFor(villagers[0]).db, gameActionPath(gameId, "SEER", seerUid)), {
         target: wolves[0],
         done: true,
         at: Date.now(),
       }),
     );
-    await assertFails(get(ref(clientFor(villagerUid).db, gameActionPath(gameId, "SEER", seerUid))));
-    await assertFails(get(ref(clientFor(villagerUid).db, privatePlayerPath(gameId, seerUid))));
+    await assertFails(get(ref(clientFor(villagers[0]).db, gameActionPath(gameId, "SEER", seerUid))));
+    await assertFails(get(ref(clientFor(villagers[0]).db, privatePlayerPath(gameId, seerUid))));
     await assertSucceeds(get(ref(clientFor(seerUid).db, privatePlayerPath(gameId, seerUid))));
 
     await submitAction(clientFor(seerUid).db, gameId, "SEER", seerUid, wolves[0]);
@@ -461,7 +471,7 @@ describe("five clients, one server, one game", () => {
 
   it("resolves the night once, and every client agrees on who died", async () => {
     for (const wolfUid of wolves) {
-      await submitAction(clientFor(wolfUid).db, gameId, "WOLVES", wolfUid, villagerUid);
+      await submitAction(clientFor(wolfUid).db, gameId, "WOLVES", wolfUid, villagers[0]);
     }
     expect((await callAdvance()).phase.name).toBe("WITCH_SAVE");
 
@@ -470,27 +480,29 @@ describe("five clients, one server, one game", () => {
     const witchPrivate = await get(
       ref(clientFor(witchUid).db, privatePlayerPath(gameId, witchUid)),
     );
-    expect((witchPrivate.val() as PrivatePlayerState).pendingWolfTarget).toBe(villagerUid);
+    expect((witchPrivate.val() as PrivatePlayerState).pendingWolfTarget).toBe(villagers[0]);
 
     await submitAction(clientFor(witchUid).db, gameId, "WITCH_SAVE", witchUid, null);
     expect((await callAdvance()).phase.name).toBe("WITCH_KILL");
     await submitAction(clientFor(witchUid).db, gameId, "WITCH_KILL", witchUid, null);
 
+    // Five non-wolves go into the night and four come out, so §4.6's
+    // headcount (2 wolves vs 4) does not end it here — DAWN, not ENDED.
     const dawn = await callAdvance();
     expect(dawn.phase.name).toBe("DAWN");
-    expect(dawn.deaths).toEqual([villagerUid]);
+    expect(dawn.deaths).toEqual([villagers[0]]);
 
     await waitForEveryClientAt(dawn.phase.name, dawn.phase.version);
     for (const client of clients) {
-      expect(client.game!.players[villagerUid].alive).toBe(false);
-      expect(client.game!.lastDeaths).toEqual([villagerUid]);
+      expect(client.game!.players[villagers[0]].alive).toBe(false);
+      expect(client.game!.lastDeaths).toEqual([villagers[0]]);
     }
-    // Not just "each is right" but "all five are the same object" — the
+    // Not just "each is right" but "all seven are the same object" — the
     // multi-device claim this whole file exists for.
     for (const client of clients.slice(1)) expect(client.game).toEqual(clients[0].game);
   }, 60_000);
 
-  it("keeps village and wolf chat separate across the five connections", async () => {
+  it("keeps village and wolf chat separate across the seven connections", async () => {
     expect((await callAdvance(true)).phase.name).toBe("DISCUSSION");
 
     await assertSucceeds(
@@ -501,9 +513,9 @@ describe("five clients, one server, one game", () => {
     );
     // Dead players watch but cannot speak (spec §4.7).
     await assertFails(
-      sendChatMessage(clientFor(villagerUid).db, gameId, "village", villagerUid, "Tôi biết ai"),
+      sendChatMessage(clientFor(villagers[0]).db, gameId, "village", villagers[0], "Tôi biết ai"),
     );
-    await assertSucceeds(get(ref(clientFor(villagerUid).db, gameChatPath(gameId, "village"))));
+    await assertSucceeds(get(ref(clientFor(villagers[0]).db, gameChatPath(gameId, "village"))));
     // ...and nobody outside the game sees the table at all.
     await assertFails(get(ref(outsiderDb, gameChatPath(gameId, "village"))));
 
@@ -532,9 +544,16 @@ describe("five clients, one server, one game", () => {
     expect(voteStart.phase.name).toBe("VOTE");
     const versionBeforeVote = voteStart.phase.version;
 
-    const aliveUids = clients.filter((c) => c.uid !== villagerUid).map((c) => c.uid);
+    // The table hangs one of its own, and not unanimously: the accused
+    // votes back at a wolf, so §4.5's tally decides it 5 to 1 rather than
+    // this being a case where every ballot happened to agree. Hanging a
+    // wolf instead would leave 1 wolf against 4 and put a wolf win out of
+    // reach; this leaves 2 against 3 — not a win yet (so VOTE_RESULT and
+    // not ENDED), but one night kill away from one.
+    const aliveUids = clients.filter((c) => c.uid !== villagers[0]).map((c) => c.uid);
     for (const uid of aliveUids) {
-      await submitAction(clientFor(uid).db, gameId, "VOTE", uid, wolves[0]);
+      const ballot = uid === villagers[1] ? wolves[0] : villagers[1];
+      await submitAction(clientFor(uid).db, gameId, "VOTE", uid, ballot);
     }
     // Nobody may cast someone else's ballot, however loud the room gets.
     await assertFails(
@@ -551,18 +570,18 @@ describe("five clients, one server, one game", () => {
     const both = await raceTwoAdvances();
     const resolved = both.filter((res) => Array.isArray(res.deaths));
     expect(resolved).toHaveLength(1);
-    expect(resolved[0].deaths).toEqual([wolves[0]]);
+    expect(resolved[0].deaths).toEqual([villagers[1]]);
     expect(resolved[0].phase.name).toBe("VOTE_RESULT");
     expect(resolved[0].phase.version).toBe(versionBeforeVote + 1);
 
     await waitForEveryClientAt("VOTE_RESULT", versionBeforeVote + 1);
     for (const client of clients) {
       expect(client.game!.phase.version).toBe(versionBeforeVote + 1);
-      expect(client.game!.players[wolves[0]].alive).toBe(false);
+      expect(client.game!.players[villagers[1]].alive).toBe(false);
     }
   }, 60_000);
 
-  it("plays night two to a wolf win and leaves all five clients identical", async () => {
+  it("plays night two to a wolf win and leaves all seven clients identical", async () => {
     const nightTwo = await callAdvance(true);
     expect(nightTwo.phase.name).toBe("NIGHT_FALLS");
     await waitForEveryClientAt(nightTwo.phase.name, nightTwo.phase.version);
@@ -572,17 +591,20 @@ describe("five clients, one server, one game", () => {
     await submitAction(clientFor(seerUid).db, gameId, "SEER", seerUid, witchUid);
     expect((await callAdvance()).phase.name).toBe("WOLVES");
 
-    // The hanged wolf's night-one vote must not still be sitting there.
+    // Night one's wolf ballots must not still be sitting there.
     const wolfActions = await readServer<Record<string, unknown>>(`actions/${gameId}/WOLVES`);
     expect(wolfActions).toBeNull();
 
-    await submitAction(clientFor(wolves[1]).db, gameId, "WOLVES", wolves[1], witchUid);
+    for (const wolfUid of wolves) {
+      await submitAction(clientFor(wolfUid).db, gameId, "WOLVES", wolfUid, villagers[2]);
+    }
     expect((await callAdvance()).phase.name).toBe("WITCH_SAVE");
     await submitAction(clientFor(witchUid).db, gameId, "WITCH_SAVE", witchUid, null);
     expect((await callAdvance()).phase.name).toBe("WITCH_KILL");
     await submitAction(clientFor(witchUid).db, gameId, "WITCH_KILL", witchUid, null);
 
-    // One wolf and one villager left: spec §4.6's headcount ends it here,
+    // The last villager dies, leaving 2 wolves against the Seer and the
+    // Witch: spec §4.6's headcount (wolves ≥ everyone else) ends it here,
     // so this transition goes straight to ENDED instead of DAWN.
     const ending = await callAdvance();
     expect(ending.phase.name).toBe("ENDED");
@@ -618,7 +640,7 @@ describe("five clients, one server, one game", () => {
       `rooms/${roomCode}`,
     );
     expect(room.status).toBe("LOBBY");
-    expect(Object.keys(room.members)).toHaveLength(5);
+    expect(Object.keys(room.members)).toHaveLength(7);
     expect(Object.values(room.members).every((member) => member.ready === false)).toBe(true);
   }, 60_000);
 });
