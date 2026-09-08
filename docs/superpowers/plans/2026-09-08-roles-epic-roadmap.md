@@ -32,7 +32,7 @@ rõ ràng chứ không giấu.
 |---|---|---|---|---|
 | **Epic 1** | Vai Làng thụ động, không cần phase đêm mới (Mason, Prince, Pacifist) | 3 | **`done`** — cả 3 story CI xanh, merged vào main, rules RTDB live đã deploy và byte-compare khớp repo (2026-09-08) | `2026-09-08-roles-epic-1.md` |
 | **Epic 1b** | Vai Làng thụ động nhưng cần thêm 1 vòng xác nhận cơ chế trước khi viết story an toàn (Tough Guy, Diseased, Old Hag — xem lý do treo ở cuối mục này) | 3 | Chưa viết story — cần làm rõ timing trước | chưa có |
-| **Epic 2** | Vai Sói đồng minh cần phase đêm mới, cơ chế đủ rõ để viết story ngay (Sorcerer/Sorceress) | 1 | **Story sẵn sàng implement** — xem lý do 3/4 vai gốc dự kiến bị tách ra ở mục dưới | `2026-09-08-roles-epic-2.md` |
+| **Epic 2** | Vai Sói đồng minh cần phase đêm mới, cơ chế đủ rõ để viết story ngay (Sorcerer/Sorceress) | 1 | Code viết xong (iteration 10) — chờ CI xanh + deploy/verify live rules RTDB (node action `SORCERER` mới) trước khi coi là `done` | `2026-09-08-roles-epic-2.md` |
 | **Epic 2b** | Vai có khái niệm rõ nhưng paraphrase để lại mơ hồ thời điểm/trạng thái xuyên đêm hoặc điều kiện thắng chính xác — cùng loại vấn đề đã chặn Epic 1b (Doppelgänger, Hoodlum) | 2 | Chưa viết story — cần rulebook gốc | chưa có |
 | **Epic 3** | Vai Sói mới ngoài Kẻ Phản Bội (Dire Wolf, Lone Wolf, Wolf Man, Wolf Cub) | 4 | Chưa viết story | chưa có |
 | **Epic 4** | Vai cần rulebook gốc để phân biệt khỏi vai đã có, **không suy đoán** (Priest vs Bảo Vệ, Huntress vs Thợ Săn, Revealer vs Tiên Tri, Village Idiot, Drunk, Troublemaker, Insomniac, Apprentice Seer, Aura Seer, Paranormal Investigator, Beholder) | ~11 | **Chặn lại** — cần nghiên cứu thêm (không phải "thêm web search thông thường" nữa, xem catalog §6 mục 4) | chưa có |
@@ -92,7 +92,7 @@ liệt kê vai đã có epic xác định (không lặp lại toàn bộ ~141 va
 | Tough Guy | 1b | `blocked` — cần xác nhận timing |
 | Diseased | 1b | `blocked` — cần xác nhận timing |
 | Old Hag | 1b | `blocked` — cần xác nhận khái niệm "rời làng" |
-| Sorcerer/Sorceress ("Pháp Sư") | 2 | `planned` — story 2.1 viết xong trong `2026-09-08-roles-epic-2.md`, sẵn sàng implement |
+| Sorcerer/Sorceress ("Pháp Sư") | 2 | `in progress` — code viết xong (iteration 10: RoleKey/phase mới/rules.json node/UI/test), CI + live-rules-verification còn thiếu |
 | Doppelgänger, Hoodlum | 2b | `blocked` — cần rulebook gốc (mơ hồ thời điểm/điều kiện thắng xuyên đêm) |
 | Dire Wolf, Lone Wolf, Wolf Man, Wolf Cub | 3 | `not started` |
 | Priest, Huntress, Revealer, Village Idiot, Drunk, Troublemaker, Insomniac, Apprentice Seer, Aura Seer, Paranormal Investigator, Beholder | 4 | `blocked` — cần rulebook gốc |

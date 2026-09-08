@@ -68,6 +68,7 @@ const NO_OPTIONAL_ROLES = {
   MASON: false,
   PRINCE: false,
   PACIFIST: false,
+  SORCERER: false,
   TANNER: false,
 };
 
@@ -879,6 +880,94 @@ describe("Spec §4.3 timing decoy: a dead role-holder's phase can't be told apar
     const durationMs = res.phase.endsAt - before;
     expect(durationMs).toBeGreaterThan(28_000);
     expect(durationMs).toBeLessThan(32_000);
+  });
+});
+
+describe("Epic 2 Story 2.1: Sorcerer's SEER check is written to their own private state", () => {
+  const gameId = "GAME-SORCERER";
+  const roomCode = "SORC01";
+  const sorcerer = "sorcerer";
+  const seer = "seer";
+  const witch = "witch";
+  const wolfA = "wolfA";
+  const villager1 = "villager1";
+  const uids = [sorcerer, seer, witch, wolfA, villager1];
+
+  async function seedSorcererGame() {
+    const players: Game["players"] = {};
+    for (const uid of uids) players[uid] = { name: uid, alive: true, muted: false };
+
+    const game: Game = {
+      roomCode,
+      startedAt: 1,
+      dayNumber: 1,
+      phase: { name: "SEER", endsAt: Date.now() - 1, version: 0 },
+      players,
+    };
+    await fakeDb.ref(`games/${gameId}`).set(game);
+    await fakeDb.ref(`private/${gameId}`).set({
+      [sorcerer]: { role: "SORCERER", initialRole: "SORCERER", potions: { heal: true, poison: true } },
+      [seer]: { role: "SEER", initialRole: "SEER", potions: { heal: true, poison: true } },
+      [witch]: { role: "WITCH", initialRole: "WITCH", potions: { heal: true, poison: true } },
+      [wolfA]: {
+        role: "WEREWOLF",
+        initialRole: "WEREWOLF",
+        potions: { heal: true, poison: true },
+        packUids: [],
+      },
+      [villager1]: {
+        role: "VILLAGER",
+        initialRole: "VILLAGER",
+        potions: { heal: true, poison: true },
+      },
+    } satisfies Record<string, PrivatePlayerState>);
+    await seedRoom(roomCode, uids, { ...NO_OPTIONAL_ROLES, SORCERER: true });
+    await fakeDb.ref(`rooms/${roomCode}/status`).set("PLAYING");
+  }
+
+  it("records result: true when the Sorcerer targets the real Seer", async () => {
+    await seedSorcererGame();
+    // SEER has nobody required to act in this seed (no SEER action written)
+    // — force the timer so advance() moves purely on the clock.
+    await expirePhaseTimer(gameId);
+    let res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("SORCERER");
+
+    await writeAction(gameId, "SORCERER", sorcerer, seer);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WOLVES");
+
+    const sorcererPriv = (await getPrivate(gameId))[sorcerer];
+    const hint = Object.values(sorcererPriv.sorcererHints ?? {})[0];
+    expect(hint).toEqual({ targetUid: seer, result: true, dayNumber: 1 });
+  });
+
+  it("records result: false when the Sorcerer targets anyone other than the Seer", async () => {
+    await seedSorcererGame();
+    await expirePhaseTimer(gameId);
+    let res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("SORCERER");
+
+    await writeAction(gameId, "SORCERER", sorcerer, villager1);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WOLVES");
+
+    const sorcererPriv = (await getPrivate(gameId))[sorcerer];
+    const hint = Object.values(sorcererPriv.sorcererHints ?? {})[0];
+    expect(hint).toEqual({ targetUid: villager1, result: false, dayNumber: 1 });
+  });
+
+  it("never writes the Sorcerer's pick or result to any publicly-readable path", async () => {
+    await seedSorcererGame();
+    await expirePhaseTimer(gameId);
+    await callAdvance(gameId);
+    await writeAction(gameId, "SORCERER", sorcerer, seer);
+    await callAdvance(gameId);
+
+    const game = await getGame(gameId);
+    assertPhaseShapeNeverLeaksRoles(game.phase);
+    const otherPriv = (await getPrivate(gameId))[villager1];
+    expect(otherPriv.sorcererHints).toBeUndefined();
   });
 });
 

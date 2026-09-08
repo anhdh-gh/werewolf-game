@@ -75,6 +75,12 @@
             ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('phase').child('name').val() === 'SEER' && root.child('games').child($gameId).child('players').child($uid).child('alive').val() === true && root.child('private').child($gameId).child($uid).child('role').val() === 'SEER'"
           }
         },
+        "SORCERER": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('phase').child('name').val() === 'SORCERER' && root.child('games').child($gameId).child('players').child($uid).child('alive').val() === true && root.child('private').child($gameId).child($uid).child('role').val() === 'SORCERER'"
+          }
+        },
         "BODYGUARD": {
           "$uid": {
             ".read": "auth != null && auth.uid === $uid",

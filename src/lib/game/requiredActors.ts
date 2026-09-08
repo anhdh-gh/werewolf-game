@@ -16,6 +16,7 @@ import type { PhaseName, RoleKey } from "@/types/game";
  * every single night. */
 export const ACTING_ROLE_BY_PHASE: Partial<Record<PhaseName, RoleKey>> = {
   SEER: "SEER",
+  SORCERER: "SORCERER",
   BODYGUARD: "BODYGUARD",
   MUTER: "MUTER",
   WITCH_SAVE: "WITCH",

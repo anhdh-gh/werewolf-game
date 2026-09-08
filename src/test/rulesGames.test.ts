@@ -27,6 +27,7 @@ const EXISTING_GAME = {
     "uid-seer": { name: "Seer", alive: true, muted: false },
     "uid-witch": { name: "Witch", alive: true, muted: false },
     "uid-pacifist": { name: "Pacifist", alive: true, muted: false },
+    "uid-sorcerer": { name: "Sorcerer", alive: true, muted: false },
     "uid-dead-hunter": { name: "Hunter", alive: false, muted: false },
     "uid-dead-villager": { name: "Villager", alive: false, muted: false },
   },
@@ -50,6 +51,7 @@ const EXISTING_PRIVATE: Record<string, Record<string, unknown>> = {
     potions: { heal: true, poison: true },
   },
   "uid-pacifist": { role: "PACIFIST", initialRole: "PACIFIST" },
+  "uid-sorcerer": { role: "SORCERER", initialRole: "SORCERER" },
   "uid-dead-hunter": { role: "HUNTER", initialRole: "HUNTER" },
   "uid-dead-villager": { role: "VILLAGER", initialRole: "VILLAGER" },
 };
@@ -291,6 +293,25 @@ describe("actions/$gameId — only the phase's own role may act", () => {
         done: true,
         at: 1,
       }),
+    );
+  });
+
+  it("lets the Sorcerer act during SORCERER, and nobody else", async () => {
+    await setPhase("SORCERER");
+    await assertSucceeds(
+      set(
+        ref(
+          testEnv.authenticatedContext("uid-sorcerer").database(),
+          "actions/GAME1/SORCERER/uid-sorcerer",
+        ),
+        { target: "uid-seer", done: true, at: 1 },
+      ),
+    );
+    await assertFails(
+      set(
+        ref(testEnv.authenticatedContext("uid-seer").database(), "actions/GAME1/SORCERER/uid-seer"),
+        { target: "uid-wolf", done: true, at: 1 },
+      ),
     );
   });
 

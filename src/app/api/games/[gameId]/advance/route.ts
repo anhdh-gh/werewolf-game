@@ -210,6 +210,7 @@ export async function POST(
   // strictly before anyone can write this round's data into it.
   const ROUND_SCOPED_PHASES: PhaseName[] = [
     "SEER",
+    "SORCERER",
     "BODYGUARD",
     "MUTER",
     "WOLVES",
@@ -334,6 +335,30 @@ export async function POST(
       await db.ref(`private/${gameId}/${seerUid}/hints`).push({
         targetUid: seerAction.target,
         result: seerCheck(targetRole),
+        dayNumber: game.dayNumber,
+      });
+    }
+  }
+
+  // Leaving SORCERER: same pattern as "Leaving SEER" above — the Sorcerer's
+  // check ("is this person the Seer?") is theirs to know immediately (Epic 2
+  // Story 2.1). No packUids/SEER_SEES_AS_WOLF involvement by design (see the
+  // story doc's two explicit no-guess decisions) — this is purely a private
+  // hint, unrelated to wolf-pack coordination.
+  if (game.phase.name === "SORCERER") {
+    const sorcererActionSnap = await db.ref(`actions/${gameId}/SORCERER`).get();
+    const sorcererActionVal = (sorcererActionSnap.val() ?? {}) as Record<
+      string,
+      { target: string }
+    >;
+    const [sorcererUid, sorcererAction] = Object.entries(sorcererActionVal)[0] ?? [];
+    const sorcererTargetRole = sorcererAction
+      ? privateState[sorcererAction.target]?.role
+      : undefined;
+    if (sorcererUid && sorcererAction && sorcererTargetRole) {
+      await db.ref(`private/${gameId}/${sorcererUid}/sorcererHints`).push({
+        targetUid: sorcererAction.target,
+        result: sorcererTargetRole === "SEER",
         dayNumber: game.dayNumber,
       });
     }

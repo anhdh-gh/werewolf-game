@@ -13,6 +13,7 @@ export const OPTIONAL_ROLE_KEYS = [
   "MASON",
   "PRINCE",
   "PACIFIST",
+  "SORCERER",
   "TANNER",
 ] as const;
 export type OptionalRoleKey = (typeof OPTIONAL_ROLE_KEYS)[number];

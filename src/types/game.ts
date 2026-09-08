@@ -2,6 +2,7 @@ export type RoleKey =
   | "WEREWOLF"
   | "TRAITOR"
   | "SEER"
+  | "SORCERER"
   | "WITCH"
   | "BODYGUARD"
   | "HUNTER"
@@ -24,6 +25,7 @@ export const FACTION_BY_ROLE: Record<RoleKey, Faction> = {
   WEREWOLF: "WOLF",
   TRAITOR: "WOLF",
   SEER: "VILLAGE",
+  SORCERER: "WOLF",
   WITCH: "VILLAGE",
   BODYGUARD: "VILLAGE",
   HUNTER: "VILLAGE",
@@ -52,6 +54,7 @@ export const PHASE_SEQUENCE = [
   "PAIR_LOVERS",
   "NIGHT_FALLS",
   "SEER",
+  "SORCERER",
   "BODYGUARD",
   "MUTER",
   "WOLVES",
@@ -72,6 +75,7 @@ export type PhaseName = (typeof PHASE_SEQUENCE)[number] | "ENDED";
  * all (spec §4.3) — they only affect role dealing and Seer results. */
 export const PHASE_OPTIONAL_ROLE: Partial<Record<PhaseName, RoleKey>> = {
   PAIR_LOVERS: "CUPID",
+  SORCERER: "SORCERER",
   BODYGUARD: "BODYGUARD",
   MUTER: "MUTER",
   CURSED: "CURSED",
@@ -132,6 +136,15 @@ export interface SeerHint {
   dayNumber: number;
 }
 
+/** Epic 2 Story 2.1: the Sorcerer's own check history — same shape idea as
+ * SeerHint, but a distinct type (result is boolean, not "WOLF"|"VILLAGER")
+ * so it doesn't disturb any existing SeerHint-keyed exhaustiveness. */
+export interface SorcererHint {
+  targetUid: string;
+  result: boolean;
+  dayNumber: number;
+}
+
 /** Spec §0/§7: chat only exists for a "Chơi xa" room, in two scopes.
  * "village" is the public/day channel — every player in the game,
  * regardless of faction (mirrors §10's single shared Discussion call room).
@@ -155,6 +168,9 @@ export interface PrivatePlayerState {
   /** The Seer's own check history — RTDB push() keys, so this is a map, not
    * an array. Only ever present for a uid dealt the Seer role. */
   hints?: Record<string, SeerHint>;
+  /** The Sorcerer's own check history — same push()-keyed-map shape as
+   * `hints` above. Only ever present for a uid dealt the Sorcerer role. */
+  sorcererHints?: Record<string, SorcererHint>;
   /** Spec §6.5: the wolves' current-night pick, written here (not anywhere
    * publicly readable) the moment the WOLVES phase ends, so the Witch can
    * decide whether to save them. null when the pack didn't agree on

@@ -26,6 +26,7 @@ import { MasonInfo } from "./MasonInfo";
 import { MutedBanner } from "./MutedBanner";
 import { DeathAnnouncement } from "./DeathAnnouncement";
 import { SeerHints } from "./SeerHints";
+import { SorcererHints } from "./SorcererHints";
 import { PlayerList } from "./PlayerList";
 import { GameEndScreen } from "./GameEndScreen";
 import { HunterRevengePrompt } from "./HunterRevenge";
@@ -179,6 +180,7 @@ function GameScreenInner({
           <PackInfo privateState={privateState} players={game.players} />
           <MasonInfo privateState={privateState} players={game.players} />
           <SeerHints privateState={privateState} players={game.players} />
+          <SorcererHints privateState={privateState} players={game.players} />
 
           {isRequired && !alreadyDone ? (
             <Card>

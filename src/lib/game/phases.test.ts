@@ -64,6 +64,16 @@ describe("nextPhase", () => {
     expect(nextPhase("VOTE_RESULT", ALL_ROLES)).toBe("NIGHT_FALLS");
   });
 
+  it("SORCERER slots in right after SEER when a Sorcerer is in the game", () => {
+    const withSorcerer: RoleKey[] = ["WEREWOLF", "SEER", "SORCERER", "WITCH", "VILLAGER"];
+    expect(nextPhase("SEER", withSorcerer)).toBe("SORCERER");
+    expect(nextPhase("SORCERER", withSorcerer)).toBe("WOLVES");
+  });
+
+  it("skips SORCERER entirely when there is no Sorcerer in the game", () => {
+    expect(nextPhase("SEER", MINIMAL_ROLES)).toBe("WOLVES");
+  });
+
   it("has a duration for every phase", () => {
     for (const phase of Object.keys(PHASE_DURATIONS_MS)) {
       expect(PHASE_DURATIONS_MS[phase as keyof typeof PHASE_DURATIONS_MS]).toBeGreaterThan(0);

@@ -115,6 +115,18 @@ export function ActionPanel({
     );
   }
 
+  if (phase === "SORCERER") {
+    return (
+      <TargetPicker
+        targets={alivePlayersExcept(game, [uid])}
+        selected={selected}
+        onSelect={setSelected}
+        onSubmit={() => selected && submit("SORCERER", selected)}
+        submitLabel="Dò"
+      />
+    );
+  }
+
   if (phase === "BODYGUARD") {
     // Spec §4.1: can't shield the same person two nights running.
     const excluded = game.lastProtectedUid ? [game.lastProtectedUid] : [];

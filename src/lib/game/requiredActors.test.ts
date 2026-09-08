@@ -13,6 +13,7 @@ const ROLES: Record<string, RoleKey> = {
   cupid1: "CUPID",
   hunter1: "HUNTER",
   cursed1: "CURSED",
+  sorcerer1: "SORCERER",
   villager1: "VILLAGER",
 };
 
@@ -24,6 +25,10 @@ describe("requiredActorsForPhase", () => {
 
   it("only the Seer acts during SEER", () => {
     expect(requiredActorsForPhase("SEER", ROLES)).toEqual(["seer1"]);
+  });
+
+  it("only the Sorcerer acts during SORCERER", () => {
+    expect(requiredActorsForPhase("SORCERER", ROLES)).toEqual(["sorcerer1"]);
   });
 
   it("only the Witch acts during both witch phases", () => {
@@ -56,5 +61,10 @@ describe("requiredActorsForPhase", () => {
   it("returns nobody for a role phase whose role isn't alive", () => {
     const { seer1: _seer1, ...withoutSeer } = ROLES;
     expect(requiredActorsForPhase("SEER", withoutSeer)).toEqual([]);
+  });
+
+  it("returns nobody for SORCERER when the Sorcerer isn't alive or isn't in the game", () => {
+    const { sorcerer1: _sorcerer1, ...withoutSorcerer } = ROLES;
+    expect(requiredActorsForPhase("SORCERER", withoutSorcerer)).toEqual([]);
   });
 });

@@ -16,6 +16,7 @@ export const PHASE_DURATIONS_MS: Record<PhaseName, number> = {
   PAIR_LOVERS: 20_000,
   NIGHT_FALLS: 8_000,
   SEER: 30_000,
+  SORCERER: 30_000,
   BODYGUARD: 30_000,
   MUTER: 30_000,
   WOLVES: 40_000,
