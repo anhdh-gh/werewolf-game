@@ -38,19 +38,21 @@ rõ ràng chứ không giấu.
 | **Epic 3b** | Vai Sói có khái niệm rõ nhưng paraphrase mơ hồ thời điểm xuyên đêm hoặc điều kiện thắng chính xác — cùng loại vấn đề đã chặn Epic 1b/2b (Dire Wolf, Lone Wolf) | 2 | Chưa viết story — cần rulebook gốc | chưa có |
 | **Epic 3c** | Vai cần khả năng engine mới ("cắn 2 mạng/đêm", chưa có trong pipeline WOLVES/WITCH/resolveNight hiện tại) — Wolf Cub | 1 | **`done`** — CI xanh (run 34224670711, commit e1deedd, `typecheck`/`test`/`build` đều `success`), rules RTDB live đã deploy và byte-compare khớp repo (2026-09-08, iteration 18) | `2026-09-08-roles-epic-3c.md` |
 | **Epic 4** | Vai cần rulebook gốc để phân biệt khỏi vai đã có, **không suy đoán** (Priest vs Bảo Vệ, Huntress vs Thợ Săn, Revealer vs Tiên Tri, Village Idiot, Drunk, Troublemaker, Insomniac, Apprentice Seer, Aura Seer, Paranormal Investigator, Beholder) | ~11 | **Chặn lại** — cần nghiên cứu thêm (không phải "thêm web search thông thường" nữa, xem catalog §6 mục 4) | chưa có |
-| **Epic 5 (kiến trúc)** | Phe thứ 3 mới hoàn toàn — Vampire, Cult Leader (cần thiết kế điều kiện thắng + UI phe mới dùng chung trước khi có vai nào trong nhóm này implement được) | 2 | Chặn lại — cần một `bmad-architecture` pass riêng trước khi có story | chưa có |
+| **Epic 5** | Phe thứ 3 mới — Vampire, Cult Leader. **Kiến trúc đã xong (2026-09-08, iteration 19)**: pass thiết kế xác nhận template "1 phase đêm cho 1 vai đơn lẻ" đã tồn tại sẵn (Sorcerer đã chứng minh), `checkWinner` chỉ cần thêm 1 branch mới (không refactor), "đổi phe hiệu lực" đã có tiền lệ ngầm từ Cursed. Không có gì bị chặn ở tầng kỹ thuật nữa. | 2 | Chặn lại — **đổi lý do sang "cần nguồn"**: Vampire thiếu hoàn toàn lời văn điều kiện thắng; Cult Leader thiếu chi tiết cơ chế xuyên đêm (cùng lớp mơ hồ Epic 1b/2b/3b) | `2026-09-08-roles-epic-5.md` |
 | **Epic 6** | Tier 2 — Night Terrors, Urban Legends, Classic Movie Monsters (tên xác nhận, **lời văn năng lực chưa có nguồn chính hãng**) | ~14 | Chặn lại — cần nghiên cứu lại lời văn trước khi viết story (catalog §5, §6 mục 4) | chưa có |
 | **Epic Z (cuối roadmap, không phải tier chờ implement)** | Bonus Roles (44) + Pro Roles (50+) | 94 | **Chặn vĩnh viễn cho tới khi có nguồn mới** — không lặp lại tìm kiếm web thông thường (catalog §1.1 kết luận) | chưa có |
 | *Loại khỏi phạm vi* | Legacy (kiến trúc campaign 16 phiên), Artifacts (cơ chế item-overlay, không phải vai), Daybreak (thuộc One Night, khác kiến trúc), "Village" (không xác nhận tồn tại) | — | Không lập epic — ghi rõ lý do ở catalog §2 | — |
 
 **Thứ tự triển khai đề xuất:** Epic 1 → Epic 2 → Epic 3 → Epic 3c (đã `done`, 2026-09-08) →
-Epic 1b/2b/3b/4 (khi có nghiên cứu rulebook giải quyết được mơ hồ) →
-(Epic 5 sau khi có kiến trúc phe thứ 3) → (Epic 6 sau khi có lời văn Tier 2) → Epic Z chỉ khi
+Epic 1b/2b/3b/4/5 (khi có nghiên cứu rulebook giải quyết được mơ hồ) →
+(Epic 6 sau khi có lời văn Tier 2) → Epic Z chỉ khi
 owner tự cung cấp nguồn mới (ảnh chụp thẻ bài vật lý, liên hệ Bezier Games). Đây đúng là thứ tự
 "phổ biến nhất trước, hiếm nhất sau cùng" owner yêu cầu — vai càng rõ nguồn và càng đơn giản về
 kiến trúc thì càng lên trước, không phải theo thứ tự bảng chữ cái hay theo độ khó code. Epic 2
 (Sorcerer/Sorceress) và Epic 3 (Wolf Man) đứng trước Epic 1b/2b/3b vì đã có story sẵn sàng ngay,
-trong khi các epic "b" vẫn đang chờ một nguồn rulebook mới chưa tìm ra.
+trong khi các epic "b" vẫn đang chờ một nguồn rulebook mới chưa tìm ra. Epic 5 chuyển từ nhóm
+"chờ kiến trúc riêng" sang xếp cùng nhóm 1b/2b/3b/4 (chờ nguồn) kể từ khi kiến trúc phe thứ 3
+được xác nhận là không cần pass riêng nữa (iteration 19, `2026-09-08-roles-epic-5.md`).
 
 ### Vì sao Epic 2 chỉ còn 1/4 vai dự kiến ban đầu
 
@@ -117,7 +119,8 @@ liệt kê vai đã có epic xác định (không lặp lại toàn bộ ~141 va
 | Dire Wolf, Lone Wolf | 3b | `blocked` — cần rulebook gốc (mơ hồ thời điểm bạn đồng hành / điều kiện thắng chính xác) |
 | Wolf Cub | 3c | `done` — CI xanh (run 34224670711, commit e1deedd, `typecheck`/`test`/`build` đều `success`), merged vào main. Rules RTDB live đã deploy (`firebase deploy --only database --project werewolf-game-2026`, 2026-09-08) và byte-compare khớp 100% với `database.rules.json` trong repo (rule WOLVES/wolves-chat mở rộng `WOLF_CUB` và field `wolfCubBonusNightPending` xác nhận có mặt sau deploy, diff rỗng) — `resolveNight`/`tallyMajorityVote` tổng quát hoá sang `tallyTopNVotes`/`wolfTargets: string[]`, `planAdvance` nhận `wolfCubBonusNightPending` + trả `deathsThisRoundRoles`, route đọc/set cờ đúng 2 điểm DAWN/VOTE_RESULT (KHÔNG ở "Leaving WOLVES" như thiết kế gốc), full test coverage (unit + route-level e2e + emulator rules) |
 | Priest, Huntress, Revealer, Village Idiot, Drunk, Troublemaker, Insomniac, Apprentice Seer, Aura Seer, Paranormal Investigator, Beholder | 4 | `blocked` — cần rulebook gốc |
-| Vampire, Cult Leader | 5 | `blocked` — cần kiến trúc phe thứ 3 |
+| Vampire | 5 | `blocked` — cần nguồn: điều kiện thắng hoàn toàn chưa xác định (khác các vai Tier 1 khác, không có nổi 1 câu paraphrase về thắng/thua) |
+| Cult Leader | 5 | `blocked` — cần rulebook gốc (điều kiện thắng đã rõ, nhưng cơ chế "kéo người vào giáo phái" mỗi đêm mơ hồ thời điểm/kháng cự — cùng lớp vấn đề Epic 1b/2b/3b) |
 | Thing, The Count, Beholder*, Insomniac*, Bogeyman, vai thứ 6 chưa rõ (Night Terrors); Bloody Mary, Chupacabra, Wolf Man*, Leprechaun, Sasquatch, Nostradamus (Urban Legends); The Blob, The Mummy, Dracula, The Zombie, Frankenstein's Monster (Classic Movie Monsters) | 6 | `blocked` — cần lời văn năng lực |
 | Bonus Roles (44), Pro Roles (50+) | Z | `blocked` — cần nguồn mới ngoài web search |
 
@@ -139,11 +142,13 @@ việc lấy nguồn cho 94 vai còn lại, **là của owner**, không tự ý 
 
 Điều này KHÔNG có nghĩa là dừng toàn bộ epic mở rộng vai ngay bây giờ — Epic 1 (3 vai), Epic 2
 (1 vai), Epic 3 (1 vai, Wolf Man) và Epic 3c (1 vai, Wolf Cub) đều đã `done` (2026-09-08,
-iteration 18 đóng nốt Epic 3c). Epic 1b, Epic 2b, Epic 3b (7 vai) hiện đang chờ một nguồn
-rulebook mới — không có epic nào còn "code written nhưng chưa verify" nữa; mọi việc đã unblock
-qua nghiên cứu/thiết kế engine (không cần nguồn owner) đều đã implement và verify xong. "Không
-bao giờ hoàn thành 100%" áp dụng chắc chắn cho Epic Z (94 vai), và có thể áp dụng cho Epic
-1b/2b/3b/4/6 nếu không tìm ra rulebook gốc mới — tất cả cần owner theo dõi, không chỉ Epic Z.
+iteration 18 đóng nốt Epic 3c). Epic 1b, Epic 2b, Epic 3b, Epic 5 (9 vai) hiện đang chờ một
+nguồn rulebook mới — không có epic nào còn "code written nhưng chưa verify" nữa; mọi việc đã
+unblock qua nghiên cứu/thiết kế engine (không cần nguồn owner) đều đã implement và verify xong,
+**kể cả phần kiến trúc phe thứ 3** (iteration 19 xác nhận Epic 5 không còn cần một pass kiến
+trúc riêng — xem `2026-09-08-roles-epic-5.md`). "Không bao giờ hoàn thành 100%" áp dụng chắc
+chắn cho Epic Z (94 vai), và có thể áp dụng cho Epic 1b/2b/3b/4/5/6 nếu không tìm ra rulebook
+gốc mới — tất cả cần owner theo dõi, không chỉ Epic Z.
 
 ## Việc tiếp theo sau tài liệu này
 
@@ -247,3 +252,21 @@ bao giờ hoàn thành 100%" áp dụng chắc chắn cho Epic Z (94 vai), và c
     mới. Xem mục "Phán đoán" ở trên: 6/141 vai (Mason, Prince, Pacifist, Sorcerer/Sorceress,
     Wolf Man, Wolf Cub) hiện `done`; roadmap hiện tại không có việc "chỉ cần code" nào còn lại
     cho tới khi owner cung cấp nguồn mới hoặc quyết định 52/141 (hay ít hơn) là đủ.
+
+11. **Xong (iteration 19, 2026-09-08)**: pass kiến trúc Epic 5 (`2026-09-08-roles-epic-5.md`),
+    đúng việc iteration 18 xác định là bước tự-giải-quyết-được kế tiếp. Kết quả: giả định "phe
+    thứ 3 cần kiến trúc engine mới hoàn toàn" (viết khi lập roadmap ban đầu, chưa soi code) chỉ
+    đúng một nửa khi kiểm chứng lại trực tiếp trên code — template "1 phase đêm cho 1 vai đơn
+    lẻ" đã tồn tại sẵn và đã chứng minh 2 lần (Seer → Sorcerer), `checkWinner.ts` chỉ cần thêm 1
+    branch tuần tự mới (không refactor gì), và "đổi phe hiệu lực xuyên ván" đã có tiền lệ ngầm
+    từ cách Cursed's `transformedToWolf` được xử lý ở `planAdvance.ts`. Không có năng lực engine
+    nào còn thiếu cho phe thứ 3. Nhưng **không vai nào chuyển sang `story ready`** — cả Vampire
+    (thiếu hoàn toàn lời văn điều kiện thắng, không có nổi 1 câu paraphrase, khác mọi vai Tier 1
+    khác) và Cult Leader (điều kiện thắng rõ nhưng cơ chế "kéo người vào giáo phái" mỗi đêm mơ
+    hồ thời điểm/kháng cự — cùng lớp vấn đề Epic 1b/2b/3b) vẫn `blocked`, nhưng lý do đổi từ
+    "chờ kiến trúc" sang "chờ nguồn", xếp cùng nhóm 1b/2b/3b/4. Không có code thay đổi ở iteration
+    này — thuần tài liệu thiết kế + cập nhật roadmap. Việc tiếp theo cho epic mở rộng vai: không
+    còn epic nào tự-giải-quyết-được nữa (đã hết cả loại "cần thiết kế engine" lẫn loại "code
+    written chưa verify") — mọi epic còn lại (1b, 2b, 3b, 4, 5, 6, Z) chờ đúng một thứ duy nhất:
+    owner cung cấp nguồn rulebook gốc mới. Nếu run này tiếp tục mà không có nguồn mới từ owner,
+    các iteration sau nên nêu rõ điều đó thay vì cố tìm việc tự chế ra để làm.
