@@ -1,8 +1,12 @@
 # Danh mục vai Ultimate Werewolf (Bezier Games) — nghiên cứu nguồn, Task 1
 
-> Trạng thái: **một phần** — đủ để bắt đầu lập epic/story cho Tier 1 và Tier 2, còn Bonus
-> Roles (44 vai) và Pro Roles (50+ vai) chưa liệt kê được từng vai cụ thể (xem §6). Đây là
-> input cho `bmad-create-epics-and-stories` / `bmad-spec`, không phải bản thiết kế implement.
+> Trạng thái: **đóng vòng nghiên cứu web thông thường (2026-09-08, 2 phiên)** — đủ để bắt đầu
+> lập epic/story cho Tier 1 và Tier 2. Bonus Roles (44 vai) và Pro Roles (50+ vai) đã qua **hai
+> phiên tìm kiếm độc lập với >15 nguồn khác nhau** (xem §1 và §6) mà không tìm ra tên từng vai
+> cụ thể — kết luận: tìm kiếm web thông thường đã cạn, cần nguồn khác hẳn (mua vật lý, liên hệ
+> Bezier Games) nếu muốn có danh sách đầy đủ. Không chặn việc lập epic — Tier 1/2 đủ để bắt đầu.
+> Đây là input cho `bmad-create-epics-and-stories` / `bmad-spec`, không phải bản thiết kế
+> implement.
 
 ## 0. Vì sao tài liệu này tồn tại
 
@@ -33,6 +37,33 @@ không suy đoán.**
 App" (đề cập trên trang sản phẩm nhưng không fetch được), danh sách đầy đủ 44 vai của Bonus
 Roles hay 50+ vai của Pro Roles ở bất kỳ nguồn nào.
 
+### 1.1 Phiên nghiên cứu thứ 2 (2026-09-08, tiếp tục) — mục tiêu: thu hẹp khoảng trống Bonus/Pro Roles
+
+Thử thêm các nguồn sau, tất cả đều **không** cho ra tên vai cụ thể của Bonus Roles/Pro Roles:
+
+| Nguồn | Kết quả |
+|---|---|
+| `beziergames.com/products/ultimate-werewolf-bonus-roles` (fetch lại trực tiếp) | Chỉ có "44 new unique roles and 2 new player items" — không tên |
+| Amazon listing `B09JDJ8C44` (Bonus Roles) | HTML không render đủ nội dung mô tả, không có tên vai |
+| Noble Knight Games, Hobbiesville, Little Shop of Magic, Board Game Bliss (retailer listings) | Đều lặp lại mô tả marketing giống nhau, không tên vai riêng lẻ |
+| `gridbeast.gg/ultimate-werewolf-bonus-roles/` (review site) | Trang có mục "Roles" nhưng ghi rõ **"List coming Soon"** — tác giả cũng chưa liệt kê được |
+| `boardseyeview.net/post/ultimate-werewolf-extreme-pro-bonus-roles` | Bài viết xác nhận "well over a hundred different roles" nhưng không nêu tên cụ thể nào |
+| `boardgamegeek.com/boardgame/346935/ultimate-werewolf-bonus-roles` (trang game riêng cho Bonus Roles) | HTTP 403 (giống trang BGG chung) |
+| `cdn.1j1ju.com` (kho rulebook PDF của nhà phân phối 1jour-1jeu, có rulebook One Night Ultimate Werewolf Daybreak) | Không có rulebook nào cho dòng Ultimate Werewolf chính (Extreme/Pro/Bonus Roles) trong kho này — chỉ có dòng One Night |
+| Google Play "Ultimate Werewolf Moderator" (app chính hãng Bezier Games, `com.beziergames.uwexmoderator`) | **Có dữ liệu mới hữu ích**: mô tả app ghi rõ *"All 141 different roles, across all games and expansions, have been uniquely implemented"* — xác nhận con số tổng chính thức là **141 vai** (không phải ước lượng "100+"), nhưng app store listing không liệt kê từng tên vai |
+
+**Kết luận sau 2 phiên (>15 nguồn khác nhau đã thử, xem §1 và bảng trên)**: tên riêng lẻ của
+Bonus Roles (44) và Pro Roles (50+) **không có sẵn qua tìm kiếm web thông thường** — kể cả
+trang sản phẩm chính hãng, blog chính hãng, app store chính hãng, 5+ trang bán lẻ, 2 trang
+review/blog bên thứ ba (một trang tự nhận "list coming soon"), BGG (403 cả hai lần), và kho
+rulebook PDF của nhà phân phối lớn. Đây không còn là "chưa thử đủ" — là **giới hạn thực sự của
+kênh tìm kiếm web** cho riêng phần này. Muốn có danh sách đầy đủ cần một trong: mua bản vật lý
+và chụp ảnh thẻ bài, liên hệ trực tiếp Bezier Games xin rulebook PDF, hoặc tìm được rulebook PDF
+gián tiếp qua một kênh khác hẳn (Discord cộng đồng, forum BGG dạng thread thay vì trang game).
+**Khuyến nghị: không lặp lại tìm kiếm web cho phần này ở các phiên sau** trừ khi có đầu mối mới
+cụ thể (không phải "thử lại cùng loại nguồn") — dùng thời gian nghiên cứu cho việc khác có ích
+hơn (xác nhận lời văn chính xác cho Tier 1/2, hoặc bắt đầu lập epic).
+
 ## 2. Sơ đồ dòng sản phẩm (nguồn: beziergames.com blog "Differences Among All Of The Ultimate
 Werewolf Editions", 2026-09-08)
 
@@ -49,7 +80,13 @@ Werewolf Editions", 2026-09-08)
     **The Zombie**, **Frankenstein's Monster**.
 - **Ultimate Werewolf: Extreme Collector's Edition** — 196 thẻ vai = Extreme (88) + **Bonus
   Roles** (44 vai, tên riêng lẻ **chưa xác nhận được** — xem §6) + **Pro Roles** (50+ vai, tên
-  riêng lẻ **chưa xác nhận được**).
+  riêng lẻ **chưa xác nhận được**). Bonus Roles hiện cũng bán riêng lẻ như một expansion độc
+  lập (tương thích với cả Extreme và Pro), không chỉ nằm trong Collector's Edition. Nguồn mới
+  (2026-09-08, app store Google Play "Ultimate Werewolf Moderator" của chính Bezier Games,
+  package `com.beziergames.uwexmoderator`): mô tả app ghi rõ tổng số chính thức trên toàn bộ
+  dòng sản phẩm là **141 vai** ("All 141 different roles, across all games and expansions") —
+  đây là con số xác nhận đầu tiên thay cho ước lượng "100+"/"well over a hundred" trước đó,
+  dùng con số này làm mốc tổng cho việc theo dõi tiến độ epic (xem §7).
 - **Ultimate Werewolf: Extreme Super Collector's Edition** — như Collector's + **Artifacts**
   expansion. Artifacts **không phải vai** — mỗi người chơi nhận thêm 1 thẻ Artifact (vật phẩm
   có năng lực kích hoạt bất kỳ lúc nào) chồng lên vai gốc của họ. Đây là một cơ chế khác hẳn
@@ -168,11 +205,17 @@ văn", không suy đoán năng lực để không đầu độc epic sau này.
 
 ## 6. Chưa làm được — cần nghiên cứu tiếp (việc còn lại, ghi rõ để không lặp lại công sức)
 
-1. **Bonus Roles (44 vai)** — không tìm được danh sách tên trên `beziergames.com`, blog chính
-   hãng, BGG (403), hay fandom wiki (402) trong phiên này. Thử tiếp: tìm ảnh chụp thẻ bài trên
-   Amazon/eBay listing (thường có ảnh sản phẩm chụp rõ tên thẻ), review video YouTube có liệt
-   kê, hoặc trang app store "Ultimate Werewolf App" mô tả tính năng có thể liệt kê vai.
-2. **Pro Roles (50+ vai)** — tương tự, chưa có danh sách tên.
+1. **Bonus Roles (44 vai)** và **2. Pro Roles (50+ vai)** — **đã đóng vòng tìm kiếm web thông
+   thường sau 2 phiên, >15 nguồn khác nhau** (chi tiết §1.1): trang sản phẩm chính hãng, blog
+   chính hãng, app store chính hãng (chỉ cho tổng số 141, không cho tên), 5+ trang bán lẻ, 2
+   review/blog bên thứ ba (một trang ghi thẳng "list coming soon"), BGG (403 mọi lần thử),
+   fandom wiki (402 mọi lần thử), kho rulebook PDF của nhà phân phối lớn (không có dòng
+   Ultimate Werewolf chính). **Không nên lặp lại tìm kiếm web loại này ở phiên sau** — chỉ thử
+   lại nếu có đầu mối thật sự mới (vd: chủ dự án có bản vật lý chụp ảnh thẻ bài, hoặc tìm được
+   một forum/Discord thread cụ thể chưa thử). Hai epic Bonus Roles + Pro Roles (94/141 vai,
+   ~2/3 tổng số) do đó **nên xếp vào tier thấp nhất, triển khai sau cùng** (nếu có triển khai),
+   và ghi rõ trong PRD là "chưa có nguồn — sẽ nghiên cứu lại khi tới lượt tier này, không chặn
+   các tier khác".
 3. **Night Terrors vai thứ 6** — 5/6 xác nhận, thiếu 1.
 4. **Lời văn năng lực chính xác** (không phải paraphrase từ review) cho *toàn bộ* danh sách ở
    §4 và §5 — nên thử lại BGG (thử fetch với cách khác, có thể trang cụ thể bị chặn nhưng API
@@ -198,10 +241,15 @@ cân nhắc)
   vai" thông thường.
 - Legacy, Artifacts, One Night-only roles (Daybreak) — nêu rõ trong PRD/kiến trúc là **loại
   khỏi phạm vi** của epic vai này, lý do đã ghi ở §2, để chủ dự án xác nhận hoặc phủ quyết.
-- Bonus Roles/Pro Roles (94 vai gộp, gần một nửa tổng số ~196 thẻ) là phần lớn nhất chưa
-  nghiên cứu được — **rủi ro thực tế cho tiến độ toàn bộ epic vai**: nếu không tìm được nguồn
-  đáng tin cho gần 100 vai này, "hoàn thành toàn bộ catalog" có thể không bao giờ khả thi bằng
-  tìm kiếm web thông thường. Đây là tín hiệu sớm cho điều khoản dừng của run: nếu sau vài lần
-  thử thêm (ảnh sản phẩm, video review, rulebook PDF từ nguồn khác) vẫn không ra được danh
-  sách, cần nêu thẳng với chủ dự án ở notes.md rằng phần này có thể phải dừng ở Tier 1+2 xác
-  nhận được, không cố phủ 100% con số "hơn 100 vai".
+- Bonus Roles/Pro Roles (94 của tổng 141 vai đã xác nhận chính thức — §2) là phần lớn nhất
+  **đã xác nhận không nghiên cứu được qua web thông thường sau 2 phiên độc lập** (§1.1, §6) —
+  đây không còn là rủi ro giả định mà là **kết luận thực tế đã kiểm chứng**: hoàn thành 100%
+  catalog 141 vai bằng tìm kiếm web là không khả thi với các công cụ hiện có. **Khuyến nghị rõ
+  ràng cho chủ dự án**: coi Tier 1 (~38 vai, §4) + Tier 2 (~14 vai đã có tên, §5) — tổng ~52/141
+  vai có nguồn đủ tin cậy để lập epic/story — là phạm vi thực tế của epic mở rộng vai trong các
+  run sắp tới; Bonus Roles + Pro Roles (94 vai còn lại) xếp thành một epic "nghiên cứu lại khi
+  có nguồn mới" ở cuối roadmap, không phải một tier chờ implement như các tier khác. Đây chính
+  là phán đoán "có thể không bao giờ hoàn thành 100%" mà run này cần nêu thẳng ra theo yêu cầu
+  điều khoản dừng — chủ dự án cần xác nhận có chấp nhận dừng roadmap ở ~52/141 vai đã có nguồn
+  hay muốn tự cung cấp thêm nguồn (ảnh chụp thẻ bài vật lý, liên hệ Bezier Games) cho 94 vai
+  còn lại trước khi coi epic này "xong".
