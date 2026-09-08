@@ -3,7 +3,7 @@ import { adminDb } from "@/lib/firebase/admin";
 import { assignRoles, buildMasonLinks } from "@/lib/game/roles";
 import { PHASE_DURATIONS_MS } from "@/lib/game/phases";
 import type { Room } from "@/types/room";
-import { FACTION_BY_ROLE, type PrivatePlayerState } from "@/types/game";
+import { isPackVisible, type PrivatePlayerState } from "@/types/game";
 
 /**
  * Deals roles and creates the game (spec §3: anyone in the room can start it
@@ -44,9 +44,11 @@ export async function POST(
   if (!narrationSeqKey) throw new Error("Không tạo được narration seq");
 
   const now = Date.now();
-  // Spec §7: "danh sách đồng bọn cho Sói" — every wolf-faction uid (WEREWOLF
-  // and TRAITOR both) needs to know the rest of the pack.
-  const wolfFactionUids = uids.filter((uid) => FACTION_BY_ROLE[assignment[uid]] === "WOLF");
+  // Spec §7: "danh sách đồng bọn cho Sói" — every pack-visible uid (WEREWOLF,
+  // TRAITOR, WOLF_MAN) needs to know the rest of the pack. Wolf-faction roles
+  // that are hidden allies (SORCERER) are deliberately excluded — see
+  // isPackVisible's doc comment.
+  const wolfFactionUids = uids.filter((uid) => isPackVisible(assignment[uid]));
   // Story 1.1: same passive-knowledge pattern as packUids above, for Mason.
   const masonLinks = buildMasonLinks(assignment);
 
@@ -58,7 +60,7 @@ export async function POST(
       role,
       initialRole: role,
       potions: { heal: true, poison: true },
-      ...(FACTION_BY_ROLE[role] === "WOLF"
+      ...(isPackVisible(role)
         ? { packUids: wolfFactionUids.filter((packUid) => packUid !== uid) }
         : {}),
       ...(role === "MASON" ? { masonUids: masonLinks[uid] ?? [] } : {}),

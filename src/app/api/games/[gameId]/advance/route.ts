@@ -7,6 +7,7 @@ import { requiredActorsForPhase, ACTING_ROLE_BY_PHASE } from "@/lib/game/require
 import { checkWinner } from "@/lib/game/checkWinner";
 import { applyLoverDeaths } from "@/lib/game/resolveDeathExtras";
 import {
+  isPackVisible,
   seerCheck,
   type Faction,
   type Game,
@@ -304,9 +305,7 @@ export async function POST(
     // find out about each other after tonight's transformation.
     const newPack = [
       ...Object.entries(privateState)
-        .filter(
-          ([, p]) => p.role === "WEREWOLF" || p.role === "TRAITOR" || p.role === "WOLF_MAN",
-        )
+        .filter(([, p]) => isPackVisible(p.role))
         .map(([packUid]) => packUid),
       ...transformedAndAlive,
     ];

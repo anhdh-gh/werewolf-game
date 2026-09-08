@@ -51,6 +51,17 @@ export function seerCheck(role: RoleKey): "WOLF" | "VILLAGER" {
   return SEER_SEES_AS_WOLF.has(role) ? "WOLF" : "VILLAGER";
 }
 
+/** Roles that appear in each other's `packUids` (the "who else is a wolf"
+ * list every pack member sees). Not the same as `FACTION_BY_ROLE === "WOLF"`:
+ * SORCERER is wolf-faction but is a hidden ally who never learns the pack's
+ * identity and is never shown to them either (story 2.1's explicit no-guess
+ * design decision). */
+const PACK_VISIBLE_ROLES: ReadonlySet<RoleKey> = new Set(["WEREWOLF", "TRAITOR", "WOLF_MAN"]);
+
+export function isPackVisible(role: RoleKey): boolean {
+  return PACK_VISIBLE_ROLES.has(role);
+}
+
 export const PHASE_SEQUENCE = [
   "REVEAL_ROLE",
   "PAIR_LOVERS",

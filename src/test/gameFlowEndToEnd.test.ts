@@ -970,6 +970,33 @@ describe("Epic 2 Story 2.1: Sorcerer's SEER check is written to their own privat
     const otherPriv = (await getPrivate(gameId))[villager1];
     expect(otherPriv.sorcererHints).toBeUndefined();
   });
+
+  it("does not give the Sorcerer packUids at game start, unlike the real wolf pack", async () => {
+    // Real callStart (not a seeded fixture) — this is the route that had the
+    // bug: its wolf-pack-membership filter was generic over FACTION_BY_ROLE
+    // (wolf-faction), which wrongly includes SORCERER even though story 2.1
+    // explicitly decided the Sorcerer is a hidden ally who never learns (or
+    // is shown in) the pack's identity.
+    const startUids = ["wolfA", "wolfB", "seer2", "witch2", "villagerX", "villagerY", "villagerZ"];
+    await seedRoom("SORCPACK", startUids, { ...NO_OPTIONAL_ROLES, SORCERER: true });
+    const { gameId: startedGameId } = await callStart("SORCPACK");
+    if (!startedGameId) throw new Error("start route did not return a gameId");
+
+    const priv = await getPrivate(startedGameId);
+    const [sorcererUid, sorcererPriv] =
+      Object.entries(priv).find(([, p]) => p.role === "SORCERER") ?? [];
+    if (!sorcererUid || !sorcererPriv) throw new Error("no Sorcerer was assigned");
+    expect(sorcererPriv.packUids).toBeUndefined();
+
+    const werewolfUids = Object.entries(priv)
+      .filter(([, p]) => p.role === "WEREWOLF")
+      .map(([uid]) => uid);
+    expect(werewolfUids.length).toBeGreaterThan(0);
+    for (const uid of werewolfUids) {
+      expect(priv[uid].packUids).toBeDefined();
+      expect(priv[uid].packUids).not.toContain(sorcererUid);
+    }
+  });
 });
 
 describe("Epic 3 Story 3.1: Wolf Man acts with the pack and survives a Cursed pack rebuild", () => {
