@@ -5,7 +5,7 @@
 // of same-origin HTTP calls (API routes, Firebase Auth REST calls) that
 // could otherwise get caught by an over-broad fetch handler.
 
-const CACHE_VERSION = "v1";
+const CACHE_VERSION = "v2"; // narration audio (37 clips) rendered 2026-09-08 — bust the cache
 const CACHE_NAME = `masoi-shell-${CACHE_VERSION}`;
 
 const PRECACHE_URLS = [

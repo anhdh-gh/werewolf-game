@@ -600,3 +600,47 @@ is exactly the half that was already reporting correctly. Covered by
 `src/lib/game/useAutoAdvance.test.tsx` (a 500 and a transport failure each retry, the
 backoff sequence and its cap, a success stops the loop, and both a phase change and an
 unmount cancel a pending retry).
+
+### The third instance of the family: a call room that dies for a whole phase (2026-09-08)
+
+Same shape again, found by grepping for the pattern rather than by any probe. `useCallToken`
+(`src/lib/livekit/useCallToken.ts`) fetched `/api/livekit/token` exactly once per
+`(user, gameId, enabled)` change. Those deps only change when the phase moves on, so one
+failure — a 500, or a dropped request on a phone switching from wifi to mobile data — left
+`CallRoom` rendering a static error card for the entire remaining phase. Nothing was logged
+either: the `!res.ok` branch set state and returned, and the outer `catch` set state and
+returned, so a "Chơi xa" room that never connected left no trace in the browser console, none
+in `vercel logs` (the server had answered), and nothing for preflight to see.
+
+It also threw away the distinction the previous section had just built. That iteration split
+the route's responses so a verifier that *could not run* answers 500 while a genuinely
+rejected token answers 401 — and then the only client of that route treated both identically.
+The 500/401 split had no consumer.
+
+The fix gives it one:
+
+- **5xx → retry** with the same capped backoff as `useAutoAdvance` (1s, 2s, 4s, 8s, 15s cap,
+  0–400ms jitter per attempt), cancelled on unmount or when `enabled` flips false. A 500 means
+  "the server broke", which is transient more often than not.
+- **401 → exactly one forced ID-token refresh, then stop.** `user.getIdToken()` returns a
+  *cached* JWT; a phone that slept through its refresh window presents an expired one and gets
+  a perfectly correct 401. Spending one `getIdToken(true)` on that before telling the player
+  their login is invalid costs one request and fixes the most likely cause. A second 401 with
+  a freshly minted token is the server's real verdict.
+- **400/403/404 → terminal.** Those are verdicts about this player in this phase ("phòng chưa
+  bật Chơi xa", "phase hiện tại không có phòng gọi"); retrying only burns the endpoint.
+- Every failure is `console.error`'d, and any message shown while another attempt is still
+  coming carries the ` — đang thử lại…` suffix, so the card reads "not yet" rather than
+  "give up".
+
+Covered by `src/lib/livekit/useCallToken.test.tsx` (15 tests): success asks once, a 500 / a
+transport failure / a failing `getIdToken()` each retry, the exact backoff sequence and its
+cap, a success stops the loop, the 401 path spends one forced refresh and then gives up,
+400/403/404 never retry, the body-less fallback message, and both `enabled: false` and unmount
+cancel a pending retry.
+
+The generalisable lesson, now three for three: **a React effect whose deps only change on
+success is a latch, not a retry loop.** `useAutoAdvance` re-armed only when the phase changed,
+which only happened when a call succeeded. `useCallToken` re-fetched only when the phase moved
+on, which the player needed the call room to help make happen. Both looked like they had error
+handling. Neither could recover.
