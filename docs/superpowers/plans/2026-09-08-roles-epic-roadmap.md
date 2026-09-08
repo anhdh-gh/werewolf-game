@@ -36,15 +36,15 @@ rõ ràng chứ không giấu.
 | **Epic 2b** | Vai có khái niệm rõ nhưng paraphrase để lại mơ hồ thời điểm/trạng thái xuyên đêm hoặc điều kiện thắng chính xác — cùng loại vấn đề đã chặn Epic 1b (Doppelgänger, Hoodlum) | 2 | Chưa viết story — cần rulebook gốc | chưa có |
 | **Epic 3** | Vai Sói thật tham gia cắn cùng bầy WOLVES, cơ chế đủ rõ để viết story ngay (Wolf Man → "Lang Nhân") | 1 | **`done`** — CI xanh (run 34221621075, commit 62e1052, `typecheck`/`test`/`build` đều `success`, sau khi iteration 14 sửa 1 bug đếm quân trong test fixture của run trước đó bị fail), rules RTDB live đã deploy và byte-compare khớp repo (2026-09-08) | `2026-09-08-roles-epic-3.md` |
 | **Epic 3b** | Vai Sói có khái niệm rõ nhưng paraphrase mơ hồ thời điểm xuyên đêm hoặc điều kiện thắng chính xác — cùng loại vấn đề đã chặn Epic 1b/2b (Dire Wolf, Lone Wolf) | 2 | Chưa viết story — cần rulebook gốc | chưa có |
-| **Epic 3c** | Vai cần khả năng engine mới ("cắn 2 mạng/đêm", chưa có trong pipeline WOLVES/WITCH/resolveNight hiện tại) — Wolf Cub | 1 | **`code written, CI + live-rules-verification pending`** (2026-09-08, iteration 17) — implement xong theo doc, gồm 1 fix thiết kế thật (thời điểm xoá cờ) phát hiện lúc trace tay trước khi viết test | `2026-09-08-roles-epic-3c.md` |
+| **Epic 3c** | Vai cần khả năng engine mới ("cắn 2 mạng/đêm", chưa có trong pipeline WOLVES/WITCH/resolveNight hiện tại) — Wolf Cub | 1 | **`done`** — CI xanh (run 34224670711, commit e1deedd, `typecheck`/`test`/`build` đều `success`), rules RTDB live đã deploy và byte-compare khớp repo (2026-09-08, iteration 18) | `2026-09-08-roles-epic-3c.md` |
 | **Epic 4** | Vai cần rulebook gốc để phân biệt khỏi vai đã có, **không suy đoán** (Priest vs Bảo Vệ, Huntress vs Thợ Săn, Revealer vs Tiên Tri, Village Idiot, Drunk, Troublemaker, Insomniac, Apprentice Seer, Aura Seer, Paranormal Investigator, Beholder) | ~11 | **Chặn lại** — cần nghiên cứu thêm (không phải "thêm web search thông thường" nữa, xem catalog §6 mục 4) | chưa có |
 | **Epic 5 (kiến trúc)** | Phe thứ 3 mới hoàn toàn — Vampire, Cult Leader (cần thiết kế điều kiện thắng + UI phe mới dùng chung trước khi có vai nào trong nhóm này implement được) | 2 | Chặn lại — cần một `bmad-architecture` pass riêng trước khi có story | chưa có |
 | **Epic 6** | Tier 2 — Night Terrors, Urban Legends, Classic Movie Monsters (tên xác nhận, **lời văn năng lực chưa có nguồn chính hãng**) | ~14 | Chặn lại — cần nghiên cứu lại lời văn trước khi viết story (catalog §5, §6 mục 4) | chưa có |
 | **Epic Z (cuối roadmap, không phải tier chờ implement)** | Bonus Roles (44) + Pro Roles (50+) | 94 | **Chặn vĩnh viễn cho tới khi có nguồn mới** — không lặp lại tìm kiếm web thông thường (catalog §1.1 kết luận) | chưa có |
 | *Loại khỏi phạm vi* | Legacy (kiến trúc campaign 16 phiên), Artifacts (cơ chế item-overlay, không phải vai), Daybreak (thuộc One Night, khác kiến trúc), "Village" (không xác nhận tồn tại) | — | Không lập epic — ghi rõ lý do ở catalog §2 | — |
 
-**Thứ tự triển khai đề xuất:** Epic 1 → Epic 2 → Epic 3 → Epic 1b/2b/3b (khi có nghiên cứu
-rulebook giải quyết được mơ hồ) → (Epic 3c/Epic 4 sau khi có nghiên cứu/thiết kế engine mới) →
+**Thứ tự triển khai đề xuất:** Epic 1 → Epic 2 → Epic 3 → Epic 3c (đã `done`, 2026-09-08) →
+Epic 1b/2b/3b/4 (khi có nghiên cứu rulebook giải quyết được mơ hồ) →
 (Epic 5 sau khi có kiến trúc phe thứ 3) → (Epic 6 sau khi có lời văn Tier 2) → Epic Z chỉ khi
 owner tự cung cấp nguồn mới (ảnh chụp thẻ bài vật lý, liên hệ Bezier Games). Đây đúng là thứ tự
 "phổ biến nhất trước, hiếm nhất sau cùng" owner yêu cầu — vai càng rõ nguồn và càng đơn giản về
@@ -115,7 +115,7 @@ liệt kê vai đã có epic xác định (không lặp lại toàn bộ ~141 va
 | Doppelgänger, Hoodlum | 2b | `blocked` — cần rulebook gốc (mơ hồ thời điểm/điều kiện thắng xuyên đêm) |
 | Wolf Man ("Lang Nhân") | 3 | `done` — CI xanh (run 34221621075, commit 62e1052, `typecheck`/`test`/`build` đều `success`; commit gốc d82648a từng fail 1 test do lỗi đếm quân trong fixture, sửa ở iteration 14). Rules RTDB live đã deploy (`firebase deploy --only database --project werewolf-game-2026`, 2026-09-08) và byte-compare khớp 100% với `database.rules.json` trong repo (2 rule WOLVES/wolves-chat mở rộng `WOLF_MAN` xác nhận có mặt sau deploy) |
 | Dire Wolf, Lone Wolf | 3b | `blocked` — cần rulebook gốc (mơ hồ thời điểm bạn đồng hành / điều kiện thắng chính xác) |
-| Wolf Cub | 3c | `code written, CI + live-rules-verification pending` (2026-09-08, iteration 17) — `resolveNight`/`tallyMajorityVote` tổng quát hoá sang `tallyTopNVotes`/`wolfTargets: string[]`, `planAdvance` nhận `wolfCubBonusNightPending` + trả `deathsThisRoundRoles`, route đọc/set cờ đúng 2 điểm DAWN/VOTE_RESULT (KHÔNG ở "Leaving WOLVES" như thiết kế gốc — xem fix bug bên dưới), `database.rules.json` mở rộng rule WOLVES + wolves-chat, full test coverage (unit + route-level e2e + emulator rules) |
+| Wolf Cub | 3c | `done` — CI xanh (run 34224670711, commit e1deedd, `typecheck`/`test`/`build` đều `success`), merged vào main. Rules RTDB live đã deploy (`firebase deploy --only database --project werewolf-game-2026`, 2026-09-08) và byte-compare khớp 100% với `database.rules.json` trong repo (rule WOLVES/wolves-chat mở rộng `WOLF_CUB` và field `wolfCubBonusNightPending` xác nhận có mặt sau deploy, diff rỗng) — `resolveNight`/`tallyMajorityVote` tổng quát hoá sang `tallyTopNVotes`/`wolfTargets: string[]`, `planAdvance` nhận `wolfCubBonusNightPending` + trả `deathsThisRoundRoles`, route đọc/set cờ đúng 2 điểm DAWN/VOTE_RESULT (KHÔNG ở "Leaving WOLVES" như thiết kế gốc), full test coverage (unit + route-level e2e + emulator rules) |
 | Priest, Huntress, Revealer, Village Idiot, Drunk, Troublemaker, Insomniac, Apprentice Seer, Aura Seer, Paranormal Investigator, Beholder | 4 | `blocked` — cần rulebook gốc |
 | Vampire, Cult Leader | 5 | `blocked` — cần kiến trúc phe thứ 3 |
 | Thing, The Count, Beholder*, Insomniac*, Bogeyman, vai thứ 6 chưa rõ (Night Terrors); Bloody Mary, Chupacabra, Wolf Man*, Leprechaun, Sasquatch, Nostradamus (Urban Legends); The Blob, The Mummy, Dracula, The Zombie, Frankenstein's Monster (Classic Movie Monsters) | 6 | `blocked` — cần lời văn năng lực |
@@ -137,13 +137,13 @@ liên hệ trực tiếp Bezier Games xin rulebook). Epic Z ghi nhận đúng th
 thầm bỏ qua — quyết định có coi 52/141 là đủ để "xong" epic mở rộng vai, hay tiếp tục đầu tư vào
 việc lấy nguồn cho 94 vai còn lại, **là của owner**, không tự ý chọn ở đây.
 
-Điều này KHÔNG có nghĩa là dừng toàn bộ epic mở rộng vai ngay bây giờ — Epic 1 (3 vai) và Epic 2
-(1 vai) đều đã `done`, và Epic 3 (1 vai, Wolf Man) có đường đi rõ ràng không cần nguồn mới, story
-đã viết xong. Epic 1b, Epic 2b, Epic 3b (7 vai) hiện đang chờ một nguồn rulebook mới, và Epic 3c
-(1 vai, Wolf Cub) chờ một pass thiết kế engine riêng — không tự tin nói "không cần nguồn/thiết kế
-mới" cho các epic này nữa như bản roadmap trước đã ghi nhầm cho toàn bộ Epic 3. "Không bao giờ
-hoàn thành 100%" áp dụng chắc chắn cho Epic Z (94 vai), và có thể áp dụng cho Epic 1b/2b/3b nếu
-không tìm ra rulebook gốc — tất cả cần owner theo dõi, không chỉ Epic Z.
+Điều này KHÔNG có nghĩa là dừng toàn bộ epic mở rộng vai ngay bây giờ — Epic 1 (3 vai), Epic 2
+(1 vai), Epic 3 (1 vai, Wolf Man) và Epic 3c (1 vai, Wolf Cub) đều đã `done` (2026-09-08,
+iteration 18 đóng nốt Epic 3c). Epic 1b, Epic 2b, Epic 3b (7 vai) hiện đang chờ một nguồn
+rulebook mới — không có epic nào còn "code written nhưng chưa verify" nữa; mọi việc đã unblock
+qua nghiên cứu/thiết kế engine (không cần nguồn owner) đều đã implement và verify xong. "Không
+bao giờ hoàn thành 100%" áp dụng chắc chắn cho Epic Z (94 vai), và có thể áp dụng cho Epic
+1b/2b/3b/4/6 nếu không tìm ra rulebook gốc mới — tất cả cần owner theo dõi, không chỉ Epic Z.
 
 ## Việc tiếp theo sau tài liệu này
 
@@ -233,3 +233,17 @@ không tìm ra rulebook gốc — tất cả cần owner theo dõi, không chỉ
    đúng mục tiêu top-1). Vẫn là một gap UI thật, giống pattern bug Sorcerer packUids ở Epic 2/3
    (phát hiện ở iteration 12, sửa ở iteration 15) — nên xử lý như một fix riêng, không phải một
    phần bắt buộc để coi Epic 3c "xong".
+
+10. **Xong (iteration 18, 2026-09-08)**: xác nhận CI xanh cho commit Wolf Cub (e1deedd, run
+    34224670711 — `typecheck`/`test`/`build` đều `success`), sau đó `firebase deploy --only
+    database --project werewolf-game-2026` (live ruleset trước deploy còn thiếu field
+    `wolfCubBonusNightPending` và 2 clause `WOLF_CUB` trong rule WOLVES/wolves-chat) và
+    `firebase database:get /.settings/rules` byte-compare sau deploy khớp 100% với
+    `database.rules.json` trong repo (diff rỗng). Epic 3c giờ `done` — không còn epic nào ở
+    trạng thái "code written, verification pending". Việc tiếp theo cho epic mở rộng vai: mọi
+    epic còn chưa `done` (1b, 2b, 3b, 4, 5, 6, Z) đều chặn ở nguồn/thiết kế owner cần tham gia
+    (rulebook gốc, kiến trúc phe thứ 3, hoặc — cho Epic Z — hoàn toàn ngoài tầm web search) —
+    không còn "story ready, chưa implement" nào tồn đọng để làm tiếp mà không cần owner/nguồn
+    mới. Xem mục "Phán đoán" ở trên: 6/141 vai (Mason, Prince, Pacifist, Sorcerer/Sorceress,
+    Wolf Man, Wolf Cub) hiện `done`; roadmap hiện tại không có việc "chỉ cần code" nào còn lại
+    cho tới khi owner cung cấp nguồn mới hoặc quyết định 52/141 (hay ít hơn) là đủ.
