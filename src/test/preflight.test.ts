@@ -26,8 +26,11 @@ import {
   normalizeRules,
   parseDatabaseRegionRedirect,
   parseEnvFileNames,
+  classifyBuildEnvFreshness,
+  parseRelativeAge,
   parseVercelDeployments,
   parseVercelEnvList,
+  parseVercelEnvRows,
   summarize,
 } from "../../scripts/preflight.mjs";
 import { REPO_ROOT } from "../../scripts/narration-catalog.mjs";
@@ -201,6 +204,134 @@ describe("vercel output parsing", () => {
 
   it("skips the header row rather than reading it as a deployment", () => {
     expect(parseVercelDeployments(LS).map((row) => row.url)).not.toContain("Deployment");
+  });
+});
+
+// Setting a NEXT_PUBLIC_* variable in Vercel and having the served site
+// actually contain it are two different facts: Next.js inlines those at build
+// time, so one set after the last build is absent from the bundle and the app
+// behaves exactly as if it had never been set. The plain "is it set" check
+// above reports PASS in that state, which is the specific false all-clear this
+// suite exists to prevent. Vercel only ever reports rounded relative ages, so
+// the comparison must also refuse to answer when the two ages are genuinely
+// indistinguishable rather than guess.
+describe("build-time variables reaching the deployed bundle", () => {
+  // Captured verbatim from `vercel env ls production` on 2026-09-08, after the
+  // owner supplied the VAPID and LiveKit credentials. Note that the
+  // `environments` column is a comma-and-space list of varying width, so the
+  // `created` column can only be reached by anchoring on the end of the row.
+  const ENV_LS_WITH_AGES = [
+    " name                                        value                       type      environments                        created    ",
+    " NEXT_PUBLIC_FIREBASE_VAPID_KEY              eyJ2IjoidjIiLCJjIj…         Config    Production                          24m ago    ",
+    " LIVEKIT_API_SECRET                          Hidden                      Secret    Production                          26m ago    ",
+    " NEXT_PUBLIC_LIVEKIT_URL                     eyJ2IjoidjIiLCJjIj…         Config    Production                          26m ago    ",
+    " NEXT_PUBLIC_FIREBASE_APP_ID                 eyJ2IjoidjIiLCJjIj…         Config    Production, Preview, Development    2d ago     ",
+    "",
+  ].join("\n");
+
+  const rows = () => parseVercelEnvRows(ENV_LS_WITH_AGES);
+  const buildScoped = new Set(
+    REQUIRED_ENV.filter((variable) => variable.scope === "build").map((variable) => variable.name),
+  );
+
+  it("reads each row's created age without reading its value", () => {
+    expect(rows()).toEqual([
+      { name: "NEXT_PUBLIC_FIREBASE_VAPID_KEY", age: "24m" },
+      { name: "LIVEKIT_API_SECRET", age: "26m" },
+      { name: "NEXT_PUBLIC_LIVEKIT_URL", age: "26m" },
+      { name: "NEXT_PUBLIC_FIREBASE_APP_ID", age: "2d" },
+    ]);
+    const serialized = JSON.stringify(rows());
+    expect(serialized).not.toContain("eyJ2");
+    expect(serialized).not.toContain("Hidden");
+  });
+
+  it("keeps parseVercelEnvList as exactly the names of those rows", () => {
+    expect(parseVercelEnvList(ENV_LS_WITH_AGES)).toEqual(rows().map((row) => row.name));
+  });
+
+  it("reads an age as a span, not a point, because Vercel truncates it", () => {
+    expect(parseRelativeAge("5m")).toEqual({ seconds: 300, granularity: 60 });
+    expect(parseRelativeAge("2d")).toEqual({ seconds: 172800, granularity: 86400 });
+    // "mo" has to win over "m", or three months would read as three minutes.
+    expect(parseRelativeAge("3mo")).toEqual({ seconds: 7776000, granularity: 2592000 });
+    for (const junk of ["Hidden", "ago", "", "m", "5x", null, undefined]) {
+      expect([junk, parseRelativeAge(junk as string)]).toEqual([junk, null]);
+    }
+  });
+
+  it("passes a build newer than every variable, and ignores runtime-only ones", () => {
+    const verdict = classifyBuildEnvFreshness(rows(), "5m", buildScoped);
+    expect(verdict.setAfterBuild).toEqual([]);
+    expect(verdict.unknown).toEqual([]);
+    expect(verdict.inBuild).toEqual([
+      "NEXT_PUBLIC_FIREBASE_VAPID_KEY",
+      "NEXT_PUBLIC_LIVEKIT_URL",
+      "NEXT_PUBLIC_FIREBASE_APP_ID",
+    ]);
+    // LIVEKIT_API_SECRET is read by a route at runtime, not inlined, so a
+    // redeploy is irrelevant to it and flagging it would be a false alarm.
+    expect(verdict.inBuild).not.toContain("LIVEKIT_API_SECRET");
+  });
+
+  it("catches the variable that is set but absent from the served bundle", () => {
+    // The build is 40m old; VAPID and the LiveKit URL were set 24m and 26m
+    // ago. Both are "set in Vercel" and neither is in the deployed JS.
+    const verdict = classifyBuildEnvFreshness(rows(), "40m", buildScoped);
+    expect(verdict.setAfterBuild).toEqual([
+      "NEXT_PUBLIC_FIREBASE_VAPID_KEY",
+      "NEXT_PUBLIC_LIVEKIT_URL",
+    ]);
+    expect(verdict.inBuild).toEqual(["NEXT_PUBLIC_FIREBASE_APP_ID"]);
+  });
+
+  it("refuses to judge when the two rounded ages overlap", () => {
+    const same = [{ name: "NEXT_PUBLIC_LIVEKIT_URL", age: "24m" }];
+    expect(classifyBuildEnvFreshness(same, "24m", buildScoped).unknown).toEqual([
+      "NEXT_PUBLIC_LIVEKIT_URL",
+    ]);
+    // Coarser unit on one side widens the doubt rather than inventing a
+    // verdict: "1d" is anywhere in [24h, 48h), which straddles a 30h build.
+    const day = [{ name: "NEXT_PUBLIC_LIVEKIT_URL", age: "1d" }];
+    expect(classifyBuildEnvFreshness(day, "30h", buildScoped).unknown).toEqual([
+      "NEXT_PUBLIC_LIVEKIT_URL",
+    ]);
+    // But [24h, 48h) is entirely after a 20h build, so that one is decidable.
+    expect(classifyBuildEnvFreshness(day, "20h", buildScoped).inBuild).toEqual([
+      "NEXT_PUBLIC_LIVEKIT_URL",
+    ]);
+  });
+
+  it("decides adjacent buckets, which do not actually overlap", () => {
+    const older = [{ name: "NEXT_PUBLIC_LIVEKIT_URL", age: "25m" }];
+    const newer = [{ name: "NEXT_PUBLIC_LIVEKIT_URL", age: "23m" }];
+    expect(classifyBuildEnvFreshness(older, "24m", buildScoped).inBuild).toEqual([
+      "NEXT_PUBLIC_LIVEKIT_URL",
+    ]);
+    expect(classifyBuildEnvFreshness(newer, "24m", buildScoped).setAfterBuild).toEqual([
+      "NEXT_PUBLIC_LIVEKIT_URL",
+    ]);
+  });
+
+  it("never reports an unreadable age as fine", () => {
+    const unreadable = [{ name: "NEXT_PUBLIC_LIVEKIT_URL", age: null }];
+    const verdict = classifyBuildEnvFreshness(unreadable, "5m", buildScoped);
+    expect(verdict.unknown).toEqual(["NEXT_PUBLIC_LIVEKIT_URL"]);
+    expect(verdict.inBuild).toEqual([]);
+  });
+
+  it("covers every build-time variable the table declares", () => {
+    // If a NEXT_PUBLIC_* is added to REQUIRED_ENV, it is automatically in
+    // scope here — this pins that `scope` is actually being used to select.
+    expect(buildScoped.size).toBeGreaterThan(0);
+    for (const name of buildScoped) expect(name.startsWith("NEXT_PUBLIC_")).toBe(true);
+    const runtime = REQUIRED_ENV.filter((variable) => variable.scope !== "build");
+    for (const variable of runtime) {
+      expect([variable.name, variable.name.startsWith("NEXT_PUBLIC_")]).toEqual([
+        variable.name,
+        false,
+      ]);
+    }
   });
 });
 

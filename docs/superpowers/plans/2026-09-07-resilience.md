@@ -316,13 +316,29 @@ for each gap. `src/test/preflight.test.ts` greps `src/` for every `process.env.*
 fails if the preflight's list and the code disagree, so a variable cannot be added to
 the app without being preflighted.
 
-Verified read-only on 2026-09-08 with it: the seven `NEXT_PUBLIC_FIREBASE_*` values
-and `FIREBASE_SERVICE_ACCOUNT_KEY` **are** now set in Vercel production; the newest
-production deployment is Ready; the RTDB instance exists at
+Verified read-only on 2026-09-08 with it, re-checked later the same day: **all twelve**
+required variables are now set in Vercel production — the seven `NEXT_PUBLIC_FIREBASE_*`
+values, `FIREBASE_SERVICE_ACCOUNT_KEY`, `NEXT_PUBLIC_FIREBASE_VAPID_KEY`, and all three
+LiveKit values. The newest production deployment is Ready and, importantly, is *newer*
+than every one of them, so the nine build-time `NEXT_PUBLIC_*` values are actually inlined
+in the bundle being served rather than merely set (preflight checks that separately — see
+below). The RTDB instance exists at
 `werewolf-game-2026-default-rtdb.asia-southeast1.firebasedatabase.app` (note the
 region — not the `*.firebaseio.com` host) and an unauthenticated read of `/games` is
-denied, so the database is not in test mode. Still missing: the VAPID key, all three
-LiveKit values, and the narration audio.
+denied, so the database is not in test mode.
+
+**Narration audio is now the only remaining FAIL**, and it is the one item on this list
+that was never blocked on credentials the owner had to go and create.
+
+A note on why the build-time check is separate from the env check: Next.js inlines every
+`NEXT_PUBLIC_*` at build time, so "set in Vercel" and "present in the running site" are
+different facts. A value set after the last build is absent from the served JS and the
+feature behaves exactly as if it had never been configured — while `vercel env ls` shows
+it as set. That is a false all-clear precisely at the moment someone is most likely to run
+a preflight ("I just added the key"), so preflight compares each build-time variable's age
+against the newest Ready deployment's and fails when the variable is the newer of the two.
+Both ages come back rounded to a single unit, so it only rules when the two ranges do not
+overlap and reports SKIP otherwise rather than guessing.
 
 - Deploy `database.rules.json` (now also covers `fcmTokens/`, `chat/`) to the real
   Firebase project. Preflight can confirm this one exactly, but only after
@@ -332,11 +348,12 @@ LiveKit values, and the narration audio.
 - ~~Set `FIREBASE_SERVICE_ACCOUNT_KEY` in Vercel~~ — done; preflight sees it as a
   Secret on Production. (Already needed by Game Engine; Resilience's new routes —
   `/api/livekit/token` — depend on the same one.)
-- Set `NEXT_PUBLIC_FIREBASE_VAPID_KEY` (Firebase Console → Project Settings → Cloud
-  Messaging → Web Push certificates) for Task 6's push notifications to mint tokens
-  at all.
-- Create a LiveKit Cloud project; set `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`,
-  `NEXT_PUBLIC_LIVEKIT_URL` for Task 7.
+- ~~Set `NEXT_PUBLIC_FIREBASE_VAPID_KEY`~~ — done; preflight sees it on Production, and
+  sees that the deployed build is newer than it, so the key is really inlined in the
+  served bundle and Task 6 can mint push tokens in the browser.
+- ~~Create a LiveKit Cloud project; set `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET`,
+  `NEXT_PUBLIC_LIVEKIT_URL`~~ — done; all three are on Production for Task 7. Whether the
+  call rooms actually connect still needs a device (see the last item).
 - Render `NARRATION_SENTENCES`/`NARRATION_COUNT_WORDS` (Task 5, `narration.ts`) to
   real Vietnamese mp3s at the exact paths its own path helpers expect — the one
   piece of this whole plan blocked on a missing tool rather than missing

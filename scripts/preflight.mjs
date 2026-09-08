@@ -181,8 +181,8 @@ export const REQUIRED_ENV = [
  * only the first token of each row is taken — no value can leak into the
  * report even if Vercel changes how it renders them. Rows before the header
  * and the "Next steps" footer are ignored. */
-export function parseVercelEnvList(stdout) {
-  const names = [];
+export function parseVercelEnvRows(stdout) {
+  const rows = [];
   let seenHeader = false;
   for (const raw of stdout.split("\n")) {
     const line = raw.trim();
@@ -196,9 +196,75 @@ export function parseVercelEnvList(stdout) {
     // otherwise be read as an environment variable that is set.
     if (line === "") break;
     const name = line.split(/\s+/)[0];
-    if (/^[A-Za-z_][A-Za-z_0-9]*$/.test(name)) names.push(name);
+    if (!/^[A-Za-z_][A-Za-z_0-9]*$/.test(name)) continue;
+    // The `created` column is last and always reads "<age> ago". Anchoring on
+    // the end of the row is the only safe way to reach it: the `environments`
+    // column before it holds a comma-and-space list ("Production, Preview,
+    // Development") whose width varies per row, so counting columns from the
+    // left lands on a different field depending on the variable.
+    const age = /(\S+)\s+ago$/.exec(line);
+    rows.push({ name, age: age ? age[1] : null });
   }
-  return names;
+  return rows;
+}
+
+/** The names only, for the "is it set at all" check. */
+export function parseVercelEnvList(stdout) {
+  return parseVercelEnvRows(stdout).map((row) => row.name);
+}
+
+/** Both Vercel tables report time as a rounded relative age ("5m", "2d") and
+ * never an absolute timestamp, so a comparison between two of them is only as
+ * sharp as the coarser unit. Returns the age in seconds together with the
+ * width of the rounding bucket, so a caller can tell "definitely older" from
+ * "too close to call" instead of guessing. */
+export function parseRelativeAge(token) {
+  const match = /^(\d+)(mo|ms|[smhdwy])$/.exec(String(token ?? "").trim());
+  if (!match) return null;
+  const unit = {
+    ms: 0.001,
+    s: 1,
+    m: 60,
+    h: 3600,
+    d: 86400,
+    w: 604800,
+    mo: 2592000,
+    y: 31536000,
+  }[match[2]];
+  // Vercel truncates rather than rounds, so a row reading "5m" is somewhere in
+  // [5m, 6m). `granularity` is the width of that interval.
+  return { seconds: Number(match[1]) * unit, granularity: unit };
+}
+
+/** Next.js inlines every NEXT_PUBLIC_* value into the bundle at build time, so
+ * "the variable is set in Vercel" and "the running site has it" are different
+ * facts: a value set after the last build is not in the deployed bundle, and
+ * the site behaves exactly as if it had never been set. This decides which of
+ * the two it is by age, per variable.
+ *
+ * `age` is how long ago a thing happened, so a LARGER age is EARLIER. A
+ * variable is safely in the build when it is older than the build. Both ages
+ * are bucketed (see parseRelativeAge), so a verdict is only given when the
+ * buckets do not overlap; anything else is reported as unknown rather than
+ * guessed, because both a false alarm and a false all-clear are worse here
+ * than an honest "redeploy if you are not sure". */
+export function classifyBuildEnvFreshness(envRows, deploymentAge, buildScopedNames) {
+  const build = parseRelativeAge(deploymentAge);
+  const verdict = { inBuild: [], setAfterBuild: [], unknown: [] };
+  for (const row of envRows) {
+    if (!buildScopedNames.has(row.name)) continue;
+    const variable = parseRelativeAge(row.age);
+    if (!variable || !build) {
+      verdict.unknown.push(row.name);
+    } else if (variable.seconds >= build.seconds + build.granularity) {
+      verdict.inBuild.push(row.name);
+    } else if (variable.seconds + variable.granularity <= build.seconds) {
+      verdict.setAfterBuild.push(row.name);
+    } else {
+      verdict.unknown.push(row.name);
+    }
+  }
+  return verdict;
 }
 
 /** Parses `vercel ls` into {url, status, environment} rows, newest first.
@@ -341,7 +407,7 @@ function checkNarration() {
   };
 }
 
-function checkVercelEnv() {
+function checkVercelEnv(state) {
   const result = run("vercel", ["env", "ls", "production"]);
   if (!result.ok) {
     return [
@@ -356,7 +422,8 @@ function checkVercelEnv() {
       },
     ];
   }
-  const present = new Set(parseVercelEnvList(result.combined));
+  state.envRows = parseVercelEnvRows(result.combined);
+  const present = new Set(state.envRows.map((row) => row.name));
   const checks = [];
   const byFeature = new Map();
   for (const variable of REQUIRED_ENV) {
@@ -417,7 +484,7 @@ function checkLocalEnv() {
   };
 }
 
-function checkVercelDeployment() {
+function checkVercelDeployment(state) {
   const result = run("vercel", ["ls"]);
   if (!result.ok) {
     return {
@@ -439,6 +506,9 @@ function checkVercelDeployment() {
     };
   }
   const latest = production[0];
+  // Only a finished build can have inlined anything, so a still-Building
+  // deployment is deliberately not offered to the freshness check.
+  if (latest.status === "Ready") state.latestReadyProduction = latest;
   // A deploy that is still Building is not a failure — the most likely reason
   // to be running preflight at all is "I just pushed". Only a finished-and-bad
   // deployment counts against the run.
@@ -450,6 +520,63 @@ function checkVercelDeployment() {
     detail:
       `  ${latest.url}\n  Logs: vercel logs ${latest.url}` +
       (inProgress ? "\n  Still deploying — re-run preflight once it settles." : ""),
+  };
+}
+
+function checkBuildEnvFreshness(state) {
+  const id = "vercel-build-freshness";
+  const title = "Build-time variables are in the deployed bundle";
+  if (!state.envRows || !state.latestReadyProduction) {
+    return {
+      id,
+      title,
+      status: SKIP,
+      detail:
+        "  Needs both `vercel env ls production` and a Ready production deployment;\n" +
+        "  one of those checks above did not produce a result.",
+    };
+  }
+  const buildScoped = new Set(
+    REQUIRED_ENV.filter((variable) => variable.scope === "build").map((v) => v.name),
+  );
+  const deploymentAge = state.latestReadyProduction.age;
+  const verdict = classifyBuildEnvFreshness(state.envRows, deploymentAge, buildScoped);
+
+  if (verdict.setAfterBuild.length > 0) {
+    return {
+      id,
+      title: `${verdict.setAfterBuild.length} build-time variables were set after the last deploy`,
+      status: FAIL,
+      detail:
+        "  Next.js inlines NEXT_PUBLIC_* at build time. These are set in Vercel but were\n" +
+        `  set AFTER the newest Ready production deployment (${deploymentAge} old), so the\n` +
+        "  bundle being served does not contain them and the site behaves as if they were\n" +
+        "  never set — which the env check above cannot see:\n" +
+        verdict.setAfterBuild.map((name) => `    ${name}\n`).join("") +
+        "  Rebuild so they get inlined: vercel --prod (or push an empty commit to main).\n",
+    };
+  }
+  if (verdict.unknown.length > 0) {
+    return {
+      id,
+      title: `${verdict.unknown.length} build-time variables are too close to the deploy to judge`,
+      status: SKIP,
+      detail:
+        "  Vercel reports both ages rounded to one unit, and for these the variable and\n" +
+        `  the deployment (${deploymentAge} old) fall in the same bucket, so it cannot be\n` +
+        "  told whether the build inlined them:\n" +
+        verdict.unknown.map((name) => `    ${name}\n`).join("") +
+        "  Redeploy if you are not sure — it is cheap and always makes this definite.\n",
+    };
+  }
+  return {
+    id,
+    title: `All ${verdict.inBuild.length} build-time variables predate the deployed build`,
+    status: OK,
+    detail:
+      `  Each was set before the newest Ready production deployment (${deploymentAge} old),\n` +
+      "  so that build inlined them. Any NEXT_PUBLIC_* changed from here on needs a\n" +
+      "  redeploy before it reaches the browser.",
   };
 }
 
@@ -649,9 +776,12 @@ async function main() {
       detail: "  --offline was passed.",
     });
   } else {
-    checks.push(...checkVercelEnv());
+    const state = {};
+    checks.push(...checkVercelEnv(state));
     checks.push(checkLocalEnv());
-    checks.push(checkVercelDeployment());
+    checks.push(checkVercelDeployment(state));
+    // Must come after both of the above: it compares what they each read.
+    checks.push(checkBuildEnvFreshness(state));
     checks.push(...(await checkDatabase(projectId())));
   }
   process.exit(report(checks, asJson));
