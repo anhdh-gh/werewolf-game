@@ -982,7 +982,12 @@ describe("Epic 3 Story 3.1: Wolf Man acts with the pack and survives a Cursed pa
   const witch = "witch";
   const cursed = "cursed";
   const villager1 = "villager1";
-  const uids = [wolfA, wolfman, traitor, seer, witch, cursed, villager1];
+  const villager2 = "villager2";
+  const villager3 = "villager3";
+  // 3 wolf-team players pre-transform become 4 after Cursed turns; checkWinner
+  // ends the game the moment alive wolves >= alive non-wolves, so this fixture
+  // needs enough villagers alive post-transform (5) to keep reaching DAWN.
+  const uids = [wolfA, wolfman, traitor, seer, witch, cursed, villager1, villager2, villager3];
 
   beforeEach(async () => {
     const players: Game["players"] = {};
@@ -1020,6 +1025,16 @@ describe("Epic 3 Story 3.1: Wolf Man acts with the pack and survives a Cursed pa
       [witch]: { role: "WITCH", initialRole: "WITCH", potions: { heal: true, poison: true } },
       [cursed]: { role: "CURSED", initialRole: "CURSED", potions: { heal: true, poison: true } },
       [villager1]: {
+        role: "VILLAGER",
+        initialRole: "VILLAGER",
+        potions: { heal: true, poison: true },
+      },
+      [villager2]: {
+        role: "VILLAGER",
+        initialRole: "VILLAGER",
+        potions: { heal: true, poison: true },
+      },
+      [villager3]: {
         role: "VILLAGER",
         initialRole: "VILLAGER",
         potions: { heal: true, poison: true },
