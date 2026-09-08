@@ -55,7 +55,7 @@
         "VOTE": {
           ".read": "auth != null",
           "$uid": {
-            ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('phase').child('name').val() === 'VOTE' && root.child('games').child($gameId).child('players').child($uid).child('alive').val() === true && root.child('private').child($gameId).child($uid).child('role').val() !== 'PACIFIST'"
+            ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('phase').child('name').val() === 'VOTE' && root.child('games').child($gameId).child('players').child($uid).child('alive').val() === true && root.child('private').child($gameId).child($uid).child('role').val() !== 'PACIFIST' && (root.child('private').child($gameId).child($uid).child('role').val() !== 'VILLAGE_IDIOT' || newData.child('target').val() !== null)"
           }
         },
         "HUNTER_SHOT": {

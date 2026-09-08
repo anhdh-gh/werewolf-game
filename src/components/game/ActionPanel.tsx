@@ -223,15 +223,23 @@ export function ActionPanel({
         </p>
       );
     }
+    const isVillageIdiot = privateState?.role === "VILLAGE_IDIOT";
     return (
-      <TargetPicker
-        targets={alivePlayersExcept(game, [uid])}
-        selected={selected}
-        onSelect={setSelected}
-        onSubmit={() => submit("VOTE", selected ?? null)}
-        submitLabel="Treo cổ"
-        abstainLabel="Bỏ phiếu trắng"
-      />
+      <div className="flex flex-col gap-3">
+        {isVillageIdiot && (
+          <p className="text-center text-sm text-muted-foreground">
+            Bạn là Gã Khờ — bắt buộc phải chọn một người.
+          </p>
+        )}
+        <TargetPicker
+          targets={alivePlayersExcept(game, [uid])}
+          selected={selected}
+          onSelect={setSelected}
+          onSubmit={() => submit("VOTE", selected ?? null)}
+          submitLabel="Treo cổ"
+          abstainLabel={isVillageIdiot ? undefined : "Bỏ phiếu trắng"}
+        />
+      </div>
     );
   }
 

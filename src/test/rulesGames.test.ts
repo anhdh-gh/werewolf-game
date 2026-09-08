@@ -29,6 +29,7 @@ const EXISTING_GAME = {
     "uid-seer": { name: "Seer", alive: true, muted: false },
     "uid-witch": { name: "Witch", alive: true, muted: false },
     "uid-pacifist": { name: "Pacifist", alive: true, muted: false },
+    "uid-village-idiot": { name: "Village Idiot", alive: true, muted: false },
     "uid-sorcerer": { name: "Sorcerer", alive: true, muted: false },
     "uid-dead-hunter": { name: "Hunter", alive: false, muted: false },
     "uid-dead-villager": { name: "Villager", alive: false, muted: false },
@@ -55,6 +56,7 @@ const EXISTING_PRIVATE: Record<string, Record<string, unknown>> = {
     potions: { heal: true, poison: true },
   },
   "uid-pacifist": { role: "PACIFIST", initialRole: "PACIFIST" },
+  "uid-village-idiot": { role: "VILLAGE_IDIOT", initialRole: "VILLAGE_IDIOT" },
   "uid-sorcerer": { role: "SORCERER", initialRole: "SORCERER" },
   "uid-dead-hunter": { role: "HUNTER", initialRole: "HUNTER" },
   "uid-dead-villager": { role: "VILLAGER", initialRole: "VILLAGER" },
@@ -302,6 +304,40 @@ describe("actions/$gameId — only the phase's own role may act", () => {
     await assertSucceeds(
       set(ref(alive, "actions/GAME1/VOTE/uid-seer"), {
         target: "uid-wolf",
+        done: true,
+        at: 1,
+      }),
+    );
+  });
+
+  it("denies an alive Village Idiot from abstaining (target: null), but allows a real target", async () => {
+    // Story 4a.1: Village Idiot is the mirror of Pacifist — instead of
+    // blocking the write entirely, this blocks only the explicit-abstain
+    // shape (target: null) that TargetPicker/ActionPanel write for a
+    // skipped ballot, while a normal target vote still succeeds.
+    await setPhase("VOTE");
+    const villageIdiot = testEnv.authenticatedContext("uid-village-idiot").database();
+    await assertFails(
+      set(ref(villageIdiot, "actions/GAME1/VOTE/uid-village-idiot"), {
+        target: null,
+        done: true,
+        at: 1,
+      }),
+    );
+    await assertSucceeds(
+      set(ref(villageIdiot, "actions/GAME1/VOTE/uid-village-idiot"), {
+        target: "uid-seer",
+        done: true,
+        at: 1,
+      }),
+    );
+
+    // Control: a normal player abstaining (target: null) is untouched by
+    // this rule — only a VILLAGE_IDIOT writer is blocked from it.
+    const alive = testEnv.authenticatedContext("uid-seer").database();
+    await assertSucceeds(
+      set(ref(alive, "actions/GAME1/VOTE/uid-seer"), {
+        target: null,
         done: true,
         at: 1,
       }),

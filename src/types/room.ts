@@ -13,6 +13,7 @@ export const OPTIONAL_ROLE_KEYS = [
   "MASON",
   "PRINCE",
   "PACIFIST",
+  "VILLAGE_IDIOT",
   "SORCERER",
   "WOLF_MAN",
   "WOLF_CUB",

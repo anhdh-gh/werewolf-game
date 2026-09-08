@@ -34,6 +34,7 @@ export const ROLE_LABELS: Record<RoleKey, string> = {
   MASON: "Hội Kín",
   PRINCE: "Hoàng Tử",
   PACIFIST: "Người Hoà Bình",
+  VILLAGE_IDIOT: "Gã Khờ",
   WOLF_MAN: "Lang Nhân",
   WOLF_CUB: "Sói Con",
   TANNER: "Chán Đời",
