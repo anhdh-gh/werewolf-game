@@ -30,7 +30,7 @@ rõ ràng chứ không giấu.
 
 | Epic | Nội dung | Số vai | Trạng thái | Tài liệu |
 |---|---|---|---|---|
-| **Epic 1** | Vai Làng thụ động, không cần phase đêm mới (Mason, Prince, Pacifist) | 3 | Cả 3 story đã có code (Mason `done`/CI xanh, Prince `done`/CI xanh, Pacifist code xong — chờ CI + verify rules live) | `2026-09-08-roles-epic-1.md` |
+| **Epic 1** | Vai Làng thụ động, không cần phase đêm mới (Mason, Prince, Pacifist) | 3 | **`done`** — cả 3 story CI xanh, merged vào main, rules RTDB live đã deploy và byte-compare khớp repo (2026-09-08) | `2026-09-08-roles-epic-1.md` |
 | **Epic 1b** | Vai Làng thụ động nhưng cần thêm 1 vòng xác nhận cơ chế trước khi viết story an toàn (Tough Guy, Diseased, Old Hag — xem lý do treo ở cuối mục này) | 3 | Chưa viết story — cần làm rõ timing trước | chưa có |
 | **Epic 2** | Vai Làng cần phase đêm mới, cơ chế đã đủ rõ để viết story (Sorcerer/Sorceress, Doppelgänger, Cult Leader, Hoodlum) | 4 | Chưa viết story | chưa có |
 | **Epic 3** | Vai Sói mới ngoài Kẻ Phản Bội (Dire Wolf, Lone Wolf, Wolf Man, Wolf Cub) | 4 | Chưa viết story | chưa có |
@@ -73,7 +73,7 @@ liệt kê vai đã có epic xác định (không lặp lại toàn bộ ~141 va
 |---|---|---|
 | Mason | 1 | `done` — CI xanh (run 34215788171, commit 6c6e469), merged vào main |
 | Prince | 1 | `done` — CI xanh (run trên commit 7917ac9, `typecheck`/`test`/`build` đều `success`), merged vào main |
-| Pacifist | 1 | `in progress` — code viết xong (types/game.ts, types/room.ts, database.rules.json VOTE rule + điều kiện PACIFIST, ActionPanel.tsx ẩn nút bỏ phiếu, labels.ts, rulesGames.test.ts assertFails/assertSucceeds mới), **chưa CI xanh, chưa deploy rules live, chưa merge** — xem iteration log |
+| Pacifist | 1 | `done` — CI xanh (run 34216872017, commit 85c9299, `typecheck`/`test`/`build` đều `success`), merged vào main. Rules RTDB live đã deploy (`firebase deploy --only database --project werewolf-game-2026`, 2026-09-08) và byte-compare khớp 100% với `database.rules.json` trong repo (`firebase database:get /.settings/rules` sau deploy diff rỗng) |
 | Tough Guy | 1b | `blocked` — cần xác nhận timing |
 | Diseased | 1b | `blocked` — cần xác nhận timing |
 | Old Hag | 1b | `blocked` — cần xác nhận khái niệm "rời làng" |
