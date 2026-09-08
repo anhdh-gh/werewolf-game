@@ -390,9 +390,15 @@ against the newest Ready deployment's and fails when the variable is the newer o
 Both ages come back rounded to a single unit, so it only rules when the two ranges do not
 overlap and reports SKIP otherwise rather than guessing.
 
-- **Deploy `database.rules.json` (now also covers `fcmTokens/`, `chat/`, and the
-  role-gated `actions/` blocks above) to the real Firebase project — still outstanding,
-  and confirmed outstanding rather than assumed.**
+- ~~Deploy `database.rules.json` (now also covers `fcmTokens/`, `chat/`, and the
+  role-gated `actions/` blocks above) to the real Firebase project~~ — **done
+  2026-09-08**, and confirmed done rather than assumed: before the deploy the live
+  ruleset carried only `presence` and `rooms`, so every read or write under `games/`,
+  `actions/`, `chat/`, `private/` and `fcmTokens/` was denied outright (RTDB rules do
+  not cascade upward, so a room could be created and joined and then nothing else
+  worked). `firebase deploy --only database` released it, and a fresh
+  `firebase database:get "/.settings/rules"` read back byte-identical to the committed
+  file under preflight's own normalizer — all seven sections present.
   Preflight reads the live ruleset back with `firebase database:get "/.settings/rules"`
   and names which top-level sections are absent, different, or live-only. (It does *not*
   use `firebase database:rules:list` / `rules:get`: those need the `rtdbrules` experiment
@@ -434,3 +440,49 @@ overlap and reports SKIP otherwise rather than guessing.
   win on night two.
   What still genuinely needs devices: push notifications, the LiveKit call room, and
   audio playback — none of which the emulator can stand in for.
+
+## The outage preflight could not see (2026-09-08)
+
+Every one of the three Admin-SDK routes — `/api/games/[gameId]/advance`,
+`/api/rooms/[code]/start`, `/api/livekit/token` — returned a bare HTTP 500 on
+wolf.anhdh.net for hours while CI was green and preflight reported 9 PASS. The 500 had
+no body; only `vercel logs` showed it:
+
+```
+Error: Failed to load external module firebase-admin-<hash>/auth:
+Error [ERR_REQUIRE_ESM]: require() of ES Module
+/var/task/node_modules/jose/dist/webapi/index.js
+from /var/task/node_modules/jwks-rsa/src/utils.js not supported.
+  at Context.externalImport (.next/server/chunks/[turbopack]_runtime.js:687:15)
+```
+
+The chain: `firebase-admin` is on Next's default `serverExternalPackages` list
+(`next/dist/lib/server-external-packages.jsonc`), so it is never bundled — the deployed
+function `require()`s it out of `node_modules` at first request. firebase-admin@14 depends
+on `jwks-rsa@^4`, whose `src/utils.js` opens with a plain `require('jose')`, and npm
+hoisted `jose@6.2.12` to the root of the tree to satisfy `livekit-client` and
+`@livekit/components-react`. jose 6 dropped its CommonJS build; 5.x was the last major to
+ship both. That `require()` therefore only works on a runtime with `require(esm)`
+available, and the deployed function's is not — despite the Vercel project being set to
+Node 24.x, which does support it, so do not assume the runtime matches the setting.
+
+Fix: an npm `overrides` entry pinning **jwks-rsa's** jose to `5.10.0` — scoped to
+jwks-rsa, so the browser bundles keep jose 6. 5.10.0 was already in the lockfile (nested
+under `livekit-server-sdk`), and jwks-rsa only uses `importJWK`, `exportSPKI`,
+`decodeJwt` and `decodeProtectedHeader`, all unchanged in 5.x; its `key.export(...)`
+fallback branch already handles jose 5 returning a `KeyObject` where 6 returns a
+`CryptoKey`. `src/test/serverBundleDeps.test.ts` guards the pin, reading
+`package-lock.json` rather than `node_modules` so it asserts what `npm ci` installs on
+Vercel rather than what happens to be unpacked locally.
+
+Two things to carry forward:
+
+- **The whole suite mocks the Admin SDK**, so no test ever loads `jwks-rsa`. There is no
+  arrangement of unit tests that would have caught this. Only a real request against the
+  deployed URL, or the module-format assertion above, can.
+- **Preflight checks configuration, not behaviour.** It verified every environment
+  variable, the deployment's Ready state, the database instance and the deployed
+  ruleset — and reported all-clear while every server route was dead. The obvious next
+  addition is a live smoke request against a deployed route that fails on a module-load
+  500; it needs a shape that stays read-only (a route that returns 4xx for an unknown id
+  is fine, a real state transition is not).
