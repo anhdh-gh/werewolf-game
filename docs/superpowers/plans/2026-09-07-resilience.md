@@ -698,3 +698,38 @@ The generalisable lesson, and the counterpart to the client-side one above: **a 
 still log. And when an SDK call reports per-item outcomes in its return value rather than by
 throwing, `await`ing it without reading the result is not error handling at all — the `.catch()`
 that looks like it covers the call is covering a failure mode the call does not use.
+
+### Closing verification: the whole outage class, re-checked live on 0acb006 (2026-09-08)
+
+The four instances above were each fixed in a separate iteration, and each iteration verified
+the live state of the *previous* commit — so the last one to land (0acb006, the server-side
+push-notification silence) had never itself been checked against live infrastructure. This is
+that check, run against the production deployment built from 0acb006 and the CI run for it.
+
+| What | Evidence | Result |
+| --- | --- | --- |
+| Deployed code is 0acb006 | `vercel ls --meta githubCommitSha=0acb006…` returns exactly one Ready Production deployment, aliased to `wolf.anhdh.net`, created 07:27:14Z against a 07:27:11Z commit | matched |
+| The original outage stays fixed | `POST https://wolf.anhdh.net/api/games/test-id/advance` → **404** with body `{"error":"Không tìm thấy ván đấu"}` and no `x-vercel-error` header | no module-load 500 |
+| Deployed RTDB ruleset | preflight's `Deployed rules match database.rules.json` (fresh `firebase database:get "/.settings/rules"` read-back, normalised) | byte-identical |
+| Preflight | 14 PASS / 0 FAIL / 1 SKIP at 07:31Z; the SKIP is `Local environment: 12 of 12 variables not set here`, informational by construction — production reads Vercel's environment, not this machine's | no non-owner-blocked FAIL |
+| CI | run `34199400716` for `0acb006`: `typecheck` success, `test` success, `build` success | green |
+
+All four deployed route probes PASS, including the two that prove real work rather than mere
+module load: `/api/games/:id/advance` and `/api/rooms/:id/start` each reach their 404 guard only
+*after* an `adminDb().ref(...).get()` completes, so the 404s are live evidence of module load,
+service-account credential acceptance and an RTDB round trip; and the bogus-bearer probe against
+`/api/livekit/token` returns 401 rather than 500, which after the classification split above
+means `adminAuth().verifyIdToken()` actually ran and rejected the token.
+
+Both error-handling surfaces are audited and closed. Client: the only three non-test `fetch()`
+callers are `src/lib/game/actions.ts` and `src/lib/livekit/useCallToken.ts` (both now retry with
+backoff and log) and `RoomLobby.startGame`, whose button-driven manual retry is correct by
+design. Server: the advance route's best-effort push `.catch()` was the single instance and now
+logs. `src/lib/notifications/push.ts`'s `catch { return false }` is deliberately not an instance —
+the `false` keeps the enable button visible so the user retries by clicking.
+
+There is no fifth instance of this family left to find, and nothing else code-shaped in the
+priority list: the one remaining owner-side item is a paid Vietnamese TTS voice for narration.
+The 37 clips preflight now reports as rendered came from the unofficial `translate.google.com`
+provider in `scripts/render-narration.mjs`, so that PASS row is not evidence the narration item
+is genuinely resolved — it is evidence a placeholder exists.
