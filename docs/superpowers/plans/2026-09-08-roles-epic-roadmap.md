@@ -113,23 +113,25 @@ liệt kê vai đã có epic xác định (không lặp lại toàn bộ ~141 va
 | Mason | 1 | `done` — CI xanh (run 34215788171, commit 6c6e469), merged vào main |
 | Prince | 1 | `done` — CI xanh (run trên commit 7917ac9, `typecheck`/`test`/`build` đều `success`), merged vào main |
 | Pacifist | 1 | `done` — CI xanh (run 34216872017, commit 85c9299, `typecheck`/`test`/`build` đều `success`), merged vào main. Rules RTDB live đã deploy (`firebase deploy --only database --project werewolf-game-2026`, 2026-09-08) và byte-compare khớp 100% với `database.rules.json` trong repo (`firebase database:get /.settings/rules` sau deploy diff rỗng) |
-| Tough Guy | 1b | `blocked` — cần xác nhận timing |
-| Diseased | 1b | `blocked` — cần xác nhận timing |
-| Old Hag | 1b | `blocked` — cần xác nhận khái niệm "rời làng" |
+| Tough Guy | 1b | `unblocked` (2026-09-08, iteration 6) — lời văn chính hãng đầy đủ tìm thấy (catalog §8.3), sẵn sàng viết story |
+| Diseased | 1b | `unblocked` (2026-09-08, iteration 6) — lời văn chính hãng đầy đủ tìm thấy (catalog §8.3), sẵn sàng viết story |
+| Old Hag | 1b | `unblocked` (2026-09-08, iteration 6) — lời văn chính hãng đầy đủ tìm thấy (catalog §8.3), sẵn sàng viết story |
 | Sorcerer/Sorceress ("Pháp Sư") | 2 | `done` — CI xanh (run 34219156728, commit 9395543, `typecheck`/`test`/`build` đều `success`), merged vào main. Rules RTDB live đã deploy (`firebase deploy --only database --project werewolf-game-2026`, 2026-09-08) và byte-compare khớp 100% với `database.rules.json` trong repo (node action `SORCERER` xác nhận có mặt sau deploy, diff chỉ lệch newline cuối file) |
-| Doppelgänger, Hoodlum | 2b | `blocked` — cần rulebook gốc (mơ hồ thời điểm/điều kiện thắng xuyên đêm) |
+| Doppelgänger, Hoodlum | 2b | `unblocked` (2026-09-08, iteration 6) — lời văn chính hãng đầy đủ tìm thấy cho cả 2 (catalog §8.3), sẵn sàng viết story |
 | Wolf Man ("Lang Nhân") | 3 | `done` — CI xanh (run 34221621075, commit 62e1052, `typecheck`/`test`/`build` đều `success`; commit gốc d82648a từng fail 1 test do lỗi đếm quân trong fixture, sửa ở iteration 14). Rules RTDB live đã deploy (`firebase deploy --only database --project werewolf-game-2026`, 2026-09-08) và byte-compare khớp 100% với `database.rules.json` trong repo (2 rule WOLVES/wolves-chat mở rộng `WOLF_MAN` xác nhận có mặt sau deploy) |
-| Dire Wolf, Lone Wolf | 3b | `blocked` — cần rulebook gốc (mơ hồ thời điểm bạn đồng hành / điều kiện thắng chính xác) |
+| Lone Wolf | 3b | `unblocked` (2026-09-08, iteration 6) — lời văn chính hãng đầy đủ tìm thấy (catalog §8.3), sẵn sàng viết story |
+| Dire Wolf | 3b | `blocked` — vẫn không tìm thấy trong PDF nguồn mới (catalog §8.4), cần rulebook gốc khác |
 | Wolf Cub | 3c | `done` — CI xanh (run 34224670711, commit e1deedd, `typecheck`/`test`/`build` đều `success`), merged vào main. Rules RTDB live đã deploy (`firebase deploy --only database --project werewolf-game-2026`, 2026-09-08) và byte-compare khớp 100% với `database.rules.json` trong repo (rule WOLVES/wolves-chat mở rộng `WOLF_CUB` và field `wolfCubBonusNightPending` xác nhận có mặt sau deploy, diff rỗng) — `resolveNight`/`tallyMajorityVote` tổng quát hoá sang `tallyTopNVotes`/`wolfTargets: string[]`, `planAdvance` nhận `wolfCubBonusNightPending` + trả `deathsThisRoundRoles`, route đọc/set cờ đúng 2 điểm DAWN/VOTE_RESULT (KHÔNG ở "Leaving WOLVES" như thiết kế gốc), full test coverage (unit + route-level e2e + emulator rules) |
 | Village Idiot ("Gã Khờ") | 4a | `done` — CI xanh (run 34227270895, commit 96d1a72, `typecheck`/`test`/`build` đều `success`), merged vào main. Rules RTDB live đã deploy (`firebase deploy --only database --project werewolf-game-2026`, 2026-09-08) và byte-compare khớp 100% với `database.rules.json` trong repo (rule VOTE mở rộng điều kiện `VILLAGE_IDIOT` xác nhận có mặt sau deploy, diff chỉ lệch newline cuối file) |
 | Beholder ("Kẻ Quan Sát") | 4a | `done` — CI xanh (run 34258090368, commit c60aa5c). `beholderSeerUid` viết vào `private/{gameId}/{uid}` lúc chia vai (`buildBeholderTargets`, khuôn `buildMasonLinks`), không cần rule RTDB mới (`private/` đã `.write: false`) — nhưng `roleCounts` `.validate` (thêm `BEHOLDER` là RoleKey thứ 20) đã deploy (`firebase deploy --only database --project werewolf-game-2026`, 2026-09-08, iteration 5) và byte-compare khớp 100% với `database.rules.json` trong repo |
-| Priest, Huntress, Revealer, Aura Seer | 4b | `blocked` — trùng/xung đột vai đã có (Bodyguard/Hunter/Seer), không có lời văn phân biệt |
-| Drunk, Apprentice Seer | 4b | `blocked` — mơ hồ thời điểm, cùng lớp Epic 1b/2b/3b |
-| Troublemaker | 4b | `blocked` — thiếu khả năng engine (chèn thêm 1 chu kỳ VOTE phụ) + thiếu lời văn cơ chế kích hoạt |
-| Insomniac | 4b | `blocked` — khái niệm "hàng xóm" (seating order) không tồn tại trong kiến trúc hiện tại |
-| Paranormal Investigator | 4b | `blocked` — paraphrase quá chung chung, không đủ để suy ra cơ chế |
-| Vampire | 5 | `blocked` — cần nguồn: điều kiện thắng hoàn toàn chưa xác định (khác các vai Tier 1 khác, không có nổi 1 câu paraphrase về thắng/thua) |
-| Cult Leader | 5 | `blocked` — cần rulebook gốc (điều kiện thắng đã rõ, nhưng cơ chế "kéo người vào giáo phái" mỗi đêm mơ hồ thời điểm/kháng cự — cùng lớp vấn đề Epic 1b/2b/3b) |
+| Priest, Aura Seer | 4b | `unblocked` (2026-09-08, iteration 6) — lời văn chính hãng đầy đủ tìm thấy cho cả 2, kèm câu phân biệt rõ Priest vs Bodyguard (catalog §8.3), sẵn sàng viết story |
+| Huntress, Revealer | 4b | `blocked` — vẫn không tìm thấy trong PDF nguồn mới (catalog §8.4), cần rulebook gốc khác |
+| Apprentice Seer | 4b | `unblocked` (2026-09-08, iteration 6) — lời văn chính hãng đầy đủ tìm thấy, kèm bản Alternate (catalog §8.3), sẵn sàng viết story |
+| Drunk | 4b | `blocked` — chỉ thấy tên trong scenario list (catalog §8.5), không tìm được trang lời văn riêng |
+| Troublemaker | 4b | `unblocked` (2026-09-08, iteration 6) — lời văn chính hãng tìm thấy; xác nhận đúng nghi ngờ cũ: cần thiết kế engine mới (chèn 1 chu kỳ VOTE thứ 2 trong cùng ngày sau lần treo cổ đầu tiên) trước khi viết story — không chỉ "sẵn sàng ngay" như Priest/Aura Seer/Apprentice Seer (catalog §8.3) |
+| Insomniac, Paranormal Investigator | 4b | `blocked` (P.I. lời văn đã rõ, catalog §8.3) — cả 2 vẫn cần khái niệm "hàng xóm"/thứ tự chỗ ngồi (seating order) không tồn tại trong kiến trúc hiện tại; catalog §8.4 gợi ý 1 story kiến trúc `seatOrder` dùng chung gỡ chặn cả 2 cùng lúc |
+| Vampire | 5 | `blocked`, thu hẹp đáng kể (2026-09-08, iteration 6) — không còn "chưa có nổi 1 câu paraphrase": PDF xác nhận Vampire là phe riêng, cơ chế cắn/giết ban đêm giống hệt Werewolf, xuất hiện trong thứ tự gọi vai chính thức ngay sau Werewolves (catalog §8.3). Suy luận hợp lý (chưa phải trích nguyên văn) là điều kiện thắng đối xứng với Werewolf — cần 1 câu xác nhận trực tiếp trước khi viết story, không tự suy đoán thành sự thật |
+| Cult Leader | 5 | `unblocked` (2026-09-08, iteration 6) — lời văn chính hãng đầy đủ tìm thấy, xác nhận không có "kháng cự" (catalog §8.3), sẵn sàng viết story |
 | Thing, The Count, Beholder*, Insomniac*, Bogeyman, vai thứ 6 chưa rõ (Night Terrors); Bloody Mary, Chupacabra, Wolf Man*, Leprechaun, Sasquatch, Nostradamus (Urban Legends); The Blob, The Mummy, Dracula, The Zombie, Frankenstein's Monster (Classic Movie Monsters) | 6 | `blocked` — cần lời văn năng lực |
 | Bonus Roles (44), Pro Roles (50+) | Z | `blocked` — cần nguồn mới ngoài web search |
 
@@ -344,3 +346,17 @@ gốc mới — tất cả cần owner theo dõi, không chỉ Epic Z.
     việc kế tiếp cho role-catalog epic là Epic 1b/2b/3b/4b/5 khi có nghiên cứu rulebook mới,
     theo đúng "Thứ tự triển khai đề xuất" ở trên — không có story nào khác đang `story ready`
     chờ implement ngay lúc này.
+16. **Xong (gnhf run `stop-read-this-first-98c7ba` iteration 6, 2026-09-08)**: tìm được PDF
+    rulebook chính hãng đầy đủ ("Ultimate Werewolf: Ultimate Edition Official Rules", Ted
+    Alspach/Pegasus Spiele — xem `2026-09-08-role-catalog.md` §8 cho toàn bộ chi tiết + trích
+    dẫn nguyên văn), gỡ chặn **10 vai** (Old Hag, Tough Guy, Diseased, Doppelgänger, Hoodlum,
+    Lone Wolf, Priest, Aura Seer, Apprentice Seer, Cult Leader — tất cả `unblocked`, sẵn sàng
+    viết story) và thu hẹp đáng kể 2 vai khác (Troublemaker — có lời văn nhưng cần thiết kế
+    engine mới trước khi viết story; Vampire — không còn "chưa có 1 câu paraphrase nào", cần 1
+    câu xác nhận nhỏ). Insomniac/P.I. vẫn `blocked` nhưng nay biết chính xác lý do dùng chung:
+    cả 2 cần khái niệm "hàng xóm"/seating order chưa có trong kiến trúc — gợi ý gộp thành 1
+    story kiến trúc chung. Dire Wolf, Huntress, Revealer, Drunk, Mayor vẫn `blocked` — không
+    tìm thấy trong PDF này (không suy đoán). Thuần nghiên cứu, không có thay đổi code — việc kế
+    tiếp là chọn một trong các vai `unblocked` ở trên (khuyến nghị bắt đầu bằng nhóm 4b Priest/
+    Aura Seer/Apprentice Seer vì không cần thiết kế engine mới, giống khuôn Epic 1/2/3c) và viết
+    story doc riêng trước khi implement, đúng kỷ luật "research → plan → implement" của owner.
