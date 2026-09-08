@@ -86,6 +86,7 @@ const DECK_7_NO_OPTIONAL_ROLES: Record<RoleKey, number> = {
   PACIFIST: 0,
   VILLAGE_IDIOT: 0,
   BEHOLDER: 0,
+  DISEASED: 0,
   VILLAGER: 3,
   TANNER: 0,
 };

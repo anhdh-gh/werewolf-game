@@ -24,6 +24,7 @@ const baseInput: PlanAdvanceInput = {
   alreadyTransformedCursed: [],
   lovers: null,
   wolfCubBonusNightPending: false,
+  diseasedSuppressNextBite: false,
 };
 
 describe("planAdvance", () => {
@@ -166,5 +167,71 @@ describe("planAdvance", () => {
       wolfCubBonusNightPending: true,
     });
     expect(result.deaths).toEqual(["villager1"]);
+  });
+
+  // Epic 1b (Diseased): a successful bite on the Diseased player this night
+  // arms diseasedSuppressNextBite for the *next* DAWN, but doesn't change
+  // anything about tonight's own resolution.
+  it("arms diseasedSuppressNextBite when the wolves successfully bite the Diseased player", () => {
+    const result = planAdvance({
+      ...baseInput,
+      currentPhase: "CURSED",
+      aliveRolesByUid: { ...baseInput.aliveRolesByUid, diseased1: "DISEASED" },
+      activeRoles: [...baseInput.activeRoles, "DISEASED"],
+      actions: { ...NIGHT_ACTIONS_EMPTY, wolfVotes: { wolf1: "diseased1" } },
+    });
+    expect(result.deaths).toEqual(["diseased1"]);
+    expect(result.diseasedSuppressNextBite).toBe(true);
+  });
+
+  it("does not arm diseasedSuppressNextBite when the Diseased player is protected", () => {
+    const result = planAdvance({
+      ...baseInput,
+      currentPhase: "CURSED",
+      aliveRolesByUid: { ...baseInput.aliveRolesByUid, diseased1: "DISEASED" },
+      activeRoles: [...baseInput.activeRoles, "DISEASED"],
+      actions: {
+        ...NIGHT_ACTIONS_EMPTY,
+        wolfVotes: { wolf1: "diseased1" },
+        protectTarget: "diseased1",
+      },
+    });
+    expect(result.deaths).toEqual([]);
+    expect(result.diseasedSuppressNextBite).toBe(false);
+  });
+
+  it("does not arm diseasedSuppressNextBite when nobody bit the Diseased player", () => {
+    const result = planAdvance({
+      ...baseInput,
+      currentPhase: "CURSED",
+      aliveRolesByUid: { ...baseInput.aliveRolesByUid, diseased1: "DISEASED" },
+      activeRoles: [...baseInput.activeRoles, "DISEASED"],
+      actions: { ...NIGHT_ACTIONS_EMPTY, wolfVotes: { wolf1: "villager1" } },
+    });
+    expect(result.diseasedSuppressNextBite).toBe(false);
+  });
+
+  it("voids tonight's wolf-bite death when diseasedSuppressNextBite is armed from last night", () => {
+    const result = planAdvance({
+      ...baseInput,
+      currentPhase: "CURSED",
+      actions: { ...NIGHT_ACTIONS_EMPTY, wolfVotes: { wolf1: "villager1" } },
+      diseasedSuppressNextBite: true,
+    });
+    expect(result.deaths).toEqual([]);
+  });
+
+  it("suppression this night doesn't stop a separately poisoned villager from dying", () => {
+    const result = planAdvance({
+      ...baseInput,
+      currentPhase: "CURSED",
+      actions: {
+        ...NIGHT_ACTIONS_EMPTY,
+        wolfVotes: { wolf1: "villager1" },
+        witchPoisonTarget: "seer1",
+      },
+      diseasedSuppressNextBite: true,
+    });
+    expect(result.deaths).toEqual(["seer1"]);
   });
 });

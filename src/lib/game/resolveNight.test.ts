@@ -111,6 +111,45 @@ describe("resolveNight", () => {
     expect(result.deaths).toEqual(["v1"]);
     expect(result.transformed).toEqual(["v2"]);
   });
+
+  // Epic 1b (Diseased): suppressBite voids every wolf-bite death this night
+  // (the pack still picks a target — see planAdvance's caller for why —
+  // but nobody dies), while leaving poison and Cursed's transform untouched.
+  it("suppressBite voids the wolves' kill even though nobody protected or saved the target", () => {
+    const result = resolveNight({ ...base, wolfTargets: ["v1"], suppressBite: true });
+    expect(result.deaths).toEqual([]);
+    expect(result.transformed).toEqual([]);
+  });
+
+  it("suppressBite still lets poison kill independently", () => {
+    const result = resolveNight({
+      ...base,
+      wolfTargets: ["v1"],
+      witchPoisonTarget: "v2",
+      suppressBite: true,
+    });
+    expect(result.deaths).toEqual(["v2"]);
+  });
+
+  it("suppressBite still lets a Cursed target transform instead of surviving untouched", () => {
+    const result = resolveNight({
+      ...base,
+      wolfTargets: ["v1"],
+      cursedUids: ["v1"],
+      suppressBite: true,
+    });
+    expect(result.deaths).toEqual([]);
+    expect(result.transformed).toEqual(["v1"]);
+  });
+
+  it("on a bonus night, suppressBite voids both wolf victims", () => {
+    const result = resolveNight({
+      ...base,
+      wolfTargets: ["v1", "v2"],
+      suppressBite: true,
+    });
+    expect(result.deaths).toEqual([]);
+  });
 });
 
 describe("tallyMajorityVote", () => {

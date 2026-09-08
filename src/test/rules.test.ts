@@ -11,9 +11,9 @@ import { ref, set, get, update } from "firebase/database";
 let testEnv: RulesTestEnvironment;
 
 /** Deck-builder change (2026-09-08): settings.roleCounts needs a value for
- * every one of the 20 RoleKeys (Story 4a.2 added BEHOLDER). 8 total, ≥1
- * Wolf-faction role, matching the deck the room-creation UI seeds by
- * default (src/app/page.tsx). */
+ * every one of the 21 RoleKeys (Story 4a.2 added BEHOLDER, Epic 1b Story
+ * 1b.2 added DISEASED). 8 total, ≥1 Wolf-faction role, matching the deck the
+ * room-creation UI seeds by default (src/app/page.tsx). */
 const VALID_ROLE_COUNTS = {
   WEREWOLF: 2,
   TRAITOR: 1,
@@ -33,6 +33,7 @@ const VALID_ROLE_COUNTS = {
   PACIFIST: 0,
   VILLAGE_IDIOT: 0,
   BEHOLDER: 0,
+  DISEASED: 0,
   VILLAGER: 1,
   TANNER: 0,
 };
@@ -222,7 +223,7 @@ describe("rooms/$code", () => {
     await assertFails(set(ref(db, "rooms/EXIST1/settings"), { remoteMode: false }));
   });
 
-  it("denies a settings write missing one of roleCounts' 20 role keys", async () => {
+  it("denies a settings write missing one of roleCounts' 21 role keys", async () => {
     const db = testEnv.authenticatedContext("uid-owner").database();
     const { VILLAGER: _omitted, ...incomplete } = VALID_ROLE_COUNTS;
     await assertFails(

@@ -168,6 +168,7 @@ export async function POST(
     alreadyTransformedCursed,
     lovers,
     wolfCubBonusNightPending: game.wolfCubBonusNightPending ?? false,
+    diseasedSuppressNextBite: game.diseasedSuppressNextBite ?? false,
   });
 
   // Spec §4.3: a role-specific phase whose actor is alive ends the moment
@@ -303,6 +304,13 @@ export async function POST(
     decision.deathsThisRoundRoles.includes("WOLF_CUB")
   ) {
     updates[`games/${gameId}/wolfCubBonusNightPending`] = true;
+  }
+  // Epic 1b (Diseased): mirror of the wolfCubBonusNightPending write above —
+  // DAWN is the one call that just consumed diseasedSuppressNextBite as
+  // planAdvance's input, so it's also where the new value (armed if
+  // tonight's bite just landed on Diseased) gets persisted for next time.
+  if (decision.nextPhase === "DAWN") {
+    updates[`games/${gameId}/diseasedSuppressNextBite`] = decision.diseasedSuppressNextBite;
   }
 
   for (const uid of decision.deaths) {

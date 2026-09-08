@@ -17,6 +17,7 @@ export type RoleKey =
   | "BEHOLDER"
   | "WOLF_MAN"
   | "WOLF_CUB"
+  | "DISEASED"
   | "TANNER"
   | "VILLAGER";
 
@@ -44,6 +45,7 @@ export const FACTION_BY_ROLE: Record<RoleKey, Faction> = {
   BEHOLDER: "VILLAGE",
   WOLF_MAN: "WOLF",
   WOLF_CUB: "WOLF",
+  DISEASED: "VILLAGE",
   TANNER: "TANNER",
   VILLAGER: "VILLAGE",
 };
@@ -71,6 +73,7 @@ export const ALL_ROLE_KEYS: RoleKey[] = [
   "PACIFIST",
   "VILLAGE_IDIOT",
   "BEHOLDER",
+  "DISEASED",
   "VILLAGER",
   "TANNER",
 ];
@@ -191,6 +194,16 @@ export interface Game {
    * Set/read/cleared entirely at the route layer since planAdvance() is
    * pure and has no memory between calls. */
   wolfCubBonusNightPending?: boolean;
+  /** Epic 1b (Diseased / "Người Nhiễm Bệnh"): true for exactly the one
+   * WOLVES phase right after the wolves successfully bite the Diseased
+   * player — that night's wolf target still gets picked normally, but
+   * nobody actually dies (spec doc 2026-09-08-roles-epic-1b.md §2, "no role
+   * reveal" branch of the source text). Public and safe: it says nothing
+   * about who the Diseased player is (already-public death/survival info
+   * doesn't reveal it either), only that the pack's next bite is voided.
+   * Set/read/cleared entirely at the route layer, same pattern as
+   * wolfCubBonusNightPending. */
+  diseasedSuppressNextBite?: boolean;
 }
 
 export interface SeerHint {

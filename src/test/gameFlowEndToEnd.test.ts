@@ -1355,6 +1355,125 @@ describe("Epic 3c: Wolf Cub death arms a 2-victim bonus night, consumed exactly 
   });
 });
 
+describe("Epic 1b Story 1b.2: Diseased voids the wolves' next bite after a successful feed", () => {
+  const gameId = "GAME-DISEASED";
+  const roomCode = "DISEASE1";
+  const wolf1 = "wolf1";
+  const seer = "seer";
+  const witch = "witch";
+  const diseased = "diseased1";
+  const villagers = ["villager1", "villager2", "villager3"];
+  const uids = [wolf1, seer, witch, diseased, ...villagers];
+
+  beforeEach(async () => {
+    const players: Game["players"] = {};
+    for (const uid of uids) players[uid] = { name: uid, alive: true, muted: false };
+
+    const game: Game = {
+      roomCode,
+      startedAt: 1,
+      dayNumber: 1,
+      phase: { name: "SEER", endsAt: Date.now() - 1, version: 0 },
+      players,
+    };
+    await fakeDb.ref(`games/${gameId}`).set(game);
+
+    const priv: Record<string, PrivatePlayerState> = {
+      [wolf1]: { role: "WEREWOLF", initialRole: "WEREWOLF", potions: { heal: true, poison: true } },
+      [seer]: { role: "SEER", initialRole: "SEER", potions: { heal: true, poison: true } },
+      [witch]: { role: "WITCH", initialRole: "WITCH", potions: { heal: true, poison: true } },
+      [diseased]: { role: "DISEASED", initialRole: "DISEASED", potions: { heal: true, poison: true } },
+    };
+    for (const uid of villagers) {
+      priv[uid] = { role: "VILLAGER", initialRole: "VILLAGER", potions: { heal: true, poison: true } };
+    }
+    await fakeDb.ref(`private/${gameId}`).set(priv);
+    // DISEASED isn't part of the old auto-fill formula seedRoom()'s fixture
+    // leans on — same reason Story 4a.2 (Beholder) seeded roleCounts
+    // directly — but this test drives the game entirely through
+    // games/private + callAdvance (never callStart), so the exact deck
+    // seedRoom() records here is never read; it only needs the room to
+    // exist for the end-of-game LOBBY reset writes.
+    await seedRoom(roomCode, uids, NO_OPTIONAL_ROLES);
+    await fakeDb.ref(`rooms/${roomCode}/status`).set("PLAYING");
+  });
+
+  it("kills the Diseased player on a successful first bite, then voids the very next night's bite", async () => {
+    // Night 1: the pack bites the Diseased player — a normal kill, exactly
+    // like biting anyone else.
+    await writeAction(gameId, "SEER", seer, wolf1);
+    let res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WOLVES");
+
+    await writeAction(gameId, "WOLVES", wolf1, diseased);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WITCH_SAVE");
+
+    await writeAction(gameId, "WITCH_SAVE", witch, null);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WITCH_KILL");
+
+    await writeAction(gameId, "WITCH_KILL", witch, null);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("DAWN");
+    expect(res.deaths).toEqual([diseased]);
+
+    let game = await getGame(gameId);
+    expect(game.diseasedSuppressNextBite).toBe(true);
+
+    // Day 1: nobody votes — no majority, nobody hangs — and the just-armed
+    // flag must survive this unrelated VOTE_RESULT untouched.
+    await expirePhaseTimer(gameId);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("DISCUSSION");
+
+    await expirePhaseTimer(gameId);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("VOTE");
+
+    await expirePhaseTimer(gameId);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("VOTE_RESULT");
+    expect(res.deaths).toEqual([]);
+
+    game = await getGame(gameId);
+    expect(game.diseasedSuppressNextBite).toBe(true);
+
+    await expirePhaseTimer(gameId);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("NIGHT_FALLS");
+    expect((await getGame(gameId)).dayNumber).toBe(2);
+
+    await expirePhaseTimer(gameId);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("SEER");
+
+    // Night 2: the pack bites villager1 — an ordinary, unprotected target —
+    // but the sick pack's bite is voided, so villager1 survives.
+    await writeAction(gameId, "SEER", seer, wolf1);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WOLVES");
+
+    await writeAction(gameId, "WOLVES", wolf1, "villager1");
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WITCH_SAVE");
+
+    await writeAction(gameId, "WITCH_SAVE", witch, null);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WITCH_KILL");
+
+    await writeAction(gameId, "WITCH_KILL", witch, null);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("DAWN");
+    expect(res.deaths).toEqual([]);
+
+    // Consumed exactly once — back to false, and no Diseased player left
+    // alive to ever re-arm it again.
+    game = await getGame(gameId);
+    expect(game.diseasedSuppressNextBite).toBe(false);
+  });
+});
+
 describe("Resilience Task 6: push notifications for whoever's newly required to act", () => {
   const gameId = "GAME-6";
   const roomCode = "PUSH01";

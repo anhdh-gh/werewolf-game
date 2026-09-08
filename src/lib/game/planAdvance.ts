@@ -26,6 +26,10 @@ export interface PlanAdvanceInput {
    * night after Wolf Cub died — the pack bites top-2 of the vote instead of
    * top-1. Ignored outside a DAWN resolution. */
   wolfCubBonusNightPending: boolean;
+  /** Epic 1b (Diseased): true when this DAWN resolution is the one night
+   * after the wolves bit the Diseased player — tonight's bite is voided
+   * (see resolveNight's suppressBite). Ignored outside a DAWN resolution. */
+  diseasedSuppressNextBite: boolean;
 }
 
 export interface PlanAdvanceResult {
@@ -39,6 +43,13 @@ export interface PlanAdvanceResult {
    * exposed so the route can check "did Wolf Cub just die?" without
    * recomputing this itself from decision.deaths + aliveRolesByUid. */
   deathsThisRoundRoles: RoleKey[];
+  /** Epic 1b (Diseased): the new value to persist for the *next* DAWN's
+   * `diseasedSuppressNextBite` input — true iff tonight's wolf bite
+   * actually landed on the (still-alive) Diseased player and wasn't saved
+   * by Bodyguard/Witch, regardless of whether suppression zeroed out the
+   * death itself. Only meaningful when `nextPhase` resolved via DAWN;
+   * false on every other transition (route only writes it on DAWN). */
+  diseasedSuppressNextBite: boolean;
 }
 
 /**
@@ -58,6 +69,7 @@ export function planAdvance(input: PlanAdvanceInput): PlanAdvanceResult {
 
   let deaths: string[] = [];
   let transformedToWolf: string[] = [];
+  let diseasedSuppressNextBite = false;
 
   if (next === "DAWN") {
     const wolfTargets = tallyTopNVotes(
@@ -71,9 +83,19 @@ export function planAdvance(input: PlanAdvanceInput): PlanAdvanceResult {
       witchPoisonTarget: input.actions.witchPoisonTarget,
       cursedUids: input.cursedUids,
       alreadyTransformedCursed: input.alreadyTransformedCursed,
+      suppressBite: input.diseasedSuppressNextBite,
     });
     deaths = applyDeathExtras(nightResult.deaths, input.lovers, input.actions.hunterShots);
     transformedToWolf = nightResult.transformed;
+
+    const diseasedUid = Object.entries(input.aliveRolesByUid).find(
+      ([, role]) => role === "DISEASED",
+    )?.[0];
+    diseasedSuppressNextBite =
+      diseasedUid !== undefined &&
+      wolfTargets.includes(diseasedUid) &&
+      diseasedUid !== input.actions.protectTarget &&
+      diseasedUid !== input.actions.witchSaveTarget;
   } else if (next === "VOTE_RESULT") {
     const hanged = resolveVote(input.actions.voteBallots, input.aliveRolesByUid);
     deaths = applyDeathExtras(hanged ? [hanged] : [], input.lovers, input.actions.hunterShots);
@@ -100,5 +122,6 @@ export function planAdvance(input: PlanAdvanceInput): PlanAdvanceResult {
     transformedToWolf,
     winner,
     deathsThisRoundRoles,
+    diseasedSuppressNextBite,
   };
 }

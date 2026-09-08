@@ -328,3 +328,21 @@ hoàn toàn). Thứ tự implement đề xuất: Diseased trước (đơn giản
 đọc/ghi) → Old Hag cuối (nhiều file nhất, phase mới + RTDB rules mới). Sau khi 3 story implement
 xong với CI xanh + rules RTDB live verify (cho Old Hag), cập nhật
 `2026-09-08-roles-epic-roadmap.md`: Tough Guy/Diseased/Old Hag từ `unblocked` → `done`.
+
+## 7. Đã xong — Story 1b.2 (Diseased) implementation (gnhf run `stop-read-this-first-98c7ba`
+iteration 8, 2026-09-08)
+
+Implement đúng thiết kế ở §2 phía trên, không đổi gì so với thiết kế đã chốt: `RoleKey`
+`DISEASED` mới (VILLAGE faction), `Game.diseasedSuppressNextBite?: boolean`,
+`resolveNight`'s `suppressBite?: boolean` (mặc định `false`), `PlanAdvanceInput`/`Result` +2
+field mới, route đọc/ghi ở đúng nhánh DAWN, `database.rules.json`'s `roleCounts` `.validate`
+mở rộng cho `RoleKey` thứ 21, mọi `Record<RoleKey, number>` fixture literal cập nhật. Quyết
+định #5 (Diseased × Cursed: Cursed vẫn transform dù `suppressBite=true`) được implement theo
+đúng khuyến nghị của §2.2 mà không chờ owner xác nhận trực tiếp — ghi rõ ở đây để owner phủ
+quyết sau nếu muốn, cùng tinh thần "lệch nguyên văn có ghi chú" đã áp dụng cho Prince (Epic 1)
+và tương tự cách Tough Guy §1b.1.1's Q1/Q2/Q3 được xử lý (không chờ mới được code). Test: 4
+case mới trong `resolveNight.test.ts`, 5 case mới trong `planAdvance.test.ts`, 1 test e2e 2-đêm
+liên tiếp trong `gameFlowEndToEnd.test.ts` (đêm 1 cắn trúng → chết + arm cờ; đêm 2 cắn người
+khác → không ai chết, cờ tự tắt). CI xanh + live rules deploy/byte-verify để ở iteration sau,
+đúng cadence toàn dự án. Tough Guy và Old Hag (Story 1b.1, 1b.3) vẫn `story ready`, chưa
+implement.

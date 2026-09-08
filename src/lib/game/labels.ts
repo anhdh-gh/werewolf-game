@@ -38,6 +38,7 @@ export const ROLE_LABELS: Record<RoleKey, string> = {
   BEHOLDER: "Kẻ Quan Sát",
   WOLF_MAN: "Lang Nhân",
   WOLF_CUB: "Sói Con",
+  DISEASED: "Người Nhiễm Bệnh",
   TANNER: "Chán Đời",
   VILLAGER: "Dân Làng",
 };

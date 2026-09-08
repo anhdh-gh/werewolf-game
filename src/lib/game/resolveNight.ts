@@ -12,6 +12,14 @@ export interface ResolveNightInput {
   /** Cursed players who already transformed on a previous night — a second
    * bite kills them normally instead of transforming them again. */
   alreadyTransformedCursed: string[];
+  /** Epic 1b (Diseased): true for the one night after the wolves bite the
+   * Diseased player — the pack still picks a target this night (so no
+   * indirect "we didn't get to bite" tell leaks their identity), but that
+   * bite never kills. Cursed's transform-on-first-bite still applies even
+   * when this is true (design doc §2.2 decision #5): the curse triggers on
+   * being bitten, not on dying. Optional, defaults to false so every
+   * existing call site is unaffected. */
+  suppressBite?: boolean;
 }
 
 export interface ResolveNightResult {
@@ -34,6 +42,7 @@ export function resolveNight(input: ResolveNightInput): ResolveNightResult {
     witchPoisonTarget,
     cursedUids,
     alreadyTransformedCursed,
+    suppressBite = false,
   } = input;
 
   const deaths = new Set<string>();
@@ -46,7 +55,7 @@ export function resolveNight(input: ResolveNightInput): ResolveNightResult {
       cursedUids.includes(wolfTarget) && !alreadyTransformedCursed.includes(wolfTarget);
     if (isFirstCursedBite) {
       transformed.push(wolfTarget);
-    } else {
+    } else if (!suppressBite) {
       deaths.add(wolfTarget);
     }
   }
