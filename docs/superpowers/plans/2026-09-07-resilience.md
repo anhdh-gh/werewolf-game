@@ -327,7 +327,23 @@ below). The RTDB instance exists at
 region — not the `*.firebaseio.com` host) and an unauthenticated read of `/games` is
 denied, so the database is not in test mode.
 
-**Narration audio is now the only remaining FAIL**, and it is the one item on this list
+**The deployed database rules are stale, and that is now the most serious live blocker.**
+Read back from the instance on 2026-09-08 (`firebase database:get "/.settings/rules"`),
+the live ruleset contains only `presence` and `rooms`, and its `rooms` section differs
+from the committed one. The entire game runtime — `games`, `actions`, `chat`, `private`,
+`fcmTokens` — has **no deployed rules at all**. RTDB rules do not cascade upward, so those
+paths are denied for every client: a player can create and join a room, and then nothing
+works from the moment a game starts, because no client can even read `/games/{id}`. Every
+rules test in CI is green against the committed file, which is exactly why this went
+unnoticed — CI validates a ruleset that is not the one serving players. Fix, owner-side:
+
+```sh
+firebase deploy --only database
+```
+
+Preflight will not do it; it is read-only by design.
+
+**Narration audio is the other remaining FAIL**, and it is the one item on this list
 that was never blocked on credentials the owner had to go and create.
 
 A note on why the build-time check is separate from the env check: Next.js inlines every
@@ -340,11 +356,14 @@ against the newest Ready deployment's and fails when the variable is the newer o
 Both ages come back rounded to a single unit, so it only rules when the two ranges do not
 overlap and reports SKIP otherwise rather than guessing.
 
-- Deploy `database.rules.json` (now also covers `fcmTokens/`, `chat/`) to the real
-  Firebase project. Preflight can confirm this one exactly, but only after
-  `firebase experiments:enable rtdbrules` (a local CLI setting) — without it, the
-  released ruleset cannot be read back and the check reports SKIP rather than
-  guessing.
+- **Deploy `database.rules.json` (now also covers `fcmTokens/`, `chat/`) to the real
+  Firebase project — still outstanding, and confirmed outstanding rather than assumed.**
+  Preflight reads the live ruleset back with `firebase database:get "/.settings/rules"`
+  and names which top-level sections are absent, different, or live-only. (It does *not*
+  use `firebase database:rules:list` / `rules:get`: those need the `rtdbrules` experiment
+  flag *and*, even with it enabled, hit a legacy endpoint that returns `403 unauthorized
+  access` for ordinary project owners, reported only as `Unexpected error encountered with
+  database.`)
 - ~~Set `FIREBASE_SERVICE_ACCOUNT_KEY` in Vercel~~ — done; preflight sees it as a
   Secret on Production. (Already needed by Game Engine; Resilience's new routes —
   `/api/livekit/token` — depend on the same one.)

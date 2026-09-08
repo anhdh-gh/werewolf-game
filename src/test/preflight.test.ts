@@ -23,6 +23,7 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   REQUIRED_ENV,
+  diffRuleSections,
   normalizeRules,
   parseDatabaseRegionRedirect,
   parseEnvFileNames,
@@ -357,6 +358,57 @@ describe("deployed-rules comparison", () => {
     const weakened = committed.replace('"auth != null"', '"true"');
     expect(weakened).not.toBe(committed);
     expect(normalizeRules(weakened)).not.toBe(normalizeRules(committed));
+  });
+});
+
+describe("naming which rule sections are wrong", () => {
+  // normalizeRules answers "are these the same ruleset". That is enough to fail
+  // the check but not enough to act on: the owner needs to know which features
+  // are dead live. These pin the section-level breakdown that the FAIL prints.
+  const committed = () => readFileSync(path.join(REPO_ROOT, "database.rules.json"), "utf8");
+
+  it("reports nothing when the deployed ruleset is the committed one", () => {
+    const diff = diffRuleSections(JSON.stringify(JSON.parse(committed())), committed());
+    expect(diff).toEqual({ missing: [], extra: [], differing: [] });
+  });
+
+  it("names every committed section the live ruleset has never heard of", () => {
+    // This is the shape actually found deployed on 2026-09-08: an older ruleset
+    // covering only the lobby, with the whole game runtime absent. RTDB rules do
+    // not cascade upward, so those paths were denied for every client.
+    const deployed = JSON.stringify({
+      rules: { presence: { $uid: { ".read": "auth != null" } }, rooms: { $code: {} } },
+    });
+    const diff = diffRuleSections(deployed, committed());
+    expect(diff.missing).toEqual(
+      expect.arrayContaining(["games", "actions", "chat", "private", "fcmTokens"]),
+    );
+    expect(diff.missing).not.toContain("presence");
+    expect(diff.extra).toEqual([]);
+  });
+
+  it("separates a section that is present but changed from one that is absent", () => {
+    const base = '{"rules":{"a":{".read":"auth != null"},"b":{".read":true}}}';
+    const diff = diffRuleSections('{"rules":{"a":{".read":"true"},"c":{}}}', base);
+    expect(diff.differing).toEqual(["a"]);
+    expect(diff.missing).toEqual(["b"]);
+    expect(diff.extra).toEqual(["c"]);
+  });
+
+  it("compares inside the rules wrapper, so it never just reports \"rules\"", () => {
+    const diff = diffRuleSections('{"rules":{}}', committed());
+    expect(diff.missing).not.toContain("rules");
+    expect(diff.missing.length).toBeGreaterThan(0);
+  });
+
+  it("ignores key order and comments, exactly as the match check does", () => {
+    const a = '{\n  // deployed\n  "rules":{"x":{"p":1,"q":2}}\n}';
+    const b = '{"rules":{"x":{"q":2,"p":1}}}';
+    expect(diffRuleSections(a, b)).toEqual({ missing: [], extra: [], differing: [] });
+  });
+
+  it("treats a ruleset with no rules wrapper as having no sections", () => {
+    expect(diffRuleSections("{}", '{"rules":{"games":{}}}').missing).toEqual(["games"]);
   });
 });
 

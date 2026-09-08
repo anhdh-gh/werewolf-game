@@ -16,7 +16,7 @@
  * "the code for it exists".
  *
  * STRICTLY READ-ONLY. It runs `vercel ls`, `vercel env ls`, `firebase
- * database:instances:list`, `firebase database:rules:list/get`, and
+ * database:instances:list`, `firebase database:get /.settings/rules`, and
  * unauthenticated HTTPS GETs. It never deploys, never writes to the database,
  * never creates an auth user, and never prints an environment variable's
  * value — only whether the name is set. (`vercel env ls` shows values
@@ -295,11 +295,12 @@ export function parseEnvFileNames(contents) {
  * in whitespace and key order but not in meaning, so both sides are parsed and
  * re-serialized with sorted keys. Firebase also accepts JSON-with-comments in
  * a ruleset source; those are stripped before parsing. */
+export function stripJsonComments(source) {
+  return source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+}
+
 export function normalizeRules(source) {
-  const withoutComments = source
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/^\s*\/\/.*$/gm, "");
-  return stableStringify(JSON.parse(withoutComments));
+  return stableStringify(JSON.parse(stripJsonComments(source)));
 }
 
 function stableStringify(value) {
@@ -651,91 +652,110 @@ async function checkDatabase(project) {
     });
   }
 
-  checks.push(checkDeployedRules(project));
+  checks.push(checkDeployedRules(project, defaultInstance));
   return checks;
 }
 
-/** Compares the ruleset actually released on the project against
- * database.rules.json. `database:rules:*` sits behind firebase-tools' own
- * `rtdbrules` experiment flag, which is a local CLI setting (not a project
- * change), so when it is off this reports the one command that turns it on
- * rather than guessing. */
-function checkDeployedRules(project) {
-  const list = run("firebase", ["database:rules:list", "--project", project, "--json"]);
-  if (!list.ok) {
-    // With --json, firebase-tools prints nothing at all for an unknown command
-    // (the failure happens before its JSON reporter is wired up), so the reason
-    // has to be re-fetched from the human-readable run.
-    const plain = run("firebase", ["database:rules:list", "--project", project]);
-    const output = `${list.combined}\n${plain.combined}`;
-    const experimentOff = /is not a Firebase command|rtdbrules/i.test(output);
-    return {
-      id: "rtdb-rules-match",
-      title: "Deployed rules match database.rules.json",
-      status: SKIP,
-      detail: experimentOff
-        ? "  Needs firebase-tools' read-only ruleset API, which is behind an experiment flag:\n" +
-          "      firebase experiments:enable rtdbrules\n" +
-          "  (a local CLI setting — it changes nothing on the project), then re-run."
-        : "  Could not read rulesets: " + (list.error ?? output.trim() ?? ""),
-    };
-  }
-  let stableId;
-  try {
-    stableId = JSON.parse(list.stdout).result?.labeled?.stable;
-  } catch {
-    stableId = null;
-  }
-  if (!stableId) {
-    return {
-      id: "rtdb-rules-match",
-      title: "Deployed rules match database.rules.json",
-      status: SKIP,
-      detail: "  Could not determine the released ruleset id from the CLI output.",
-    };
-  }
+/** Summarizes how a deployed ruleset differs from the committed one, in terms
+ * of the top-level sections of the rule tree. A whole-file string diff answers
+ * "are they the same" but not "what is broken about the live game", and those
+ * are different questions: RTDB rules do not cascade upward, so a section that
+ * is absent from the deployed tree is not "slightly stale", it is denied
+ * outright for every client. Naming the absent sections turns the failure into
+ * the list of features that are dead live. */
+export function diffRuleSections(deployedSource, committedSource) {
+  const sections = (source) => {
+    const parsed = JSON.parse(stripJsonComments(source));
+    // A ruleset is always wrapped in a single "rules" key; compare inside it so
+    // the report names `games`, not `rules`.
+    return parsed && typeof parsed.rules === "object" && parsed.rules !== null
+      ? parsed.rules
+      : {};
+  };
+  const deployed = sections(deployedSource);
+  const committed = sections(committedSource);
+  const missing = Object.keys(committed).filter((key) => !(key in deployed));
+  const extra = Object.keys(deployed).filter((key) => !(key in committed));
+  const differing = Object.keys(committed)
+    .filter((key) => key in deployed)
+    .filter((key) => stableStringify(deployed[key]) !== stableStringify(committed[key]));
+  return { missing, extra, differing };
+}
+
+/** Compares the ruleset actually live on the database instance against
+ * database.rules.json.
+ *
+ * Mechanism note: the obvious command for this, `firebase database:rules:list`
+ * / `:get`, is doubly unusable. It sits behind firebase-tools' `rtdbrules`
+ * experiment flag, and even with that flag enabled it reads a legacy
+ * ruleset-label endpoint that answers 403 "unauthorized access" for ordinary
+ * project owners, surfacing as the opaque "Unexpected error encountered with
+ * database." So this uses the RTDB REST API's own `/.settings/rules` path
+ * instead, which `firebase database:get` reaches with the CLI's existing
+ * credentials, needs no experiment flag, and returns the live ruleset directly.
+ * It is a read of a settings path — it writes nothing. */
+function checkDeployedRules(project, instance) {
   const got = run("firebase", [
-    "database:rules:get",
-    stableId,
+    "database:get",
+    "/.settings/rules",
+    "--instance",
+    instance,
     "--project",
     project,
-    "--json",
   ]);
   if (!got.ok) {
     return {
       id: "rtdb-rules-match",
       title: "Deployed rules match database.rules.json",
       status: SKIP,
-      detail: `  Could not fetch ruleset ${stableId}: ` + (got.error ?? got.combined.trim()),
+      detail:
+        "  Could not read the live ruleset: " +
+        (got.error ?? got.combined.trim()) +
+        "\n  Read it by hand at:\n" +
+        `      https://console.firebase.google.com/project/${project}/database/${instance}/rules`,
     };
   }
+  let deployedSource = got.stdout;
   let deployed;
   try {
-    deployed = normalizeRules(JSON.parse(got.stdout).result.source);
+    deployed = normalizeRules(deployedSource);
   } catch (error) {
     return {
       id: "rtdb-rules-match",
       title: "Deployed rules match database.rules.json",
       status: SKIP,
-      detail: "  Deployed ruleset was not parseable JSON: " + String(error),
+      detail: "  Live ruleset was not parseable JSON: " + String(error),
     };
   }
-  const committed = normalizeRules(readFileSync(RULES_FILE, "utf8"));
-  if (deployed === committed) {
+  const committedSource = readFileSync(RULES_FILE, "utf8");
+  if (deployed === normalizeRules(committedSource)) {
     return {
       id: "rtdb-rules-match",
-      title: `Deployed rules match database.rules.json (ruleset ${stableId})`,
+      title: "Deployed rules match database.rules.json",
       status: OK,
     };
   }
+  const { missing, extra, differing } = diffRuleSections(deployedSource, committedSource);
+  const lines = [
+    "  The live database is NOT running the rules in this repo. Every rules test in",
+    "  this suite asserts against the committed file, so the suite is green about a",
+    "  ruleset that is not the one serving players.",
+  ];
+  if (missing.length > 0) {
+    lines.push(
+      `  Absent from the live ruleset: ${missing.join(", ")}`,
+      "  RTDB rules do not cascade upward, so an absent section is denied for every",
+      "  client — those paths are unusable live, not merely stale.",
+    );
+  }
+  if (differing.length > 0) lines.push(`  Present but different: ${differing.join(", ")}`);
+  if (extra.length > 0) lines.push(`  Live-only (not in the repo): ${extra.join(", ")}`);
+  lines.push("  Deploy the committed rules: firebase deploy --only database");
   return {
     id: "rtdb-rules-match",
-    title: `Deployed rules DIFFER from database.rules.json (ruleset ${stableId})`,
+    title: "Deployed rules DIFFER from database.rules.json",
     status: FAIL,
-    detail:
-      "  The rules in this repo are what every rules test asserts against, so the tests\n" +
-      "  are currently green about a ruleset that is not the one live.\n" +
-      "  Deploy: firebase deploy --only database",
+    detail: lines.join("\n"),
   };
 }
 
