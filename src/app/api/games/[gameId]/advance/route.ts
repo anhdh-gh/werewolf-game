@@ -403,9 +403,18 @@ export async function POST(
   // client wouldn't already have shown them.
   const newlyRequired = requiredActorsForPhase(decision.nextPhase, aliveRolesByUid);
   if (newlyRequired.length > 0) {
-    await notifyRequiredActors(db, newlyRequired).catch(() => {
+    await notifyRequiredActors(db, newlyRequired).catch((err) => {
       // best-effort — the phase already advanced regardless of whether
-      // anyone gets woken up by a push notification
+      // anyone gets woken up by a push notification, so this must never
+      // rethrow. It must still leave a trace, though: because this path
+      // deliberately produces no 5xx, an FCM outage carries no
+      // x-vercel-error, nothing for preflight to probe and nothing for CI
+      // to catch (the suite mocks adminMessaging entirely). `vercel logs`
+      // is the only place it can ever surface.
+      console.error(
+        `[advance] push notification failed for game ${gameId} entering ${decision.nextPhase}:`,
+        err,
+      );
     });
   }
 
@@ -417,10 +426,25 @@ async function notifyRequiredActors(db: Database, uids: string[]): Promise<void>
   const tokens = tokenSnaps.map((snap) => snap.val() as string | null).filter((t) => !!t);
   if (tokens.length === 0) return;
 
-  await adminMessaging().sendEachForMulticast({
+  // sendEachForMulticast resolves successfully even when every single token
+  // was rejected — per-token outcomes live in the returned BatchResponse, not
+  // in a thrown error, so the .catch() at the call site never sees them.
+  // Without this, a room where every player's registration went stale
+  // (reinstall, cleared site data, expired token) is indistinguishable from
+  // one where every notification landed.
+  const batch = await adminMessaging().sendEachForMulticast({
     tokens,
     notification: { title: "Ma Sói", body: "Đến lượt bạn!" },
   });
+  if (batch.failureCount > 0) {
+    const codes = batch.responses
+      .filter((r) => !r.success)
+      .map((r) => r.error?.code ?? "unknown");
+    console.error(
+      `[advance] ${batch.failureCount}/${tokens.length} push notifications rejected:`,
+      codes.join(", "),
+    );
+  }
 }
 
 /**

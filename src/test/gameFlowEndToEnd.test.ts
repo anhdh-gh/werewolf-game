@@ -970,10 +970,58 @@ describe("Resilience Task 6: push notifications for whoever's newly required to 
   it("a notification failure never blocks the phase transition itself", async () => {
     await fakeDb.ref(`fcmTokens/${seer}`).set("seer-token-abc");
     sendEachForMulticast.mockRejectedValueOnce(new Error("FCM is down"));
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
 
     const res = await callAdvance(gameId);
     expect(res.phase.name).toBe("SEER");
     const game = await getGame(gameId);
     expect(game.phase.name).toBe("SEER");
+
+    // ...but it must not vanish. This path deliberately returns no 5xx, so
+    // `vercel logs` is the only signal an FCM outage can ever produce.
+    expect(logged).toHaveBeenCalledTimes(1);
+    const [message, err] = logged.mock.calls[0];
+    expect(message).toContain(gameId);
+    expect(message).toContain("SEER");
+    expect((err as Error).message).toBe("FCM is down");
+    logged.mockRestore();
+  });
+
+  it("logs when FCM resolves successfully but rejected the tokens anyway", async () => {
+    // sendEachForMulticast does NOT throw for per-token failures — it
+    // resolves with a BatchResponse carrying them. A room whose every token
+    // went stale would otherwise be indistinguishable from a healthy one.
+    await fakeDb.ref(`fcmTokens/${seer}`).set("stale-token-abc");
+    sendEachForMulticast.mockResolvedValueOnce({
+      successCount: 0,
+      failureCount: 1,
+      responses: [
+        { success: false, error: { code: "messaging/registration-token-not-registered" } },
+      ],
+    });
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("SEER"); // still never blocks the transition
+
+    expect(logged).toHaveBeenCalledTimes(1);
+    expect(logged.mock.calls[0][0]).toContain("1/1 push notifications rejected");
+    expect(logged.mock.calls[0][1]).toContain("messaging/registration-token-not-registered");
+    logged.mockRestore();
+  });
+
+  it("stays silent when every notification actually landed", async () => {
+    await fakeDb.ref(`fcmTokens/${seer}`).set("seer-token-abc");
+    sendEachForMulticast.mockResolvedValueOnce({
+      successCount: 1,
+      failureCount: 0,
+      responses: [{ success: true, messageId: "projects/x/messages/1" }],
+    });
+    const logged = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("SEER");
+    expect(logged).not.toHaveBeenCalled();
+    logged.mockRestore();
   });
 });

@@ -644,3 +644,57 @@ success is a latch, not a retry loop.** `useAutoAdvance` re-armed only when the 
 which only happened when a call succeeded. `useCallToken` re-fetched only when the phase moved
 on, which the player needed the call room to help make happen. Both looked like they had error
 handling. Neither could recover.
+
+### The fourth instance, on the last unaudited surface: server-side silence (2026-09-08)
+
+The three sections above all fixed *client* code, and the iteration that closed the third one
+concluded the client `fetch()` surface was fully audited — correctly: only three non-test files
+call `fetch()`, and all three are now accounted for. But that audit never looked at the mirror
+image on the server: a `.catch()` on the route side that swallows an infrastructure failure
+into nothing at all.
+
+There was exactly one, in `src/app/api/games/[gameId]/advance/route.ts`:
+
+```ts
+await notifyRequiredActors(db, newlyRequired).catch(() => {
+  // best-effort — the phase already advanced regardless
+});
+```
+
+The *swallow itself is correct* and stays: spec §8.2's push notification is a safety net, and a
+notification problem must never roll back a phase transition that has already committed. There
+is even a test pinning that (`a notification failure never blocks the phase transition itself`).
+What was wrong is that it left no trace. Because this path deliberately produces no 5xx, an FCM
+outage carries no `x-vercel-error`, nothing for preflight's route probes to catch, and nothing
+for CI to catch either — `gameFlowEndToEnd` and `multiClientGame` both mock `adminMessaging()`
+wholesale, so the mock can never fail the way the real thing does. Push notifications could have
+been dead in production since the first deploy and every signal this project has would still
+read green. That is the same invisibility budget as the original `ERR_REQUIRE_ESM` outage, just
+on a feature nobody would notice missing until a player's tab got killed.
+
+A second, sharper defect was hiding underneath it: **`sendEachForMulticast` resolves
+successfully even when every token was rejected.** Per-token outcomes come back in the returned
+`BatchResponse` (`successCount` / `failureCount` / `responses[]`), not as a thrown error, so the
+`.catch()` above could never have seen them no matter how it was written. The old code awaited
+the call and discarded the result. A room where every player's registration had gone stale —
+reinstall, cleared site data, expired token, all routine — was byte-for-byte indistinguishable
+from one where every notification landed.
+
+The fix is observability only; no behaviour changes, nothing new can block a transition:
+
+- The `.catch()` now takes the error and `console.error`s it with the game id and the phase
+  being entered, so `vercel logs` is a real signal instead of the empty set.
+- `notifyRequiredActors` inspects the `BatchResponse` and logs `failureCount`/`tokens.length`
+  plus the distinct FCM error codes (`messaging/registration-token-not-registered`, …) when any
+  token was rejected. Silent when `failureCount` is 0, so a healthy room stays quiet.
+
+Three new tests in `src/test/gameFlowEndToEnd.test.ts` pin it: a rejected send still completes
+the transition *and* logs once with the game id, the phase name and the underlying error; a
+resolved-but-all-rejected batch logs the count and the error code while still advancing; and a
+fully successful batch logs nothing.
+
+The generalisable lesson, and the counterpart to the client-side one above: **a best-effort
+`.catch()` is a decision not to fail, not a decision not to know.** Every one of them should
+still log. And when an SDK call reports per-item outcomes in its return value rather than by
+throwing, `await`ing it without reading the result is not error handling at all — the `.catch()`
+that looks like it covers the call is covering a failure mode the call does not use.
