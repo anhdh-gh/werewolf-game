@@ -37,7 +37,7 @@ rõ ràng chứ không giấu.
 | **Epic 3** | Vai Sói thật tham gia cắn cùng bầy WOLVES, cơ chế đủ rõ để viết story ngay (Wolf Man → "Lang Nhân") | 1 | **`done`** — CI xanh (run 34221621075, commit 62e1052, `typecheck`/`test`/`build` đều `success`, sau khi iteration 14 sửa 1 bug đếm quân trong test fixture của run trước đó bị fail), rules RTDB live đã deploy và byte-compare khớp repo (2026-09-08) | `2026-09-08-roles-epic-3.md` |
 | **Epic 3b** | Vai Sói có khái niệm rõ nhưng paraphrase mơ hồ thời điểm xuyên đêm hoặc điều kiện thắng chính xác — cùng loại vấn đề đã chặn Epic 1b/2b (Dire Wolf, Lone Wolf) | 2 | Chưa viết story — cần rulebook gốc | chưa có |
 | **Epic 3c** | Vai cần khả năng engine mới ("cắn 2 mạng/đêm", chưa có trong pipeline WOLVES/WITCH/resolveNight hiện tại) — Wolf Cub | 1 | **`done`** — CI xanh (run 34224670711, commit e1deedd, `typecheck`/`test`/`build` đều `success`), rules RTDB live đã deploy và byte-compare khớp repo (2026-09-08, iteration 18) | `2026-09-08-roles-epic-3c.md` |
-| **Epic 4a** | Vai Làng thụ động/sửa VOTE, soi riêng từ Epic 4 và đủ rõ để viết story ngay (Village Idiot, Beholder) — cùng khuôn kiến trúc Epic 1 (Prince/Pacifist/Mason) | 2 | Story 4a.1 (Village Idiot) **code written, CI + live-rules-verification pending** (2026-09-08, iteration 21); Story 4a.2 (Beholder) vẫn `story ready`, chưa implement | `2026-09-08-roles-epic-4.md` |
+| **Epic 4a** | Vai Làng thụ động/sửa VOTE, soi riêng từ Epic 4 và đủ rõ để viết story ngay (Village Idiot, Beholder) — cùng khuôn kiến trúc Epic 1 (Prince/Pacifist/Mason) | 2 | Story 4a.1 (Village Idiot) **`done`** — CI xanh (run 34227270895, commit 96d1a72, `typecheck`/`test`/`build` đều `success`), rules RTDB live đã deploy và byte-compare khớp repo (2026-09-08, iteration 22); Story 4a.2 (Beholder) vẫn `story ready`, chưa implement | `2026-09-08-roles-epic-4.md` |
 | **Epic 4b** | Phần còn lại của Epic 4 sau khi soi riêng: Priest, Huntress, Revealer, Aura Seer (trùng/xung đột vai đã có, không có lời văn phân biệt); Drunk, Apprentice Seer (mơ hồ thời điểm, cùng lớp 1b/2b/3b); Troublemaker (thiếu khả năng engine + thiếu lời văn, cùng lớp 3c); Insomniac (khái niệm "hàng xóm" không tồn tại trong kiến trúc hiện tại) | 9 | **Chặn lại** — cần nghiên cứu thêm, 4 loại lý do khác nhau (xem `2026-09-08-roles-epic-4.md` bảng soi từng vai) | `2026-09-08-roles-epic-4.md` |
 | **Epic 5** | Phe thứ 3 mới — Vampire, Cult Leader. **Kiến trúc đã xong (2026-09-08, iteration 19)**: pass thiết kế xác nhận template "1 phase đêm cho 1 vai đơn lẻ" đã tồn tại sẵn (Sorcerer đã chứng minh), `checkWinner` chỉ cần thêm 1 branch mới (không refactor), "đổi phe hiệu lực" đã có tiền lệ ngầm từ Cursed. Không có gì bị chặn ở tầng kỹ thuật nữa. | 2 | Chặn lại — **đổi lý do sang "cần nguồn"**: Vampire thiếu hoàn toàn lời văn điều kiện thắng; Cult Leader thiếu chi tiết cơ chế xuyên đêm (cùng lớp mơ hồ Epic 1b/2b/3b) | `2026-09-08-roles-epic-5.md` |
 | **Epic 6** | Tier 2 — Night Terrors, Urban Legends, Classic Movie Monsters (tên xác nhận, **lời văn năng lực chưa có nguồn chính hãng**) | ~14 | Chặn lại — cần nghiên cứu lại lời văn trước khi viết story (catalog §5, §6 mục 4) | chưa có |
@@ -45,8 +45,8 @@ rõ ràng chứ không giấu.
 | *Loại khỏi phạm vi* | Legacy (kiến trúc campaign 16 phiên), Artifacts (cơ chế item-overlay, không phải vai), Daybreak (thuộc One Night, khác kiến trúc), "Village" (không xác nhận tồn tại) | — | Không lập epic — ghi rõ lý do ở catalog §2 | — |
 
 **Thứ tự triển khai đề xuất:** Epic 1 → Epic 2 → Epic 3 → Epic 3c (đã `done`, 2026-09-08) →
-Epic 4a (Story 4a.1 Village Idiot: code written, CI + live-rules pending, iteration 21; Story
-4a.2 Beholder: `story ready`, chưa implement) →
+Epic 4a (Story 4a.1 Village Idiot: `done`, iteration 22; Story
+4a.2 Beholder: `story ready`, chưa implement — hạng mục kế tiếp) →
 Epic 1b/2b/3b/4b/5 (khi có nghiên cứu rulebook giải quyết được mơ hồ) →
 (Epic 6 sau khi có lời văn Tier 2) → Epic Z chỉ khi
 owner tự cung cấp nguồn mới (ảnh chụp thẻ bài vật lý, liên hệ Bezier Games). Đây đúng là thứ tự
@@ -121,7 +121,7 @@ liệt kê vai đã có epic xác định (không lặp lại toàn bộ ~141 va
 | Wolf Man ("Lang Nhân") | 3 | `done` — CI xanh (run 34221621075, commit 62e1052, `typecheck`/`test`/`build` đều `success`; commit gốc d82648a từng fail 1 test do lỗi đếm quân trong fixture, sửa ở iteration 14). Rules RTDB live đã deploy (`firebase deploy --only database --project werewolf-game-2026`, 2026-09-08) và byte-compare khớp 100% với `database.rules.json` trong repo (2 rule WOLVES/wolves-chat mở rộng `WOLF_MAN` xác nhận có mặt sau deploy) |
 | Dire Wolf, Lone Wolf | 3b | `blocked` — cần rulebook gốc (mơ hồ thời điểm bạn đồng hành / điều kiện thắng chính xác) |
 | Wolf Cub | 3c | `done` — CI xanh (run 34224670711, commit e1deedd, `typecheck`/`test`/`build` đều `success`), merged vào main. Rules RTDB live đã deploy (`firebase deploy --only database --project werewolf-game-2026`, 2026-09-08) và byte-compare khớp 100% với `database.rules.json` trong repo (rule WOLVES/wolves-chat mở rộng `WOLF_CUB` và field `wolfCubBonusNightPending` xác nhận có mặt sau deploy, diff rỗng) — `resolveNight`/`tallyMajorityVote` tổng quát hoá sang `tallyTopNVotes`/`wolfTargets: string[]`, `planAdvance` nhận `wolfCubBonusNightPending` + trả `deathsThisRoundRoles`, route đọc/set cờ đúng 2 điểm DAWN/VOTE_RESULT (KHÔNG ở "Leaving WOLVES" như thiết kế gốc), full test coverage (unit + route-level e2e + emulator rules) |
-| Village Idiot ("Gã Khờ") | 4a | **`code written, CI + live-rules-verification pending`** (2026-09-08, iteration 21) |
+| Village Idiot ("Gã Khờ") | 4a | `done` — CI xanh (run 34227270895, commit 96d1a72, `typecheck`/`test`/`build` đều `success`), merged vào main. Rules RTDB live đã deploy (`firebase deploy --only database --project werewolf-game-2026`, 2026-09-08) và byte-compare khớp 100% với `database.rules.json` trong repo (rule VOTE mở rộng điều kiện `VILLAGE_IDIOT` xác nhận có mặt sau deploy, diff chỉ lệch newline cuối file) |
 | Beholder ("Kẻ Quan Sát") | 4a | `story ready` (2026-09-08, iteration 20) — chưa implement |
 | Priest, Huntress, Revealer, Aura Seer | 4b | `blocked` — trùng/xung đột vai đã có (Bodyguard/Hunter/Seer), không có lời văn phân biệt |
 | Drunk, Apprentice Seer | 4b | `blocked` — mơ hồ thời điểm, cùng lớp Epic 1b/2b/3b |
@@ -320,3 +320,14 @@ gốc mới — tất cả cần owner theo dõi, không chỉ Epic Z.
     implement** ở iteration này (giữ đúng "1 iteration = 1 đơn vị việc"). Việc còn lại cho Story
     4a.1: verify CI xanh, sau đó deploy + byte-verify `database.rules.json` lên RTDB live (đúng
     quy trình đã lặp lại cho Epic 1/2/3/3c) trước khi coi 4a.1 là `done`.
+
+14. **Xong (iteration 22, 2026-09-08)**: xác nhận CI xanh cho commit Village Idiot (96d1a72, run
+    34227270895, `typecheck`/`test`/`build` đều `success` — run này còn `in_progress` lúc iteration
+    21 kết thúc, iteration này poll tới khi hoàn tất). Deploy `database.rules.json` lên RTDB live
+    (`firebase deploy --only database --project werewolf-game-2026`) — pre-deploy diff xác nhận
+    rules live còn thiếu điều kiện `VILLAGE_IDIOT`; post-deploy `firebase database:get
+    /.settings/rules` byte-compare khớp repo (chỉ lệch newline cuối file). Epic 4a Story 4a.1
+    (Village Idiot) giờ là `done` đầy đủ theo mọi tiêu chí của objective. Không có thay đổi code
+    nào ở iteration này — thuần verification, đúng khuôn mẫu iteration 8/11/15/18. Việc kế tiếp
+    chưa bị chặn: Story 4a.2 (Beholder) đã `story ready` từ iteration 20, sẵn sàng implement ở
+    iteration sau.
