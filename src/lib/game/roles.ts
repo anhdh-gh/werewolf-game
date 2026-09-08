@@ -51,6 +51,22 @@ function shuffle<T>(items: T[]): T[] {
   return result;
 }
 
+/** Story 1.1 (Mason): pure, Firebase-free pairing of every MASON uid with
+ * every other MASON uid, so the caller (start route) can write it straight
+ * into each Mason's private state. Empty array for a solo Mason — nobody
+ * else to know about, still a valid (not missing) field. */
+export function buildMasonLinks(assignment: Record<string, RoleKey>): Record<string, string[]> {
+  const masonUids = Object.entries(assignment)
+    .filter(([, role]) => role === "MASON")
+    .map(([uid]) => uid);
+
+  const links: Record<string, string[]> = {};
+  for (const uid of masonUids) {
+    links[uid] = masonUids.filter((other) => other !== uid);
+  }
+  return links;
+}
+
 export function assignRoles(
   uids: string[],
   rolesEnabled: Record<OptionalRoleKey, boolean>,

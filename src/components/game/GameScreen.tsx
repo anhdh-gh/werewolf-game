@@ -22,6 +22,7 @@ import { Loader2 } from "lucide-react";
 import { ActionPanel } from "./ActionPanel";
 import { RoleCard } from "./RoleCard";
 import { PackInfo } from "./PackInfo";
+import { MasonInfo } from "./MasonInfo";
 import { MutedBanner } from "./MutedBanner";
 import { DeathAnnouncement } from "./DeathAnnouncement";
 import { SeerHints } from "./SeerHints";
@@ -176,6 +177,7 @@ function GameScreenInner({
           <MutedBanner muted={me?.muted ?? false} />
           <RoleCard privateState={privateState} />
           <PackInfo privateState={privateState} players={game.players} />
+          <MasonInfo privateState={privateState} players={game.players} />
           <SeerHints privateState={privateState} players={game.players} />
 
           {isRequired && !alreadyDone ? (

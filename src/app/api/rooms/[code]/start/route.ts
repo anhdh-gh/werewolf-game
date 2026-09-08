@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
-import { assignRoles } from "@/lib/game/roles";
+import { assignRoles, buildMasonLinks } from "@/lib/game/roles";
 import { PHASE_DURATIONS_MS } from "@/lib/game/phases";
 import type { Room } from "@/types/room";
 import { FACTION_BY_ROLE, type PrivatePlayerState } from "@/types/game";
@@ -47,6 +47,8 @@ export async function POST(
   // Spec §7: "danh sách đồng bọn cho Sói" — every wolf-faction uid (WEREWOLF
   // and TRAITOR both) needs to know the rest of the pack.
   const wolfFactionUids = uids.filter((uid) => FACTION_BY_ROLE[assignment[uid]] === "WOLF");
+  // Story 1.1: same passive-knowledge pattern as packUids above, for Mason.
+  const masonLinks = buildMasonLinks(assignment);
 
   const privateWrites: Record<string, PrivatePlayerState> = {};
   const players: Record<string, { name: string; alive: boolean; muted: boolean }> = {};
@@ -59,6 +61,7 @@ export async function POST(
       ...(FACTION_BY_ROLE[role] === "WOLF"
         ? { packUids: wolfFactionUids.filter((packUid) => packUid !== uid) }
         : {}),
+      ...(role === "MASON" ? { masonUids: masonLinks[uid] ?? [] } : {}),
     };
     players[uid] = { name: room.members[uid].name, alive: true, muted: false };
   }

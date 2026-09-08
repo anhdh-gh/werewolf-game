@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { wolfCount, buildRoleList, assignRoles } from "./roles";
+import { wolfCount, buildRoleList, assignRoles, buildMasonLinks } from "./roles";
 import type { OptionalRoleKey } from "@/types/room";
 
 const ALL_ENABLED: Record<OptionalRoleKey, boolean> = {
@@ -10,6 +10,7 @@ const ALL_ENABLED: Record<OptionalRoleKey, boolean> = {
   MUTER: true,
   CURSED: true,
   LYCAN: true,
+  MASON: true,
   TANNER: true,
 };
 
@@ -21,6 +22,7 @@ const ALL_DISABLED: Record<OptionalRoleKey, boolean> = {
   MUTER: false,
   CURSED: false,
   LYCAN: false,
+  MASON: false,
   TANNER: false,
 };
 
@@ -82,8 +84,9 @@ describe("buildRoleList", () => {
       MUTER: 1,
       CURSED: 1,
       LYCAN: 1,
+      MASON: 1,
       TANNER: 1,
-      VILLAGER: 2,
+      VILLAGER: 1,
     });
   });
 
@@ -122,6 +125,7 @@ describe("buildRoleList", () => {
     expect(counts.TANNER).toBeUndefined();
     expect(counts.CURSED).toBeUndefined();
     expect(counts.LYCAN).toBeUndefined();
+    expect(counts.MASON).toBeUndefined();
     expect(counts).toEqual({
       WEREWOLF: 3,
       SEER: 1,
@@ -148,5 +152,29 @@ describe("assignRoles", () => {
 
   it("rejects a uid list outside 4-16", () => {
     expect(() => assignRoles(["a", "b"], ALL_ENABLED)).toThrow(/4 đến 16/);
+  });
+});
+
+describe("buildMasonLinks", () => {
+  it("pairs two Masons with each other symmetrically, excluding themselves", () => {
+    const links = buildMasonLinks({ a: "MASON", b: "MASON", c: "SEER" });
+    expect(links).toEqual({ a: ["b"], b: ["a"] });
+  });
+
+  it("gives every Mason the full list of every other Mason when 3+ are dealt", () => {
+    const links = buildMasonLinks({ a: "MASON", b: "MASON", c: "MASON", d: "VILLAGER" });
+    expect(links.a.sort()).toEqual(["b", "c"]);
+    expect(links.b.sort()).toEqual(["a", "c"]);
+    expect(links.c.sort()).toEqual(["a", "b"]);
+  });
+
+  it("gives a solo Mason an empty array — nobody else to know about", () => {
+    const links = buildMasonLinks({ a: "MASON", b: "SEER", c: "VILLAGER" });
+    expect(links).toEqual({ a: [] });
+  });
+
+  it("returns nothing for a game with no Mason at all", () => {
+    const links = buildMasonLinks({ a: "SEER", b: "VILLAGER" });
+    expect(links).toEqual({});
   });
 });

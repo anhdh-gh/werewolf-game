@@ -65,6 +65,7 @@ const NO_OPTIONAL_ROLES = {
   MUTER: false,
   CURSED: false,
   LYCAN: false,
+  MASON: false,
   TANNER: false,
 };
 

@@ -9,6 +9,7 @@ export type RoleKey =
   | "MUTER"
   | "CURSED"
   | "LYCAN"
+  | "MASON"
   | "TANNER"
   | "VILLAGER";
 
@@ -28,6 +29,7 @@ export const FACTION_BY_ROLE: Record<RoleKey, Faction> = {
   MUTER: "VILLAGE",
   CURSED: "VILLAGE",
   LYCAN: "VILLAGE",
+  MASON: "VILLAGE",
   TANNER: "TANNER",
   VILLAGER: "VILLAGE",
 };
@@ -158,6 +160,11 @@ export interface PrivatePlayerState {
    * (WEREWOLF or TRAITOR), so the pack can coordinate who to bite. Only
    * ever present for a uid dealt a wolf-faction role. */
   packUids?: string[];
+  /** Every other MASON uid, written once at role-dealing time (same pattern
+   * as packUids above) — passive knowledge, no phase involved. Empty array
+   * when this uid is the only Mason in the game (nobody else to know about),
+   * never present for a non-Mason. */
+  masonUids?: string[];
 }
 
 export interface NightActions {

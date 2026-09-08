@@ -10,6 +10,7 @@ export const OPTIONAL_ROLE_KEYS = [
   "MUTER",
   "CURSED",
   "LYCAN",
+  "MASON",
   "TANNER",
 ] as const;
 export type OptionalRoleKey = (typeof OPTIONAL_ROLE_KEYS)[number];
