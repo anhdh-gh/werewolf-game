@@ -31,7 +31,7 @@ rõ ràng chứ không giấu.
 | Epic | Nội dung | Số vai | Trạng thái | Tài liệu |
 |---|---|---|---|---|
 | **Epic 1** | Vai Làng thụ động, không cần phase đêm mới (Mason, Prince, Pacifist) | 3 | **`done`** — cả 3 story CI xanh, merged vào main, rules RTDB live đã deploy và byte-compare khớp repo (2026-09-08) | `2026-09-08-roles-epic-1.md` |
-| **Epic 1b** | Vai Làng thụ động nhưng cần thêm 1 vòng xác nhận cơ chế trước khi viết story an toàn (Tough Guy, Diseased, Old Hag — xem lý do treo ở cuối mục này) | 3 | Chưa viết story — cần làm rõ timing trước | chưa có |
+| **Epic 1b** | Vai Làng có trạng thái xuyên đêm (Tough Guy, Diseased, Old Hag — xem lý do treo ở cuối mục này) | 3 | **Story doc viết xong** (2026-09-08, iteration 7) — pass thiết kế engine đầy đủ (chết trễ 1 đêm, nghỉ cắn 1 đêm, phase OLD_HAG mới + pox); `story ready` chờ owner duyệt 3 quyết định thiết kế (#5/#6/#7 trong doc), chưa implement | `2026-09-08-roles-epic-1b.md` |
 | **Epic 2** | Vai Sói đồng minh cần phase đêm mới, cơ chế đủ rõ để viết story ngay (Sorcerer/Sorceress) | 1 | **`done`** — CI xanh (run 34219156728, commit 9395543, `typecheck`/`test`/`build` đều `success`), rules RTDB live đã deploy và byte-compare khớp repo (2026-09-08) | `2026-09-08-roles-epic-2.md` |
 | **Epic 2b** | Vai có khái niệm rõ nhưng paraphrase để lại mơ hồ thời điểm/trạng thái xuyên đêm hoặc điều kiện thắng chính xác — cùng loại vấn đề đã chặn Epic 1b (Doppelgänger, Hoodlum) | 2 | Chưa viết story — cần rulebook gốc | chưa có |
 | **Epic 3** | Vai Sói thật tham gia cắn cùng bầy WOLVES, cơ chế đủ rõ để viết story ngay (Wolf Man → "Lang Nhân") | 1 | **`done`** — CI xanh (run 34221621075, commit 62e1052, `typecheck`/`test`/`build` đều `success`, sau khi iteration 14 sửa 1 bug đếm quân trong test fixture của run trước đó bị fail), rules RTDB live đã deploy và byte-compare khớp repo (2026-09-08) | `2026-09-08-roles-epic-3.md` |
@@ -47,7 +47,9 @@ rõ ràng chứ không giấu.
 **Thứ tự triển khai đề xuất:** Epic 1 → Epic 2 → Epic 3 → Epic 3c (đã `done`, 2026-09-08) →
 Epic 4a (đã `done`, 2026-09-08 — cả Story 4a.1 Village Idiot và Story 4a.2 Beholder verify
 xong CI + rules RTDB live) →
-Epic 1b/2b/3b/4b/5 (khi có nghiên cứu rulebook giải quyết được mơ hồ) →
+Epic 1b (story doc xong, 2026-09-08 iteration 7 — `story ready`, chờ owner duyệt rồi implement)
+→ Epic 2b/3b/4b/5 (khi có story doc riêng — lời văn đã đủ từ iteration 6, chỉ còn thiếu pass
+thiết kế engine như Epic 1b vừa làm) →
 (Epic 6 sau khi có lời văn Tier 2) → Epic Z chỉ khi
 owner tự cung cấp nguồn mới (ảnh chụp thẻ bài vật lý, liên hệ Bezier Games). Đây đúng là thứ tự
 "phổ biến nhất trước, hiếm nhất sau cùng" owner yêu cầu — vai càng rõ nguồn và càng đơn giản về
@@ -113,9 +115,9 @@ liệt kê vai đã có epic xác định (không lặp lại toàn bộ ~141 va
 | Mason | 1 | `done` — CI xanh (run 34215788171, commit 6c6e469), merged vào main |
 | Prince | 1 | `done` — CI xanh (run trên commit 7917ac9, `typecheck`/`test`/`build` đều `success`), merged vào main |
 | Pacifist | 1 | `done` — CI xanh (run 34216872017, commit 85c9299, `typecheck`/`test`/`build` đều `success`), merged vào main. Rules RTDB live đã deploy (`firebase deploy --only database --project werewolf-game-2026`, 2026-09-08) và byte-compare khớp 100% với `database.rules.json` trong repo (`firebase database:get /.settings/rules` sau deploy diff rỗng) |
-| Tough Guy | 1b | `unblocked` (2026-09-08, iteration 6) — lời văn chính hãng đầy đủ tìm thấy (catalog §8.3), sẵn sàng viết story |
-| Diseased | 1b | `unblocked` (2026-09-08, iteration 6) — lời văn chính hãng đầy đủ tìm thấy (catalog §8.3), sẵn sàng viết story |
-| Old Hag | 1b | `unblocked` (2026-09-08, iteration 6) — lời văn chính hãng đầy đủ tìm thấy (catalog §8.3), sẵn sàng viết story |
+| Tough Guy | 1b | `story ready` (2026-09-08, iteration 7) — thiết kế "chết trễ 1 đêm" xong (`2026-09-08-roles-epic-1b.md` §1), chờ implement |
+| Diseased | 1b | `story ready` (2026-09-08, iteration 7) — thiết kế "bầy sói nghỉ cắn 1 đêm" xong (`2026-09-08-roles-epic-1b.md` §2), chờ implement |
+| Old Hag | 1b | `story ready` (2026-09-08, iteration 7) — thiết kế phase OLD_HAG + pox mới xong, cần owner duyệt 2 quyết định (#6/#7) trước implement (`2026-09-08-roles-epic-1b.md` §3) |
 | Sorcerer/Sorceress ("Pháp Sư") | 2 | `done` — CI xanh (run 34219156728, commit 9395543, `typecheck`/`test`/`build` đều `success`), merged vào main. Rules RTDB live đã deploy (`firebase deploy --only database --project werewolf-game-2026`, 2026-09-08) và byte-compare khớp 100% với `database.rules.json` trong repo (node action `SORCERER` xác nhận có mặt sau deploy, diff chỉ lệch newline cuối file) |
 | Doppelgänger, Hoodlum | 2b | `unblocked` (2026-09-08, iteration 6) — lời văn chính hãng đầy đủ tìm thấy cho cả 2 (catalog §8.3), sẵn sàng viết story |
 | Wolf Man ("Lang Nhân") | 3 | `done` — CI xanh (run 34221621075, commit 62e1052, `typecheck`/`test`/`build` đều `success`; commit gốc d82648a từng fail 1 test do lỗi đếm quân trong fixture, sửa ở iteration 14). Rules RTDB live đã deploy (`firebase deploy --only database --project werewolf-game-2026`, 2026-09-08) và byte-compare khớp 100% với `database.rules.json` trong repo (2 rule WOLVES/wolves-chat mở rộng `WOLF_MAN` xác nhận có mặt sau deploy) |
@@ -360,3 +362,22 @@ gốc mới — tất cả cần owner theo dõi, không chỉ Epic Z.
     tiếp là chọn một trong các vai `unblocked` ở trên (khuyến nghị bắt đầu bằng nhóm 4b Priest/
     Aura Seer/Apprentice Seer vì không cần thiết kế engine mới, giống khuôn Epic 1/2/3c) và viết
     story doc riêng trước khi implement, đúng kỷ luật "research → plan → implement" của owner.
+17. **Xong (gnhf run `stop-read-this-first-98c7ba` iteration 7, 2026-09-08)**: viết
+    `2026-09-08-roles-epic-1b.md` — pass thiết kế engine đầy đủ cho cả 3 vai Epic 1b (Tough Guy,
+    Diseased, Old Hag), theo đúng khuôn Epic 3c (pass thiết kế trước khi cho phép implement).
+    Giải quyết dứt điểm 3 câu hỏi timing đã chặn epic này ở Epic 1 (cắn thành công vs. chỉ bị
+    chọn, có được cứu lần 2 không, "rời làng" ánh xạ vào cơ chế nào đã có sẵn) bằng cách móc vào
+    đúng các điểm resolve đã có (`bittenSurvives` trong `resolveNight`, `applyHunterRevenge`,
+    `resolveVote`'s `roleOf` pattern từ Prince) thay vì viết pipeline mới. Phát hiện và tự sửa 1
+    lỗi thiết kế giữa chừng tài liệu (quyết định #4): thiết kế nháp đầu tiên định cất
+    `toughGuyPendingDeathUid` (string) công khai ở `games/{gameId}` — bản thân giá trị field ĐÓ
+    chính là uid của Tough Guy, vi phạm trực tiếp spec §4.6 "vai không bao giờ tiết lộ"; sửa
+    thành 1 boolean thuần (`toughGuyDeathPending`, không map ra uid nào) trước khi chốt thiết
+    kế, không mang lỗi này sang bước implement. Còn 3 quyết định cần owner duyệt trước khi code
+    (#5 Diseased×Cursed, #6 Old Hag chặn cả vote lẫn bị-treo, #7 Old Hag không bảo vệ khỏi
+    tấn công ban đêm) — ghi rõ trong doc, không tự ý chọn thay owner. Không có thay đổi code nào
+    ở iteration này — thuần thiết kế, đúng cadence "1 iteration thiết kế, iteration sau
+    implement" đã dùng cho deck-builder (iteration 1) và Epic 3c. Việc kế tiếp: implement Epic
+    1b theo đúng thứ tự đề xuất trong doc (Diseased → Tough Guy → Old Hag), HOẶC bắt đầu bằng
+    nhóm 4b (Priest/Aura Seer/Apprentice Seer) nếu owner muốn ưu tiên vai không cần phase mới
+    trước — cả hai đường đều hợp lệ, chưa có gì bắt buộc phải chọn 1b trước 4b ngoài thứ tự số.
