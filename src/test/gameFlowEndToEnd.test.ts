@@ -69,6 +69,7 @@ const NO_OPTIONAL_ROLES = {
   PRINCE: false,
   PACIFIST: false,
   SORCERER: false,
+  WOLF_MAN: false,
   TANNER: false,
 };
 
@@ -968,6 +969,112 @@ describe("Epic 2 Story 2.1: Sorcerer's SEER check is written to their own privat
     assertPhaseShapeNeverLeaksRoles(game.phase);
     const otherPriv = (await getPrivate(gameId))[villager1];
     expect(otherPriv.sorcererHints).toBeUndefined();
+  });
+});
+
+describe("Epic 3 Story 3.1: Wolf Man acts with the pack and survives a Cursed pack rebuild", () => {
+  const gameId = "GAME-WOLFMAN";
+  const roomCode = "WOLFMAN1";
+  const wolfA = "wolfA";
+  const wolfman = "wolfman";
+  const traitor = "traitor";
+  const seer = "seer";
+  const witch = "witch";
+  const cursed = "cursed";
+  const villager1 = "villager1";
+  const uids = [wolfA, wolfman, traitor, seer, witch, cursed, villager1];
+
+  beforeEach(async () => {
+    const players: Game["players"] = {};
+    for (const uid of uids) players[uid] = { name: uid, alive: true, muted: false };
+
+    const game: Game = {
+      roomCode,
+      startedAt: 1,
+      dayNumber: 1,
+      phase: { name: "SEER", endsAt: Date.now() - 1, version: 0 },
+      players,
+    };
+    await fakeDb.ref(`games/${gameId}`).set(game);
+
+    const priv: Record<string, PrivatePlayerState> = {
+      [wolfA]: {
+        role: "WEREWOLF",
+        initialRole: "WEREWOLF",
+        potions: { heal: true, poison: true },
+        packUids: [wolfman, traitor],
+      },
+      [wolfman]: {
+        role: "WOLF_MAN",
+        initialRole: "WOLF_MAN",
+        potions: { heal: true, poison: true },
+        packUids: [wolfA, traitor],
+      },
+      [traitor]: {
+        role: "TRAITOR",
+        initialRole: "TRAITOR",
+        potions: { heal: true, poison: true },
+        packUids: [wolfA, wolfman],
+      },
+      [seer]: { role: "SEER", initialRole: "SEER", potions: { heal: true, poison: true } },
+      [witch]: { role: "WITCH", initialRole: "WITCH", potions: { heal: true, poison: true } },
+      [cursed]: { role: "CURSED", initialRole: "CURSED", potions: { heal: true, poison: true } },
+      [villager1]: {
+        role: "VILLAGER",
+        initialRole: "VILLAGER",
+        potions: { heal: true, poison: true },
+      },
+    };
+    await fakeDb.ref(`private/${gameId}`).set(priv);
+    await seedRoom(roomCode, uids, { ...NO_OPTIONAL_ROLES, TRAITOR: true, CURSED: true, WOLF_MAN: true });
+    await fakeDb.ref(`rooms/${roomCode}/status`).set("PLAYING");
+  });
+
+  it("waits for both the Werewolf and the Wolf Man to bite before leaving WOLVES", async () => {
+    await writeAction(gameId, "SEER", seer, wolfA);
+    let res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WOLVES");
+
+    // Only wolfA has acted so far — wolfman is also required, so the phase
+    // must not end early even though a majority target already exists.
+    await writeAction(gameId, "WOLVES", wolfA, cursed);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WOLVES");
+
+    await writeAction(gameId, "WOLVES", wolfman, cursed);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WITCH_SAVE");
+  });
+
+  it("keeps the Wolf Man in every pack member's packUids after a same-night Cursed transformation", async () => {
+    await writeAction(gameId, "SEER", seer, wolfA);
+    let res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WOLVES");
+
+    await writeAction(gameId, "WOLVES", wolfA, cursed);
+    await writeAction(gameId, "WOLVES", wolfman, cursed);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WITCH_SAVE");
+
+    await writeAction(gameId, "WITCH_SAVE", witch, null);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WITCH_KILL");
+
+    await writeAction(gameId, "WITCH_KILL", witch, null);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("CURSED");
+
+    await expirePhaseTimer(gameId);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("DAWN");
+    expect(res.deaths).toEqual([]);
+
+    const privAfter = await getPrivate(gameId);
+    expect(privAfter[cursed].role).toBe("WEREWOLF");
+    expect(new Set(privAfter[wolfA].packUids)).toEqual(new Set([wolfman, traitor, cursed]));
+    expect(new Set(privAfter[wolfman].packUids)).toEqual(new Set([wolfA, traitor, cursed]));
+    expect(new Set(privAfter[traitor].packUids)).toEqual(new Set([wolfA, wolfman, cursed]));
+    expect(new Set(privAfter[cursed].packUids)).toEqual(new Set([wolfA, wolfman, traitor]));
   });
 });
 

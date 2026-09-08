@@ -304,7 +304,9 @@ export async function POST(
     // find out about each other after tonight's transformation.
     const newPack = [
       ...Object.entries(privateState)
-        .filter(([, p]) => p.role === "WEREWOLF" || p.role === "TRAITOR")
+        .filter(
+          ([, p]) => p.role === "WEREWOLF" || p.role === "TRAITOR" || p.role === "WOLF_MAN",
+        )
         .map(([packUid]) => packUid),
       ...transformedAndAlive,
     ];

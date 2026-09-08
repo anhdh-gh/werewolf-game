@@ -77,6 +77,7 @@ const NO_OPTIONAL_ROLES = {
   PRINCE: false,
   PACIFIST: false,
   SORCERER: false,
+  WOLF_MAN: false,
   TANNER: false,
 };
 

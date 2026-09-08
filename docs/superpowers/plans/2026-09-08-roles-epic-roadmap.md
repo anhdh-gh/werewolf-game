@@ -34,7 +34,7 @@ rõ ràng chứ không giấu.
 | **Epic 1b** | Vai Làng thụ động nhưng cần thêm 1 vòng xác nhận cơ chế trước khi viết story an toàn (Tough Guy, Diseased, Old Hag — xem lý do treo ở cuối mục này) | 3 | Chưa viết story — cần làm rõ timing trước | chưa có |
 | **Epic 2** | Vai Sói đồng minh cần phase đêm mới, cơ chế đủ rõ để viết story ngay (Sorcerer/Sorceress) | 1 | **`done`** — CI xanh (run 34219156728, commit 9395543, `typecheck`/`test`/`build` đều `success`), rules RTDB live đã deploy và byte-compare khớp repo (2026-09-08) | `2026-09-08-roles-epic-2.md` |
 | **Epic 2b** | Vai có khái niệm rõ nhưng paraphrase để lại mơ hồ thời điểm/trạng thái xuyên đêm hoặc điều kiện thắng chính xác — cùng loại vấn đề đã chặn Epic 1b (Doppelgänger, Hoodlum) | 2 | Chưa viết story — cần rulebook gốc | chưa có |
-| **Epic 3** | Vai Sói thật tham gia cắn cùng bầy WOLVES, cơ chế đủ rõ để viết story ngay (Wolf Man → "Lang Nhân") | 1 | **Story ready** — story doc đã viết, chưa implement | `2026-09-08-roles-epic-3.md` |
+| **Epic 3** | Vai Sói thật tham gia cắn cùng bầy WOLVES, cơ chế đủ rõ để viết story ngay (Wolf Man → "Lang Nhân") | 1 | **Code written, CI + live-rules-verification pending** (iteration 13, 2026-09-08) — story doc's 4 filter points implemented (RoleKey/FACTION_BY_ROLE, `requiredActors.ts`'s WOLVES branch, `advance/route.ts`'s post-Cursed pack rebuild, 2 `database.rules.json` rules extended) plus a 5th spot the story doc missed (`GameScreen.tsx`'s `isWolfFaction` wolves-chat UI gate) | `2026-09-08-roles-epic-3.md` |
 | **Epic 3b** | Vai Sói có khái niệm rõ nhưng paraphrase mơ hồ thời điểm xuyên đêm hoặc điều kiện thắng chính xác — cùng loại vấn đề đã chặn Epic 1b/2b (Dire Wolf, Lone Wolf) | 2 | Chưa viết story — cần rulebook gốc | chưa có |
 | **Epic 3c** | Vai cần khả năng engine mới ("cắn 2 mạng/đêm", chưa có trong pipeline WOLVES/WITCH/resolveNight hiện tại) — Wolf Cub | 1 | Chặn lại — cần một pass thiết kế engine riêng trước khi viết story | chưa có |
 | **Epic 4** | Vai cần rulebook gốc để phân biệt khỏi vai đã có, **không suy đoán** (Priest vs Bảo Vệ, Huntress vs Thợ Săn, Revealer vs Tiên Tri, Village Idiot, Drunk, Troublemaker, Insomniac, Apprentice Seer, Aura Seer, Paranormal Investigator, Beholder) | ~11 | **Chặn lại** — cần nghiên cứu thêm (không phải "thêm web search thông thường" nữa, xem catalog §6 mục 4) | chưa có |
@@ -113,7 +113,7 @@ liệt kê vai đã có epic xác định (không lặp lại toàn bộ ~141 va
 | Old Hag | 1b | `blocked` — cần xác nhận khái niệm "rời làng" |
 | Sorcerer/Sorceress ("Pháp Sư") | 2 | `done` — CI xanh (run 34219156728, commit 9395543, `typecheck`/`test`/`build` đều `success`), merged vào main. Rules RTDB live đã deploy (`firebase deploy --only database --project werewolf-game-2026`, 2026-09-08) và byte-compare khớp 100% với `database.rules.json` trong repo (node action `SORCERER` xác nhận có mặt sau deploy, diff chỉ lệch newline cuối file) |
 | Doppelgänger, Hoodlum | 2b | `blocked` — cần rulebook gốc (mơ hồ thời điểm/điều kiện thắng xuyên đêm) |
-| Wolf Man ("Lang Nhân") | 3 | `story ready` — story doc viết xong (2026-09-08), chưa implement |
+| Wolf Man ("Lang Nhân") | 3 | `in progress` — code viết xong (iteration 13, 2026-09-08: RoleKey/FACTION_BY_ROLE, `requiredActors.ts`, `advance/route.ts`'s pack rebuild, 2 rule `database.rules.json` mở rộng, `GameScreen.tsx`'s wolves-chat gate, unit/route/emulator test), CI + deploy rules live còn chờ |
 | Dire Wolf, Lone Wolf | 3b | `blocked` — cần rulebook gốc (mơ hồ thời điểm bạn đồng hành / điều kiện thắng chính xác) |
 | Wolf Cub | 3c | `blocked` — cần thiết kế engine "cắn 2 mạng/đêm" (không phải thiếu nguồn) |
 | Priest, Huntress, Revealer, Village Idiot, Drunk, Troublemaker, Insomniac, Apprentice Seer, Aura Seer, Paranormal Investigator, Beholder | 4 | `blocked` — cần rulebook gốc |
@@ -157,12 +157,20 @@ không tìm ra rulebook gốc — tất cả cần owner theo dõi, không chỉ
    xem `2026-09-08-roles-epic-2.md` và tracker ở trên (CI run 34219156728, rules RTDB live đã
    deploy và byte-compare khớp repo).
 3. Epic 3 đã qua bước soi từng vai (iteration 12, áp dụng đúng bài học Epic 1b/2b): chỉ Wolf Man
-   đủ rõ để viết story, đã viết xong (`2026-09-08-roles-epic-3.md`, story 3.1) nhưng **chưa
-   implement**. Dire Wolf/Lone Wolf tách sang Epic 3b (cần rulebook gốc), Wolf Cub tách sang
-   Epic 3c (cần thiết kế engine "cắn 2 mạng/đêm"). Việc tiếp theo ngay sau tài liệu này:
-   implement story 3.1 (Wolf Man → "Lang Nhân") theo đúng file structure đã ghi trong
-   `2026-09-08-roles-epic-3.md`, build+test trước khi commit, verify CI xanh + deploy/verify
-   live rules RTDB sau khi merge (story này mở rộng 2 rule có sẵn trong `database.rules.json`).
+   đủ rõ để viết story, đã viết xong (`2026-09-08-roles-epic-3.md`, story 3.1). Dire Wolf/Lone
+   Wolf tách sang Epic 3b (cần rulebook gốc), Wolf Cub tách sang Epic 3c (cần thiết kế engine
+   "cắn 2 mạng/đêm"). **Code viết xong (iteration 13, 2026-09-08)**: 4 điểm lọc-theo-role mở
+   rộng đúng như story doc (`RoleKey`/`FACTION_BY_ROLE`, `requiredActors.ts`'s nhánh WOLVES,
+   `advance/route.ts`'s rebuild pack sau Cursed, 2 rule `database.rules.json`), cộng 1 điểm story
+   doc bỏ sót phát hiện khi soi code: `GameScreen.tsx`'s `isWolfFaction` (gate hiển thị UI chat
+   Sói ở client) cũng cần thêm `|| role === "WOLF_MAN"`, nếu không Wolf Man sẽ không thấy được
+   kênh chat Sói dù rule RTDB đã cho phép ghi/đọc — đã sửa cùng lúc. Test mới: unit
+   (`requiredActors.test.ts`, `seerCheck.test.ts`), route-level (2 test mới trong
+   `gameFlowEndToEnd.test.ts` — chờ đủ 2 actor mới rời phase WOLVES, và pack rebuild sau Cursed
+   giữ Wolf Man), emulator (`rulesGames.test.ts` — action WOLVES và chat wolves cho Wolf Man).
+   Việc tiếp theo: verify CI xanh cho commit này, sau đó deploy + byte-compare
+   `database.rules.json` lên Firebase live (đúng bài học Pacifist/Sorcerer) trước khi coi Epic 3
+   là `done`.
 4. Song song hoặc xen kẽ, có thể thử tìm lại rulebook gốc để gỡ chặn Epic 1b/2b/3b (7 vai) nếu
    có thời gian, nhưng implement Wolf Man không cần chờ việc đó.
 5. Một nợ kỹ thuật tiềm ẩn được phát hiện khi soi code cho Epic 3 (xem

@@ -14,6 +14,7 @@ const ALL_ENABLED: Record<OptionalRoleKey, boolean> = {
   PRINCE: true,
   PACIFIST: true,
   SORCERER: true,
+  WOLF_MAN: true,
   TANNER: true,
 };
 
@@ -29,6 +30,7 @@ const ALL_DISABLED: Record<OptionalRoleKey, boolean> = {
   PRINCE: false,
   PACIFIST: false,
   SORCERER: false,
+  WOLF_MAN: false,
   TANNER: false,
 };
 
@@ -77,14 +79,15 @@ describe("buildRoleList", () => {
   });
 
   it("at 16 players with everything enabled, fills every optional role slot it has room for", () => {
-    // OPTIONAL_ROLE_KEYS has grown to 12 entries (Mason, Prince, Pacifist,
-    // Sorcerer added on top of the original 8) while n=16 only ever had 9
-    // optional slots to give out (16 - 6 mandatory - 1 reserved villager) —
-    // so the last three entries in fill order (Pacifist, Sorcerer, then
-    // Tanner) miss their slot. That's by design (spec §4.2: the sole Riêng
-    // role Tanner is always lowest fill priority; Pacifist and Sorcerer just
-    // happen to be the ones immediately ahead of it once every earlier role
-    // is enabled) — see the dedicated capacity test below.
+    // OPTIONAL_ROLE_KEYS has grown to 13 entries (Mason, Prince, Pacifist,
+    // Sorcerer, Wolf Man added on top of the original 8) while n=16 only
+    // ever had 9 optional slots to give out (16 - 6 mandatory - 1 reserved
+    // villager) — so the last four entries in fill order (Pacifist,
+    // Sorcerer, Wolf Man, then Tanner) miss their slot. That's by design
+    // (spec §4.2: the sole Riêng role Tanner is always lowest fill priority;
+    // Pacifist, Sorcerer and Wolf Man just happen to be the ones immediately
+    // ahead of it once every earlier role is enabled) — see the dedicated
+    // capacity test below.
     const roles = buildRoleList(16, ALL_ENABLED);
     expect(roles).toHaveLength(16);
     expect(countRoles(roles)).toEqual({
@@ -104,10 +107,11 @@ describe("buildRoleList", () => {
     });
   });
 
-  it("drops Pacifist, Sorcerer, and Tanner first, not any earlier Wolf/Village-faction role, when demand exceeds capacity", () => {
+  it("drops Pacifist, Sorcerer, Wolf Man, and Tanner first, not any earlier Wolf/Village-faction role, when demand exceeds capacity", () => {
     const counts = countRoles(buildRoleList(16, ALL_ENABLED));
     expect(counts.PACIFIST).toBeUndefined();
     expect(counts.SORCERER).toBeUndefined();
+    expect(counts.WOLF_MAN).toBeUndefined();
     expect(counts.TANNER).toBeUndefined();
   });
 
@@ -150,6 +154,7 @@ describe("buildRoleList", () => {
     expect(counts.PRINCE).toBeUndefined();
     expect(counts.PACIFIST).toBeUndefined();
     expect(counts.SORCERER).toBeUndefined();
+    expect(counts.WOLF_MAN).toBeUndefined();
     expect(counts).toEqual({
       WEREWOLF: 3,
       SEER: 1,

@@ -15,6 +15,10 @@ describe("seerCheck", () => {
     expect(seerCheck("LYCAN")).toBe("WOLF");
   });
 
+  it("reads the Wolf Man as VILLAGER even though they're wolf-faction and act with the pack", () => {
+    expect(seerCheck("WOLF_MAN")).toBe("VILLAGER");
+  });
+
   it("reads every other role as VILLAGER", () => {
     const others: RoleKey[] = [
       "SEER",

@@ -14,13 +14,19 @@ const ROLES: Record<string, RoleKey> = {
   hunter1: "HUNTER",
   cursed1: "CURSED",
   sorcerer1: "SORCERER",
+  wolfman1: "WOLF_MAN",
   villager1: "VILLAGER",
 };
 
 describe("requiredActorsForPhase", () => {
-  it("only the wolves act during WOLVES — the Traitor does not", () => {
+  it("the Werewolves and Wolf Man act during WOLVES — the Traitor does not", () => {
     const actors = requiredActorsForPhase("WOLVES", ROLES);
-    expect(actors.sort()).toEqual(["wolf1", "wolf2"]);
+    expect(actors.sort()).toEqual(["wolf1", "wolf2", "wolfman1"]);
+  });
+
+  it("returns nobody for WOLVES when neither Werewolf nor Wolf Man is alive", () => {
+    const { wolf1: _w1, wolf2: _w2, wolfman1: _wm1, ...withoutWolves } = ROLES;
+    expect(requiredActorsForPhase("WOLVES", withoutWolves)).toEqual([]);
   });
 
   it("only the Seer acts during SEER", () => {

@@ -153,7 +153,10 @@ function GameScreenInner({
   // WOLVES (own faction only, derived from this uid's own known role only —
   // see the isRequired comment above for why that's the only role a client
   // can ever legitimately check itself against).
-  const isWolfFaction = privateState?.role === "WEREWOLF" || privateState?.role === "TRAITOR";
+  const isWolfFaction =
+    privateState?.role === "WEREWOLF" ||
+    privateState?.role === "TRAITOR" ||
+    privateState?.role === "WOLF_MAN";
   const showVillageChat = remoteMode && game.phase.name === "DISCUSSION";
   const showWolvesChat = remoteMode && game.phase.name === "WOLVES" && isWolfFaction;
   const chatLockedReason = !me?.alive
