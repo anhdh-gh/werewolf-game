@@ -54,19 +54,61 @@
         "VOTE": {
           ".read": "auth != null",
           "$uid": {
-            ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('phase').child('name').val() === 'VOTE'"
+            ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('phase').child('name').val() === 'VOTE' && root.child('games').child($gameId).child('players').child($uid).child('alive').val() === true"
           }
         },
         "HUNTER_SHOT": {
           "$uid": {
             ".read": "auth != null && auth.uid === $uid",
-            ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('players').child($uid).child('alive').val() === false"
+            ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('players').child($uid).child('alive').val() === false && root.child('private').child($gameId).child($uid).child('role').val() === 'HUNTER'"
+          }
+        },
+        "WOLVES": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('phase').child('name').val() === 'WOLVES' && root.child('games').child($gameId).child('players').child($uid).child('alive').val() === true && root.child('private').child($gameId).child($uid).child('role').val() === 'WEREWOLF'"
+          }
+        },
+        "SEER": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('phase').child('name').val() === 'SEER' && root.child('games').child($gameId).child('players').child($uid).child('alive').val() === true && root.child('private').child($gameId).child($uid).child('role').val() === 'SEER'"
+          }
+        },
+        "BODYGUARD": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('phase').child('name').val() === 'BODYGUARD' && root.child('games').child($gameId).child('players').child($uid).child('alive').val() === true && root.child('private').child($gameId).child($uid).child('role').val() === 'BODYGUARD'"
+          }
+        },
+        "MUTER": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('phase').child('name').val() === 'MUTER' && root.child('games').child($gameId).child('players').child($uid).child('alive').val() === true && root.child('private').child($gameId).child($uid).child('role').val() === 'MUTER'"
+          }
+        },
+        "WITCH_SAVE": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('phase').child('name').val() === 'WITCH_SAVE' && root.child('games').child($gameId).child('players').child($uid).child('alive').val() === true && root.child('private').child($gameId).child($uid).child('role').val() === 'WITCH'"
+          }
+        },
+        "WITCH_KILL": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('phase').child('name').val() === 'WITCH_KILL' && root.child('games').child($gameId).child('players').child($uid).child('alive').val() === true && root.child('private').child($gameId).child($uid).child('role').val() === 'WITCH'"
+          }
+        },
+        "PAIR_LOVERS": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('phase').child('name').val() === 'PAIR_LOVERS' && root.child('games').child($gameId).child('players').child($uid).child('alive').val() === true && root.child('private').child($gameId).child($uid).child('role').val() === 'CUPID'"
           }
         },
         "$phaseKey": {
           "$uid": {
             ".read": "auth != null && auth.uid === $uid",
-            ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('phase').child('name').val() === $phaseKey"
+            ".write": false
           }
         }
       }

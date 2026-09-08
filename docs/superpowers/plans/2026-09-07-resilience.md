@@ -343,6 +343,40 @@ firebase deploy --only database
 
 Preflight will not do it; it is read-only by design.
 
+**That deploy now also ships a fix to `actions/`, so deploying the ruleset as it stood
+before 2026-09-08 would have put two exploitable holes live.** The old
+`actions/$gameId/$phaseKey/$uid` write rule asked only two questions — is this your own
+leaf, and is `$phaseKey` the phase the game is actually in — and never asked whether the
+writer is in the game, alive, or holds the role that phase belongs to. That is the whole
+gate: the advance route counts what it finds under `actions/{gameId}/{phase}` verbatim
+(`tallyMajorityVote` sums every entry under `WOLVES`, `Object.values(...)[0]` takes the
+single actor for `SEER`/`BODYGUARD`/`MUTER`/`WITCH_*`/`PAIR_LOVERS`, `resolveVote` sums
+every ballot) and deliberately does not re-derive who was entitled to write it, because
+Security Rules are supposed to have decided that already. So:
+
+- Any authenticated account — including one that never joined the room, and including a
+  villager who knows the phase names — could write `actions/{gameId}/WOLVES/{ownUid}` and
+  have it counted in the pack's majority kill, every night. Same for `WITCH_KILL`,
+  `SEER`, `BODYGUARD`, `MUTER` and `PAIR_LOVERS`, each of which takes the *first* entry,
+  so an impostor could simply overwrite the real actor's decision.
+- `HUNTER_SHOT` is deliberately not phase-gated (spec §4.4 step 8 — it fires reactively on
+  death), so `alive === false` was the *only* condition on it. Any dead player of any role
+  could fire a revenge shot and kill any living player, on demand, every time they died.
+
+The rules now gate each action phase on its own named block: the writer must own the leaf,
+be a player in that game, be alive (dead, and specifically the Hunter, for `HUNTER_SHOT`),
+and hold the acting role for that phase read out of `private/{gameId}/{uid}/role` — the
+same mapping `requiredActorsForPhase()` uses, and the same one the client already applies
+before it renders an action UI at all. A Cursed player who has been bitten passes the
+`WOLVES` check because the advance route rewrites their `/private` role to `WEREWOLF` when
+they transform; the Traitor still does not, which is correct (spec §4.1 — the Traitor never
+wakes with the pack). The `$phaseKey` wildcard that used to grant those writes is now
+`".write": false`, so a phase with no action (`DAWN`, `DISCUSSION`, `CURSED`, …) cannot be
+written to at all — while keeping its self-only `.read`, which every client needs because
+`GameScreen` subscribes to `actions/{gameId}/{phase}/{uid}` on *every* phase, not only the
+ones with an action UI. `src/test/rulesGames.test.ts` pins each of these denials against
+the emulator.
+
 **Narration audio is the other remaining FAIL**, and it is the one item on this list
 that was never blocked on credentials the owner had to go and create.
 
@@ -356,8 +390,9 @@ against the newest Ready deployment's and fails when the variable is the newer o
 Both ages come back rounded to a single unit, so it only rules when the two ranges do not
 overlap and reports SKIP otherwise rather than guessing.
 
-- **Deploy `database.rules.json` (now also covers `fcmTokens/`, `chat/`) to the real
-  Firebase project — still outstanding, and confirmed outstanding rather than assumed.**
+- **Deploy `database.rules.json` (now also covers `fcmTokens/`, `chat/`, and the
+  role-gated `actions/` blocks above) to the real Firebase project — still outstanding,
+  and confirmed outstanding rather than assumed.**
   Preflight reads the live ruleset back with `firebase database:get "/.settings/rules"`
   and names which top-level sections are absent, different, or live-only. (It does *not*
   use `firebase database:rules:list` / `rules:get`: those need the `rtdbrules` experiment
