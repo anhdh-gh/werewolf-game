@@ -23,6 +23,7 @@ const baseInput: PlanAdvanceInput = {
   cursedUids: [],
   alreadyTransformedCursed: [],
   lovers: null,
+  wolfCubBonusNightPending: false,
 };
 
 describe("planAdvance", () => {
@@ -106,5 +107,64 @@ describe("planAdvance", () => {
       lovers: ["lover1", "villager1"],
     });
     expect(result.deaths.sort()).toEqual(["hunter1", "lover1", "villager1"]);
+  });
+
+  it("exposes deathsThisRoundRoles for the route to detect a Wolf Cub death", () => {
+    const result = planAdvance({
+      ...baseInput,
+      currentPhase: "CURSED",
+      aliveRolesByUid: { ...baseInput.aliveRolesByUid, cub1: "WOLF_CUB" },
+      activeRoles: [...baseInput.activeRoles, "WOLF_CUB"],
+      actions: { ...NIGHT_ACTIONS_EMPTY, witchPoisonTarget: "cub1" },
+    });
+    expect(result.deathsThisRoundRoles).toContain("WOLF_CUB");
+  });
+
+  // Epic 3c (Wolf Cub bonus night): with wolfCubBonusNightPending true, a
+  // DAWN resolution bites the top-2 voted targets instead of top-1.
+  it("bites only 1 victim on a normal night even with 3 wolf votes split 3 ways minus one", () => {
+    const result = planAdvance({
+      ...baseInput,
+      currentPhase: "CURSED",
+      actions: { ...NIGHT_ACTIONS_EMPTY, wolfVotes: { wolf1: "villager1" } },
+      wolfCubBonusNightPending: false,
+    });
+    expect(result.deaths).toEqual(["villager1"]);
+  });
+
+  it("bites 2 victims on a Wolf Cub bonus night when votes are clearly separated", () => {
+    const result = planAdvance({
+      ...baseInput,
+      currentPhase: "CURSED",
+      aliveRolesByUid: {
+        wolf1: "WEREWOLF",
+        wolf2: "WEREWOLF",
+        wolf3: "WEREWOLF",
+        seer1: "SEER",
+        witch1: "WITCH",
+        villager1: "VILLAGER",
+        villager2: "VILLAGER",
+      },
+      actions: {
+        // 2 votes for villager1, 1 for villager2 — a clean top-2 separation
+        // (2 voters landing on the exact same target, unlike a simple 1-1
+        // split between only 2 wolves, which would tie at rank 1 and yield
+        // no bite at all — see resolveNight.test.ts's tallyTopNVotes cases).
+        ...NIGHT_ACTIONS_EMPTY,
+        wolfVotes: { wolf1: "villager1", wolf2: "villager1", wolf3: "villager2" },
+      },
+      wolfCubBonusNightPending: true,
+    });
+    expect(result.deaths.sort()).toEqual(["villager1", "villager2"]);
+  });
+
+  it("a Wolf Cub bonus night still only bites 1 target when the pack couldn't fill a 2nd slot", () => {
+    const result = planAdvance({
+      ...baseInput,
+      currentPhase: "CURSED",
+      actions: { ...NIGHT_ACTIONS_EMPTY, wolfVotes: { wolf1: "villager1" } },
+      wolfCubBonusNightPending: true,
+    });
+    expect(result.deaths).toEqual(["villager1"]);
   });
 });

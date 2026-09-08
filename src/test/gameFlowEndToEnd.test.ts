@@ -70,6 +70,7 @@ const NO_OPTIONAL_ROLES = {
   PACIFIST: false,
   SORCERER: false,
   WOLF_MAN: false,
+  WOLF_CUB: false,
   TANNER: false,
 };
 
@@ -1117,6 +1118,138 @@ describe("Epic 3 Story 3.1: Wolf Man acts with the pack and survives a Cursed pa
     expect(new Set(privAfter[wolfman].packUids)).toEqual(new Set([wolfA, traitor, cursed]));
     expect(new Set(privAfter[traitor].packUids)).toEqual(new Set([wolfA, wolfman, cursed]));
     expect(new Set(privAfter[cursed].packUids)).toEqual(new Set([wolfA, wolfman, traitor]));
+  });
+});
+
+describe("Epic 3c: Wolf Cub death arms a 2-victim bonus night, consumed exactly once", () => {
+  const gameId = "GAME-WOLFCUB";
+  const roomCode = "WOLFCUB1";
+  const wolf1 = "wolf1";
+  const wolf2 = "wolf2";
+  const wolf3 = "wolf3";
+  const cub = "cub";
+  const seer = "seer";
+  const witch = "witch";
+  const villagers = ["villager1", "villager2", "villager3", "villager4", "villager5", "villager6", "villager7"];
+  const uids = [wolf1, wolf2, wolf3, cub, seer, witch, ...villagers];
+
+  beforeEach(async () => {
+    const players: Game["players"] = {};
+    for (const uid of uids) players[uid] = { name: uid, alive: true, muted: false };
+
+    const game: Game = {
+      roomCode,
+      startedAt: 1,
+      dayNumber: 1,
+      phase: { name: "SEER", endsAt: Date.now() - 1, version: 0 },
+      players,
+    };
+    await fakeDb.ref(`games/${gameId}`).set(game);
+
+    const priv: Record<string, PrivatePlayerState> = {
+      [wolf1]: { role: "WEREWOLF", initialRole: "WEREWOLF", potions: { heal: true, poison: true } },
+      [wolf2]: { role: "WEREWOLF", initialRole: "WEREWOLF", potions: { heal: true, poison: true } },
+      [wolf3]: { role: "WEREWOLF", initialRole: "WEREWOLF", potions: { heal: true, poison: true } },
+      [cub]: { role: "WOLF_CUB", initialRole: "WOLF_CUB", potions: { heal: true, poison: true } },
+      [seer]: { role: "SEER", initialRole: "SEER", potions: { heal: true, poison: true } },
+      [witch]: { role: "WITCH", initialRole: "WITCH", potions: { heal: true, poison: true } },
+    };
+    for (const uid of villagers) {
+      priv[uid] = { role: "VILLAGER", initialRole: "VILLAGER", potions: { heal: true, poison: true } };
+    }
+    await fakeDb.ref(`private/${gameId}`).set(priv);
+    await seedRoom(roomCode, uids, { ...NO_OPTIONAL_ROLES, WOLF_CUB: true });
+    await fakeDb.ref(`rooms/${roomCode}/status`).set("PLAYING");
+  });
+
+  it("bites 2 on the night after Wolf Cub dies, then falls back to 1 the night after that", async () => {
+    // Night 1: the pack unanimously bites villager1 (a normal, non-bonus
+    // night — no Wolf Cub death yet), and the Witch separately poisons the
+    // Wolf Cub itself.
+    await writeAction(gameId, "SEER", seer, wolf1);
+    let res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WOLVES");
+
+    for (const wolf of [wolf1, wolf2, wolf3, cub]) {
+      await writeAction(gameId, "WOLVES", wolf, "villager1");
+    }
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WITCH_SAVE");
+
+    await writeAction(gameId, "WITCH_SAVE", witch, null);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WITCH_KILL");
+
+    await writeAction(gameId, "WITCH_KILL", witch, cub);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("DAWN");
+    expect(res.deaths?.sort()).toEqual(["cub", "villager1"]);
+
+    let game = await getGame(gameId);
+    expect(game.wolfCubBonusNightPending).toBe(true);
+
+    // Day 1: hang villager7 — a resolution that does NOT touch Wolf Cub, so
+    // it must leave the just-armed bonus flag untouched (not clobber it back
+    // to false), even though it's the same kind of resolution (VOTE_RESULT)
+    // that Wolf Cub's own hanging death would arm from.
+    await expirePhaseTimer(gameId);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("DISCUSSION");
+
+    await expirePhaseTimer(gameId);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("VOTE");
+
+    const aliveAfterNight1 = [wolf1, wolf2, wolf3, seer, witch, ...villagers.slice(1)];
+    for (const voter of aliveAfterNight1) {
+      await writeAction(gameId, "VOTE", voter, "villager7");
+    }
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("VOTE_RESULT");
+    expect(res.deaths).toEqual(["villager7"]);
+
+    game = await getGame(gameId);
+    expect(game.wolfCubBonusNightPending).toBe(true);
+
+    await expirePhaseTimer(gameId);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("NIGHT_FALLS");
+    expect((await getGame(gameId)).dayNumber).toBe(2);
+
+    await expirePhaseTimer(gameId);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("SEER");
+
+    // Night 2: the bonus night. 3 wolves split 2-1 between villager2 and
+    // villager3 — a clean top-2 separation — so the pack bites both.
+    await writeAction(gameId, "SEER", seer, wolf2);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WOLVES");
+
+    await writeAction(gameId, "WOLVES", wolf1, "villager2");
+    await writeAction(gameId, "WOLVES", wolf2, "villager2");
+    await writeAction(gameId, "WOLVES", wolf3, "villager3");
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WITCH_SAVE");
+
+    // Still armed going into the bonus WOLVES phase, and not yet consumed —
+    // the flag only gets consumed at the WITCH_KILL -> DAWN transition below.
+    game = await getGame(gameId);
+    expect(game.wolfCubBonusNightPending).toBe(true);
+
+    await writeAction(gameId, "WITCH_SAVE", witch, null);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("WITCH_KILL");
+
+    await writeAction(gameId, "WITCH_KILL", witch, null);
+    res = await callAdvance(gameId);
+    expect(res.phase.name).toBe("DAWN");
+    expect(res.deaths?.sort()).toEqual(["villager2", "villager3"]);
+
+    // Consumed exactly once — back to false, and no Wolf Cub left to ever
+    // re-arm it again.
+    game = await getGame(gameId);
+    expect(game.wolfCubBonusNightPending).toBe(false);
   });
 });
 

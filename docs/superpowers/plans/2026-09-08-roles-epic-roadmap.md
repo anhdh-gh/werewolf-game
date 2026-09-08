@@ -36,7 +36,7 @@ rõ ràng chứ không giấu.
 | **Epic 2b** | Vai có khái niệm rõ nhưng paraphrase để lại mơ hồ thời điểm/trạng thái xuyên đêm hoặc điều kiện thắng chính xác — cùng loại vấn đề đã chặn Epic 1b (Doppelgänger, Hoodlum) | 2 | Chưa viết story — cần rulebook gốc | chưa có |
 | **Epic 3** | Vai Sói thật tham gia cắn cùng bầy WOLVES, cơ chế đủ rõ để viết story ngay (Wolf Man → "Lang Nhân") | 1 | **`done`** — CI xanh (run 34221621075, commit 62e1052, `typecheck`/`test`/`build` đều `success`, sau khi iteration 14 sửa 1 bug đếm quân trong test fixture của run trước đó bị fail), rules RTDB live đã deploy và byte-compare khớp repo (2026-09-08) | `2026-09-08-roles-epic-3.md` |
 | **Epic 3b** | Vai Sói có khái niệm rõ nhưng paraphrase mơ hồ thời điểm xuyên đêm hoặc điều kiện thắng chính xác — cùng loại vấn đề đã chặn Epic 1b/2b (Dire Wolf, Lone Wolf) | 2 | Chưa viết story — cần rulebook gốc | chưa có |
-| **Epic 3c** | Vai cần khả năng engine mới ("cắn 2 mạng/đêm", chưa có trong pipeline WOLVES/WITCH/resolveNight hiện tại) — Wolf Cub | 1 | **`story ready`** (2026-09-08, iteration 16) — pass thiết kế engine xong (tổng quát hoá `resolveNight`/`tallyMajorityVote` sang top-N nạn nhân, cờ `wolfCubBonusNightPending` xuyên đêm), chờ owner duyệt 3 quyết định thiết kế trong doc trước khi code | `2026-09-08-roles-epic-3c.md` |
+| **Epic 3c** | Vai cần khả năng engine mới ("cắn 2 mạng/đêm", chưa có trong pipeline WOLVES/WITCH/resolveNight hiện tại) — Wolf Cub | 1 | **`code written, CI + live-rules-verification pending`** (2026-09-08, iteration 17) — implement xong theo doc, gồm 1 fix thiết kế thật (thời điểm xoá cờ) phát hiện lúc trace tay trước khi viết test | `2026-09-08-roles-epic-3c.md` |
 | **Epic 4** | Vai cần rulebook gốc để phân biệt khỏi vai đã có, **không suy đoán** (Priest vs Bảo Vệ, Huntress vs Thợ Săn, Revealer vs Tiên Tri, Village Idiot, Drunk, Troublemaker, Insomniac, Apprentice Seer, Aura Seer, Paranormal Investigator, Beholder) | ~11 | **Chặn lại** — cần nghiên cứu thêm (không phải "thêm web search thông thường" nữa, xem catalog §6 mục 4) | chưa có |
 | **Epic 5 (kiến trúc)** | Phe thứ 3 mới hoàn toàn — Vampire, Cult Leader (cần thiết kế điều kiện thắng + UI phe mới dùng chung trước khi có vai nào trong nhóm này implement được) | 2 | Chặn lại — cần một `bmad-architecture` pass riêng trước khi có story | chưa có |
 | **Epic 6** | Tier 2 — Night Terrors, Urban Legends, Classic Movie Monsters (tên xác nhận, **lời văn năng lực chưa có nguồn chính hãng**) | ~14 | Chặn lại — cần nghiên cứu lại lời văn trước khi viết story (catalog §5, §6 mục 4) | chưa có |
@@ -115,7 +115,7 @@ liệt kê vai đã có epic xác định (không lặp lại toàn bộ ~141 va
 | Doppelgänger, Hoodlum | 2b | `blocked` — cần rulebook gốc (mơ hồ thời điểm/điều kiện thắng xuyên đêm) |
 | Wolf Man ("Lang Nhân") | 3 | `done` — CI xanh (run 34221621075, commit 62e1052, `typecheck`/`test`/`build` đều `success`; commit gốc d82648a từng fail 1 test do lỗi đếm quân trong fixture, sửa ở iteration 14). Rules RTDB live đã deploy (`firebase deploy --only database --project werewolf-game-2026`, 2026-09-08) và byte-compare khớp 100% với `database.rules.json` trong repo (2 rule WOLVES/wolves-chat mở rộng `WOLF_MAN` xác nhận có mặt sau deploy) |
 | Dire Wolf, Lone Wolf | 3b | `blocked` — cần rulebook gốc (mơ hồ thời điểm bạn đồng hành / điều kiện thắng chính xác) |
-| Wolf Cub | 3c | `story ready` (2026-09-08, iteration 16) — thiết kế engine xong ở `2026-09-08-roles-epic-3c.md`, chờ owner duyệt 3 quyết định thiết kế (điều kiện kích hoạt, cờ public, tái dùng UI vote đơn thay vì chọn 2 mục tiêu) trước khi code |
+| Wolf Cub | 3c | `code written, CI + live-rules-verification pending` (2026-09-08, iteration 17) — `resolveNight`/`tallyMajorityVote` tổng quát hoá sang `tallyTopNVotes`/`wolfTargets: string[]`, `planAdvance` nhận `wolfCubBonusNightPending` + trả `deathsThisRoundRoles`, route đọc/set cờ đúng 2 điểm DAWN/VOTE_RESULT (KHÔNG ở "Leaving WOLVES" như thiết kế gốc — xem fix bug bên dưới), `database.rules.json` mở rộng rule WOLVES + wolves-chat, full test coverage (unit + route-level e2e + emulator rules) |
 | Priest, Huntress, Revealer, Village Idiot, Drunk, Troublemaker, Insomniac, Apprentice Seer, Aura Seer, Paranormal Investigator, Beholder | 4 | `blocked` — cần rulebook gốc |
 | Vampire, Cult Leader | 5 | `blocked` — cần kiến trúc phe thứ 3 |
 | Thing, The Count, Beholder*, Insomniac*, Bogeyman, vai thứ 6 chưa rõ (Night Terrors); Bloody Mary, Chupacabra, Wolf Man*, Leprechaun, Sasquatch, Nostradamus (Urban Legends); The Blob, The Mummy, Dracula, The Zombie, Frankenstein's Monster (Classic Movie Monsters) | 6 | `blocked` — cần lời văn năng lực |
@@ -202,3 +202,34 @@ không tìm ra rulebook gốc — tất cả cần owner theo dõi, không chỉ
    `2026-09-08-roles-epic-3c.md` — chưa làm ở iteration 16 để giữ mỗi iteration là 1 đơn vị công
    việc nhỏ, độc lập review được (design pass riêng, implementation riêng), đúng tinh thần Epic 1
    viết story 1 iteration rồi implement iteration sau.
+9. **Xong (iteration 17, 2026-09-08)**: implement Epic 3c (Wolf Cub, "Sói Con") end-to-end theo
+   danh sách file ở mục 5 của `2026-09-08-roles-epic-3c.md`. **Phát hiện và sửa 1 bug thiết kế
+   thật** trước khi viết code (không phải sau khi CI fail): bản thiết kế gốc định xoá cờ
+   `wolfCubBonusNightPending` ở block "Leaving WOLVES" — sai, vì Witch luôn có mặt trong mọi ván
+   thật nên `WITCH_SAVE`/`WITCH_KILL` luôn nằm giữa `WOLVES` và `DAWN`, nghĩa là cờ sẽ bị xoá
+   `false` ở một lần gọi `advance()` SỚM HƠN lần gọi thực sự tính `resolveNight` — đêm thưởng sẽ
+   không bao giờ kích hoạt được trong một ván thật. Phát hiện bằng cách trace tay toàn bộ chuỗi
+   `advance()` một đêm đầy đủ trước khi viết test route-level, đúng khuyến nghị "viết route-level
+   test trước khi coi story xong" ở mục 5 của story doc. Sửa: chỉ chạm cờ ở đúng 2 điểm
+   `decision.nextPhase === "DAWN"` (ghi đè không điều kiện — vừa tiêu thụ giá trị cũ vừa tái kích
+   hoạt nếu Wolf Cub chết đêm đó) và `"VOTE_RESULT"` (chỉ được phép set `true`, không bao giờ xoá
+   — nếu không sẽ vô tình xoá cờ DAWN vừa set trước khi đêm tiếp theo kịp dùng). Đã cập nhật
+   `2026-09-08-roles-epic-3c.md` §2.4/§5 ghi rõ bug + fix. Route-level test mới trong
+   `gameFlowEndToEnd.test.ts` chạy trọn 2 đêm + 1 ngày qua route thật, xác nhận: đêm thường 1
+   nạn nhân → Wolf Cub chết (poison) → cờ `true` → 1 lần VOTE_RESULT không đụng Wolf Cub (không
+   bị xoá cờ) → đêm thưởng cắn đúng 2 nạn nhân (phiếu 2-1 tách biệt) → cờ về `false`. Cũng thêm
+   test emulator (Wolf Cub ghi được action WOLVES + chat wolves) và cập nhật mọi fixture
+   `Record<OptionalRoleKey,...>` + capacity test ở n=16 (giờ 5 vai miss slot: Pacifist, Sorcerer,
+   Wolf Man, Wolf Cub, Tanner). Epic 3c chuyển từ `story ready` sang
+   `code written, CI + live-rules-verification pending`. Việc tiếp theo: xác nhận CI xanh rồi
+   `firebase deploy --only database` + byte-compare, đúng pattern đã dùng cho Epic 1/2/3.
+
+   **Gap phát hiện nhưng chưa sửa (out of scope cho iteration này, để không phình to đổi thay
+   một iteration):** `advance/route.ts`'s "Leaving WOLVES" block viết `pendingWolfTarget` cho
+   Witch bằng `tallyMajorityVote(wolfVotes)` (luôn n=1), không đổi theo cờ đêm thưởng — nghĩa là
+   vào đúng đêm thưởng (2 nạn nhân), Witch's `WITCH_SAVE` UI chỉ thấy được 1 trong 2 mục tiêu
+   (mục tiêu có phiếu cao nhất), không có cách nào thấy/cứu mục tiêu còn lại dù cô ấy chỉ có 1
+   bình cứu cho cả đêm nên hệ quả thực tế nhỏ (không đổi được kết quả nếu cô ấy vẫn muốn cứu
+   đúng mục tiêu top-1). Vẫn là một gap UI thật, giống pattern bug Sorcerer packUids ở Epic 2/3
+   (phát hiện ở iteration 12, sửa ở iteration 15) — nên xử lý như một fix riêng, không phải một
+   phần bắt buộc để coi Epic 3c "xong".

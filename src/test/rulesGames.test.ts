@@ -25,6 +25,7 @@ const EXISTING_GAME = {
   players: {
     "uid-wolf": { name: "Wolf", alive: true, muted: false },
     "uid-wolfman": { name: "Wolf Man", alive: true, muted: false },
+    "uid-wolfcub": { name: "Wolf Cub", alive: true, muted: false },
     "uid-seer": { name: "Seer", alive: true, muted: false },
     "uid-witch": { name: "Witch", alive: true, muted: false },
     "uid-pacifist": { name: "Pacifist", alive: true, muted: false },
@@ -46,6 +47,7 @@ const EXISTING_PRIVATE: Record<string, Record<string, unknown>> = {
     potions: { heal: true, poison: true },
   },
   "uid-wolfman": { role: "WOLF_MAN", initialRole: "WOLF_MAN" },
+  "uid-wolfcub": { role: "WOLF_CUB", initialRole: "WOLF_CUB" },
   "uid-seer": { role: "SEER", initialRole: "SEER" },
   "uid-witch": {
     role: "WITCH",
@@ -132,6 +134,17 @@ describe("actions/$gameId — the role-hiding tree (spec §6.5)", () => {
     const db = testEnv.authenticatedContext("uid-wolfman").database();
     await assertSucceeds(
       set(ref(db, "actions/GAME1/WOLVES/uid-wolfman"), {
+        target: "uid-seer",
+        done: true,
+        at: 1234,
+      }),
+    );
+  });
+
+  it("allows a Wolf Cub to write a WOLVES action just like a Werewolf", async () => {
+    const db = testEnv.authenticatedContext("uid-wolfcub").database();
+    await assertSucceeds(
+      set(ref(db, "actions/GAME1/WOLVES/uid-wolfcub"), {
         target: "uid-seer",
         done: true,
         at: 1234,
@@ -489,6 +502,13 @@ describe("chat/$gameId — Resilience Task 2", () => {
     const db = testEnv.authenticatedContext("uid-wolfman").database();
     await assertSucceeds(
       set(ref(db, "chat/GAME1/wolves/msg1"), { uid: "uid-wolfman", text: "cắn ai", at: 1 }),
+    );
+  });
+
+  it("wolves: allows a live Wolf Cub uid to send, same as a Werewolf", async () => {
+    const db = testEnv.authenticatedContext("uid-wolfcub").database();
+    await assertSucceeds(
+      set(ref(db, "chat/GAME1/wolves/msg1"), { uid: "uid-wolfcub", text: "cắn ai", at: 1 }),
     );
   });
 

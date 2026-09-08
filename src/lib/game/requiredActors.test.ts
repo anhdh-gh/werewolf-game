@@ -15,17 +15,24 @@ const ROLES: Record<string, RoleKey> = {
   cursed1: "CURSED",
   sorcerer1: "SORCERER",
   wolfman1: "WOLF_MAN",
+  wolfcub1: "WOLF_CUB",
   villager1: "VILLAGER",
 };
 
 describe("requiredActorsForPhase", () => {
-  it("the Werewolves and Wolf Man act during WOLVES — the Traitor does not", () => {
+  it("the Werewolves, Wolf Man, and Wolf Cub act during WOLVES — the Traitor does not", () => {
     const actors = requiredActorsForPhase("WOLVES", ROLES);
-    expect(actors.sort()).toEqual(["wolf1", "wolf2", "wolfman1"]);
+    expect(actors.sort()).toEqual(["wolf1", "wolf2", "wolfcub1", "wolfman1"]);
   });
 
-  it("returns nobody for WOLVES when neither Werewolf nor Wolf Man is alive", () => {
-    const { wolf1: _w1, wolf2: _w2, wolfman1: _wm1, ...withoutWolves } = ROLES;
+  it("returns nobody for WOLVES when no Werewolf, Wolf Man, or Wolf Cub is alive", () => {
+    const {
+      wolf1: _w1,
+      wolf2: _w2,
+      wolfman1: _wm1,
+      wolfcub1: _wc1,
+      ...withoutWolves
+    } = ROLES;
     expect(requiredActorsForPhase("WOLVES", withoutWolves)).toEqual([]);
   });
 

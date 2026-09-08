@@ -19,6 +19,10 @@ describe("seerCheck", () => {
     expect(seerCheck("WOLF_MAN")).toBe("VILLAGER");
   });
 
+  it("reads the Wolf Cub as WOLF — a real wolf, unlike the Wolf Man's misread variant", () => {
+    expect(seerCheck("WOLF_CUB")).toBe("WOLF");
+  });
+
   it("reads every other role as VILLAGER", () => {
     const others: RoleKey[] = [
       "SEER",

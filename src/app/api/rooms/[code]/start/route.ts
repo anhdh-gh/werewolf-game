@@ -45,9 +45,9 @@ export async function POST(
 
   const now = Date.now();
   // Spec §7: "danh sách đồng bọn cho Sói" — every pack-visible uid (WEREWOLF,
-  // TRAITOR, WOLF_MAN) needs to know the rest of the pack. Wolf-faction roles
-  // that are hidden allies (SORCERER) are deliberately excluded — see
-  // isPackVisible's doc comment.
+  // TRAITOR, WOLF_MAN, WOLF_CUB) needs to know the rest of the pack.
+  // Wolf-faction roles that are hidden allies (SORCERER) are deliberately
+  // excluded — see isPackVisible's doc comment.
   const wolfFactionUids = uids.filter((uid) => isPackVisible(assignment[uid]));
   // Story 1.1: same passive-knowledge pattern as packUids above, for Mason.
   const masonLinks = buildMasonLinks(assignment);

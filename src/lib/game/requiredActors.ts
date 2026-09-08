@@ -29,8 +29,8 @@ export const ACTING_ROLE_BY_PHASE: Partial<Record<PhaseName, RoleKey>> = {
  * động trong phase đó đã xong." The advance route checks this before
  * transitioning early — this function is the single source of truth for
  * who that phase actually requires, given who's alive and what role they
- * hold. WOLVES is every alive Werewolf and Wolf Man (not the Traitor — spec
- * §4.1, the Traitor never wakes with the pack).
+ * hold. WOLVES is every alive Werewolf, Wolf Man, and Wolf Cub (not the
+ * Traitor or Sorcerer — spec §4.1, neither ever wakes with the pack).
  */
 export function requiredActorsForPhase(
   phase: PhaseName,
@@ -38,7 +38,7 @@ export function requiredActorsForPhase(
 ): string[] {
   if (phase === "WOLVES") {
     return Object.entries(aliveRolesByUid)
-      .filter(([, role]) => role === "WEREWOLF" || role === "WOLF_MAN")
+      .filter(([, role]) => role === "WEREWOLF" || role === "WOLF_MAN" || role === "WOLF_CUB")
       .map(([uid]) => uid);
   }
 

@@ -1,6 +1,6 @@
 import type { Faction, PhaseName, RoleKey } from "@/types/game";
 import { nextPhase } from "./phases";
-import { resolveNight, tallyMajorityVote } from "./resolveNight";
+import { resolveNight, tallyTopNVotes } from "./resolveNight";
 import { resolveVote } from "./resolveVote";
 import { applyDeathExtras } from "./resolveDeathExtras";
 import { checkWinner } from "./checkWinner";
@@ -22,6 +22,10 @@ export interface PlanAdvanceInput {
   cursedUids: string[];
   alreadyTransformedCursed: string[];
   lovers: readonly [string, string] | null;
+  /** Epic 3c (Wolf Cub): true when this DAWN resolution is the one bonus
+   * night after Wolf Cub died — the pack bites top-2 of the vote instead of
+   * top-1. Ignored outside a DAWN resolution. */
+  wolfCubBonusNightPending: boolean;
 }
 
 export interface PlanAdvanceResult {
@@ -31,6 +35,10 @@ export interface PlanAdvanceResult {
   deaths: string[];
   transformedToWolf: string[];
   winner: Faction | null;
+  /** Roles of everyone who died this call (night bite/poison or day hang) —
+   * exposed so the route can check "did Wolf Cub just die?" without
+   * recomputing this itself from decision.deaths + aliveRolesByUid. */
+  deathsThisRoundRoles: RoleKey[];
 }
 
 /**
@@ -52,9 +60,12 @@ export function planAdvance(input: PlanAdvanceInput): PlanAdvanceResult {
   let transformedToWolf: string[] = [];
 
   if (next === "DAWN") {
-    const wolfTarget = tallyMajorityVote(input.actions.wolfVotes);
+    const wolfTargets = tallyTopNVotes(
+      input.actions.wolfVotes,
+      input.wolfCubBonusNightPending ? 2 : 1,
+    );
     const nightResult = resolveNight({
-      wolfTarget,
+      wolfTargets,
       protectTarget: input.actions.protectTarget,
       witchSaveTarget: input.actions.witchSaveTarget,
       witchPoisonTarget: input.actions.witchPoisonTarget,
@@ -83,5 +94,11 @@ export function planAdvance(input: PlanAdvanceInput): PlanAdvanceResult {
 
   const winner = checkWinner({ deathsThisRoundRoles, aliveRoles });
 
-  return { nextPhase: winner ? "ENDED" : next, deaths, transformedToWolf, winner };
+  return {
+    nextPhase: winner ? "ENDED" : next,
+    deaths,
+    transformedToWolf,
+    winner,
+    deathsThisRoundRoles,
+  };
 }

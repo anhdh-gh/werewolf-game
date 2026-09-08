@@ -14,6 +14,7 @@ export type RoleKey =
   | "PRINCE"
   | "PACIFIST"
   | "WOLF_MAN"
+  | "WOLF_CUB"
   | "TANNER"
   | "VILLAGER";
 
@@ -38,14 +39,18 @@ export const FACTION_BY_ROLE: Record<RoleKey, Faction> = {
   PRINCE: "VILLAGE",
   PACIFIST: "VILLAGE",
   WOLF_MAN: "WOLF",
+  WOLF_CUB: "WOLF",
   TANNER: "TANNER",
   VILLAGER: "VILLAGE",
 };
 
-/** Spec §4.1: what the Seer's check reports for a role. Only WEREWOLF and
- * LYCAN read as wolf — TRAITOR is wolf-faction but reads as villager, LYCAN
- * is village-faction but reads as wolf. Everything else reads as villager. */
-const SEER_SEES_AS_WOLF: ReadonlySet<RoleKey> = new Set(["WEREWOLF", "LYCAN"]);
+/** Spec §4.1: what the Seer's check reports for a role. Only WEREWOLF,
+ * WOLF_CUB, and LYCAN read as wolf — TRAITOR and WOLF_MAN are wolf-faction
+ * but read as villager, LYCAN is village-faction but reads as wolf. Wolf Cub
+ * is a real wolf (unlike Wolf Man's "reads as villager" variant), so it
+ * belongs in this set — Epic 3c story, catalog-sourced. Everything else
+ * reads as villager. */
+const SEER_SEES_AS_WOLF: ReadonlySet<RoleKey> = new Set(["WEREWOLF", "LYCAN", "WOLF_CUB"]);
 
 export function seerCheck(role: RoleKey): "WOLF" | "VILLAGER" {
   return SEER_SEES_AS_WOLF.has(role) ? "WOLF" : "VILLAGER";
@@ -56,7 +61,12 @@ export function seerCheck(role: RoleKey): "WOLF" | "VILLAGER" {
  * SORCERER is wolf-faction but is a hidden ally who never learns the pack's
  * identity and is never shown to them either (story 2.1's explicit no-guess
  * design decision). */
-const PACK_VISIBLE_ROLES: ReadonlySet<RoleKey> = new Set(["WEREWOLF", "TRAITOR", "WOLF_MAN"]);
+const PACK_VISIBLE_ROLES: ReadonlySet<RoleKey> = new Set([
+  "WEREWOLF",
+  "TRAITOR",
+  "WOLF_MAN",
+  "WOLF_CUB",
+]);
 
 export function isPackVisible(role: RoleKey): boolean {
   return PACK_VISIBLE_ROLES.has(role);
@@ -141,6 +151,15 @@ export interface Game {
    * vote) and left alone otherwise — reveals nothing `players` doesn't
    * already reveal, since deaths are public regardless. */
   lastDeaths?: string[];
+  /** Epic 3c (Wolf Cub / "Sói Con"): true for exactly the one WOLVES phase
+   * right after Wolf Cub dies — the pack bites 2 victims that night instead
+   * of 1 (top-2 of the same vote, not a separate "pick 2" flow — see the
+   * story doc's design decision #1). Public, like lastProtectedUid: it says
+   * nothing about who Wolf Cub was, only that the pack gets a bonus bite,
+   * and Wolf Cub's death is already public via players/{uid}/alive anyway.
+   * Set/read/cleared entirely at the route layer since planAdvance() is
+   * pure and has no memory between calls. */
+  wolfCubBonusNightPending?: boolean;
 }
 
 export interface SeerHint {

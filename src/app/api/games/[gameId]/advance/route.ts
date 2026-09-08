@@ -167,6 +167,7 @@ export async function POST(
     cursedUids,
     alreadyTransformedCursed,
     lovers,
+    wolfCubBonusNightPending: game.wolfCubBonusNightPending ?? false,
   });
 
   // Spec §4.3: a role-specific phase whose actor is alive ends the moment
@@ -281,6 +282,27 @@ export async function POST(
   // before players get to read it.
   if (decision.nextPhase === "DAWN" || decision.nextPhase === "VOTE_RESULT") {
     updates[`games/${gameId}/lastDeaths`] = decision.deaths;
+  }
+  // Epic 3c (Wolf Cub): DAWN is the one call that actually *used*
+  // wolfCubBonusNightPending as planAdvance's input a moment ago (it's
+  // whatever WITCH_SAVE/WITCH_KILL/CURSED sat between WOLVES and DAWN this
+  // same night, never WOLVES itself, since Witch is always in the game) —
+  // so DAWN is also the right place to consume it: overwrite unconditionally
+  // with "did tonight's resolution just kill Wolf Cub", which is false
+  // (consumed, no re-arm) on every ordinary night and true (armed for the
+  // next WOLVES) on the night Wolf Cub actually dies. VOTE_RESULT is a day
+  // resolution that never consumes this flag — it may only ever ADD an arm
+  // (Wolf Cub hanged), never clear one DAWN already armed earlier that same
+  // day for the upcoming night, which is why it only ever writes `true` and
+  // otherwise leaves the flag untouched. Design doc: roles-epic-3c §2.4.
+  if (decision.nextPhase === "DAWN") {
+    updates[`games/${gameId}/wolfCubBonusNightPending`] =
+      decision.deathsThisRoundRoles.includes("WOLF_CUB");
+  } else if (
+    decision.nextPhase === "VOTE_RESULT" &&
+    decision.deathsThisRoundRoles.includes("WOLF_CUB")
+  ) {
+    updates[`games/${gameId}/wolfCubBonusNightPending`] = true;
   }
 
   for (const uid of decision.deaths) {

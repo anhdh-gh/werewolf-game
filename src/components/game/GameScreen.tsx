@@ -156,7 +156,8 @@ function GameScreenInner({
   const isWolfFaction =
     privateState?.role === "WEREWOLF" ||
     privateState?.role === "TRAITOR" ||
-    privateState?.role === "WOLF_MAN";
+    privateState?.role === "WOLF_MAN" ||
+    privateState?.role === "WOLF_CUB";
   const showVillageChat = remoteMode && game.phase.name === "DISCUSSION";
   const showWolvesChat = remoteMode && game.phase.name === "WOLVES" && isWolfFaction;
   const chatLockedReason = !me?.alive

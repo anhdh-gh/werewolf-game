@@ -46,6 +46,7 @@
         "result": { ".write": false },
         "lastProtectedUid": { ".write": false },
         "lastDeaths": { ".write": false },
+        "wolfCubBonusNightPending": { ".write": false },
         "narration": { ".write": false }
       }
     },
@@ -66,7 +67,7 @@
         "WOLVES": {
           "$uid": {
             ".read": "auth != null && auth.uid === $uid",
-            ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('phase').child('name').val() === 'WOLVES' && root.child('games').child($gameId).child('players').child($uid).child('alive').val() === true && (root.child('private').child($gameId).child($uid).child('role').val() === 'WEREWOLF' || root.child('private').child($gameId).child($uid).child('role').val() === 'WOLF_MAN')"
+            ".write": "auth != null && auth.uid === $uid && root.child('games').child($gameId).child('phase').child('name').val() === 'WOLVES' && root.child('games').child($gameId).child('players').child($uid).child('alive').val() === true && (root.child('private').child($gameId).child($uid).child('role').val() === 'WEREWOLF' || root.child('private').child($gameId).child($uid).child('role').val() === 'WOLF_MAN' || root.child('private').child($gameId).child($uid).child('role').val() === 'WOLF_CUB')"
           }
         },
         "SEER": {
@@ -137,9 +138,9 @@
           }
         },
         "wolves": {
-          ".read": "auth != null && (root.child('private').child($gameId).child(auth.uid).child('role').val() === 'WEREWOLF' || root.child('private').child($gameId).child(auth.uid).child('role').val() === 'TRAITOR' || root.child('private').child($gameId).child(auth.uid).child('role').val() === 'WOLF_MAN')",
+          ".read": "auth != null && (root.child('private').child($gameId).child(auth.uid).child('role').val() === 'WEREWOLF' || root.child('private').child($gameId).child(auth.uid).child('role').val() === 'TRAITOR' || root.child('private').child($gameId).child(auth.uid).child('role').val() === 'WOLF_MAN' || root.child('private').child($gameId).child(auth.uid).child('role').val() === 'WOLF_CUB')",
           "$msgId": {
-            ".write": "auth != null && !data.exists() && newData.exists() && (root.child('private').child($gameId).child(auth.uid).child('role').val() === 'WEREWOLF' || root.child('private').child($gameId).child(auth.uid).child('role').val() === 'TRAITOR' || root.child('private').child($gameId).child(auth.uid).child('role').val() === 'WOLF_MAN') && root.child('games').child($gameId).child('players').child(auth.uid).child('alive').val() === true && newData.child('uid').val() === auth.uid",
+            ".write": "auth != null && !data.exists() && newData.exists() && (root.child('private').child($gameId).child(auth.uid).child('role').val() === 'WEREWOLF' || root.child('private').child($gameId).child(auth.uid).child('role').val() === 'TRAITOR' || root.child('private').child($gameId).child(auth.uid).child('role').val() === 'WOLF_MAN' || root.child('private').child($gameId).child(auth.uid).child('role').val() === 'WOLF_CUB') && root.child('games').child($gameId).child('players').child(auth.uid).child('alive').val() === true && newData.child('uid').val() === auth.uid",
             ".validate": "newData.hasChildren(['uid', 'text', 'at']) && newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 500"
           }
         }

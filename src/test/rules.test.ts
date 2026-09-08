@@ -15,7 +15,7 @@ const EXISTING_ROOM = {
   status: "LOBBY",
   settings: {
     maxPlayers: 8,
-    rolesEnabled: { BODYGUARD: true, TRAITOR: true, HUNTER: true, CUPID: true, MUTER: true, CURSED: true, LYCAN: true, MASON: true, PRINCE: true, PACIFIST: true, SORCERER: true, WOLF_MAN: true, TANNER: true },
+    rolesEnabled: { BODYGUARD: true, TRAITOR: true, HUNTER: true, CUPID: true, MUTER: true, CURSED: true, LYCAN: true, MASON: true, PRINCE: true, PACIFIST: true, SORCERER: true, WOLF_MAN: true, WOLF_CUB: true, TANNER: true },
     remoteMode: false,
   },
   members: {
@@ -127,7 +127,7 @@ describe("rooms/$code", () => {
         status: "LOBBY",
         settings: {
           maxPlayers: 8,
-          rolesEnabled: { BODYGUARD: true, TRAITOR: true, HUNTER: true, CUPID: true, MUTER: true, CURSED: true, LYCAN: true, MASON: true, PRINCE: true, PACIFIST: true, SORCERER: true, WOLF_MAN: true, TANNER: true },
+          rolesEnabled: { BODYGUARD: true, TRAITOR: true, HUNTER: true, CUPID: true, MUTER: true, CURSED: true, LYCAN: true, MASON: true, PRINCE: true, PACIFIST: true, SORCERER: true, WOLF_MAN: true, WOLF_CUB: true, TANNER: true },
           remoteMode: false,
         },
         members: {
@@ -160,7 +160,7 @@ describe("rooms/$code", () => {
         "rooms/SOLO01/createdAt": 5000,
         "rooms/SOLO01/settings": {
           maxPlayers: 8,
-          rolesEnabled: { BODYGUARD: true, TRAITOR: true, HUNTER: true, CUPID: true, MUTER: true, CURSED: true, LYCAN: true, MASON: true, PRINCE: true, PACIFIST: true, SORCERER: true, WOLF_MAN: true, TANNER: true },
+          rolesEnabled: { BODYGUARD: true, TRAITOR: true, HUNTER: true, CUPID: true, MUTER: true, CURSED: true, LYCAN: true, MASON: true, PRINCE: true, PACIFIST: true, SORCERER: true, WOLF_MAN: true, WOLF_CUB: true, TANNER: true },
           remoteMode: false,
         },
         "rooms/SOLO01/members/uid-solo": {
@@ -208,7 +208,7 @@ describe("rooms/$code", () => {
     await assertFails(
       set(ref(db, "rooms/EXIST1/settings"), {
         maxPlayers: 8,
-        rolesEnabled: { BODYGUARD: true, TRAITOR: true, HUNTER: true, CUPID: true, MUTER: true, CURSED: true, LYCAN: true, MASON: true, PRINCE: true, PACIFIST: true, SORCERER: true, WOLF_MAN: true, TANNER: true },
+        rolesEnabled: { BODYGUARD: true, TRAITOR: true, HUNTER: true, CUPID: true, MUTER: true, CURSED: true, LYCAN: true, MASON: true, PRINCE: true, PACIFIST: true, SORCERER: true, WOLF_MAN: true, WOLF_CUB: true, TANNER: true },
       }),
     );
   });

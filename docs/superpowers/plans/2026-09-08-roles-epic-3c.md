@@ -110,18 +110,39 @@ const nightResult = resolveNight({ wolfTargets, ... });
 
 `planAdvance()` là pure, không giữ state giữa 2 lần gọi — cờ "đêm mai là đêm thưởng" phải sống ở
 `Game` (public state, xem lý do public bên dưới) và được set/đọc/xoá ở tầng route
-(`advance/route.ts`), đúng pattern đã dùng cho `lastProtectedUid`/potions:
+(`advance/route.ts`), đúng pattern đã dùng cho `lastProtectedUid`/potions.
 
-- **Set:** ngay sau khi `decision` tính xong (DAWN hoặc VOTE_RESULT), nếu
-  `deathsThisRoundRoles` (đã có sẵn trong `planAdvance`, cần export ra `PlanAdvanceResult` — xem
-  §2.5) chứa `WOLF_CUB`, route ghi `updates['games/{gameId}/wolfCubBonusNightPending'] = true`.
+**Sửa lại so với bản thiết kế gốc (phát hiện lúc implement, iteration 17):** bản đầu của mục
+này định xoá cờ ở block "Leaving WOLVES" hiện có (dòng ~249). Đó là **bug** — Witch luôn có mặt
+trong mọi ván thật (vai bắt buộc, không optional), nên `WITCH_SAVE`/`WITCH_KILL` luôn nằm giữa
+`WOLVES` và `DAWN` trong `PHASE_SEQUENCE`, nghĩa là "rời WOLVES" luôn là một lần gọi
+`advance()` SỚM HƠN lần gọi thực sự tính `resolveNight` (lần next==="DAWN"). Nếu xoá cờ ngay khi
+rời WOLVES, giá trị đã bị set `false` trong DB trước khi lần gọi tính đêm thưởng kịp đọc nó —
+đêm thưởng không bao giờ thực sự kích hoạt được. Phát hiện bằng cách trace tay toàn bộ chuỗi
+gọi `advance()` một đêm đầy đủ trước khi viết test tích hợp, đúng tinh thần "viết test route-level
+trước khi coi story xong" ở §5.
+
+Thiết kế đúng: chỉ chạm vào cờ ở đúng 2 điểm `decision.nextPhase === "DAWN"` /
+`"VOTE_RESULT"` — tức đúng 2 điểm `planAdvance` thực sự resolve cái chết (theo doc comment của
+chính nó), không phải ở "rời WOLVES":
+
+- **DAWN** (next==="DAWN"): đây là lần gọi đã THỰC SỰ dùng `wolfCubBonusNightPending` làm input
+  cho `tallyTopNVotes` một chút trước đó trong cùng lần gọi — nên đây cũng là chỗ đúng để tiêu
+  thụ nó: ghi đè không điều kiện bằng `decision.deathsThisRoundRoles.includes("WOLF_CUB")` — ra
+  `false` (đã tiêu thụ, không có ai chết mới) ở một đêm bình thường, ra `true` (kích hoạt cho
+  `WOLVES` kế tiếp) đúng đêm Wolf Cub chết.
+- **VOTE_RESULT** (next==="VOTE_RESULT"): một resolution ban ngày, KHÔNG BAO GIỜ được xoá cờ —
+  chỉ được phép set `true` nếu Wolf Cub bị treo cổ chết ở đây, còn lại (Wolf Cub không nằm
+  trong danh sách chết) thì bỏ qua, giữ nguyên giá trị cũ trong DB. Lý do: nếu DAWN đêm N vừa
+  set cờ `true` (Wolf Cub chết đêm N), cờ đó phải sống sót qua nguyên ngày N (DISCUSSION → VOTE
+  → VOTE_RESULT_N) để đến `WOLVES` đêm N+1 mới được dùng — nếu VOTE_RESULT_N ghi đè không điều
+  kiện (như DAWN làm), nó sẽ vô tình xoá `true` thành `false` ngay trong cùng ngày trước khi
+  đêm N+1 kịp dùng, vì Wolf Cub (đã chết đêm N) chắc chắn không nằm trong
+  `deathsThisRoundRoles` của VOTE_RESULT_N.
 - **Đọc:** route đọc `game.wolfCubBonusNightPending` (đã có sẵn trong `game` snapshot đầu hàm)
-  và truyền vào `planAdvance()` mỗi lần gọi.
-- **Xoá:** ngay khi rời phase WOLVES của đêm thưởng đó (route đã có block "Leaving WOLVES" ở
-  dòng ~249) — set lại `false`, bất kể đêm đó có cắn được 2 người thật hay chỉ 1 (do hòa phiếu).
-  Tiêu thụ đúng 1 lần, không cộng dồn nếu 2 Wolf Cub cùng tồn tại (không xảy ra — role đơn, xem
-  §3) hoặc nếu route bị gọi lại nhiều lần cho cùng version (idempotency guard hiện có đã chặn
-  double-processing).
+  và truyền vào `planAdvance()` mỗi lần gọi — không đổi so với bản gốc.
+- Không cộng dồn nếu 2 Wolf Cub cùng tồn tại (không xảy ra — role đơn, xem §3) hoặc nếu route bị
+  gọi lại nhiều lần cho cùng version (idempotency guard hiện có đã chặn double-processing).
 
 **Quyết định thiết kế cần owner duyệt (#2 — công khai cờ này):** `wolfCubBonusNightPending` nằm
 ở `games/{gameId}` (đọc được bởi mọi client đã auth, giống `lastProtectedUid`/`dayNumber`), NHÔNG
@@ -211,9 +232,11 @@ thúc sớm khi mọi Werewolf + Wolf Man + Wolf Cub còn sống đã bỏ phi�
 - `src/lib/game/requiredActors.ts` — nhánh `WOLVES` thêm `|| role === "WOLF_CUB"`.
 - `src/lib/game/labels.ts` — `ROLE_LABELS.WOLF_CUB = "Sói Con"`.
 - `src/app/api/games/[gameId]/advance/route.ts` — đọc `game.wolfCubBonusNightPending` vào
-  `planAdvance()`; sau khi có `decision`, set cờ `true` nếu `WOLF_CUB` nằm trong
-  `decision.deathsThisRoundRoles` (DAWN hoặc VOTE_RESULT); xoá cờ (`false`) trong block "Leaving
-  WOLVES" hiện có.
+  `planAdvance()`; khi `decision.nextPhase === "DAWN"`, ghi đè cờ không điều kiện bằng
+  `decision.deathsThisRoundRoles.includes("WOLF_CUB")` (vừa tiêu thụ vừa tái kích hoạt); khi
+  `decision.nextPhase === "VOTE_RESULT"`, chỉ set `true` nếu Wolf Cub bị treo cổ, không đụng vào
+  cờ nếu không — xem §2.4 bản sửa lại, KHÔNG xoá ở block "Leaving WOLVES" (đó là bug ở bản thiết
+  kế gốc).
 - `database.rules.json` — 2 rule (`actions/$gameId/WOLVES/$uid/.write`,
   `chat/$gameId/wolves` read + `$msgId/.write`) thêm `|| role === WOLF_CUB`; validate
   `games/$gameId/wolfCubBonusNightPending` schema (boolean, optional) nếu file dùng
