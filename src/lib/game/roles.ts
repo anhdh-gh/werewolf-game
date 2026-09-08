@@ -60,6 +60,25 @@ export function buildMasonLinks(assignment: Record<string, RoleKey>): Record<str
   return links;
 }
 
+/** Story 4a.2 (Beholder): pure pairing of every BEHOLDER uid with the
+ * game's one Seer uid, so the caller (start route) can write it straight
+ * into each Beholder's private state — same shape idea as buildMasonLinks,
+ * simpler because there's always exactly one Seer (SEER is never optional)
+ * so there's no "0 or many Seers" case to handle. Returns an empty object
+ * when the deck has no Beholder, and when it has a Beholder but somehow no
+ * Seer was dealt (shouldn't happen given SEER is always present, but this
+ * function stays defensive rather than assuming). */
+export function buildBeholderTargets(assignment: Record<string, RoleKey>): Record<string, string> {
+  const seerUid = Object.entries(assignment).find(([, role]) => role === "SEER")?.[0];
+  if (!seerUid) return {};
+
+  const targets: Record<string, string> = {};
+  for (const [uid, role] of Object.entries(assignment)) {
+    if (role === "BEHOLDER") targets[uid] = seerUid;
+  }
+  return targets;
+}
+
 /** Who gets which role among uids stays random and hidden, exactly as
  * before — only the input (an explicit deck instead of a formula-computed
  * one) changed. Caller is responsible for making sure uids.length matches

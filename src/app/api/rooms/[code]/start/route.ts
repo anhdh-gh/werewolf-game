@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
-import { assignRoles, assertValidDeck, buildMasonLinks } from "@/lib/game/roles";
+import { assignRoles, assertValidDeck, buildMasonLinks, buildBeholderTargets } from "@/lib/game/roles";
 import { PHASE_DURATIONS_MS } from "@/lib/game/phases";
 import { deckSize, type Room } from "@/types/room";
 import { isPackVisible, type PrivatePlayerState } from "@/types/game";
@@ -62,6 +62,8 @@ export async function POST(
   const wolfFactionUids = uids.filter((uid) => isPackVisible(assignment[uid]));
   // Story 1.1: same passive-knowledge pattern as packUids above, for Mason.
   const masonLinks = buildMasonLinks(assignment);
+  // Story 4a.2: same pattern again, for Beholder → the game's one Seer.
+  const beholderTargets = buildBeholderTargets(assignment);
 
   const privateWrites: Record<string, PrivatePlayerState> = {};
   const players: Record<string, { name: string; alive: boolean; muted: boolean }> = {};
@@ -75,6 +77,9 @@ export async function POST(
         ? { packUids: wolfFactionUids.filter((packUid) => packUid !== uid) }
         : {}),
       ...(role === "MASON" ? { masonUids: masonLinks[uid] ?? [] } : {}),
+      ...(role === "BEHOLDER" && beholderTargets[uid]
+        ? { beholderSeerUid: beholderTargets[uid] }
+        : {}),
     };
     players[uid] = { name: room.members[uid].name, alive: true, muted: false };
   }

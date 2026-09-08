@@ -1,5 +1,12 @@
 import { describe, it, expect } from "vitest";
-import { buildRoleList, deckIssue, assertValidDeck, assignRoles, buildMasonLinks } from "./roles";
+import {
+  buildRoleList,
+  deckIssue,
+  assertValidDeck,
+  assignRoles,
+  buildMasonLinks,
+  buildBeholderTargets,
+} from "./roles";
 import { ALL_ROLE_KEYS, type RoleKey } from "@/types/game";
 
 function zeroDeck(): Record<RoleKey, number> {
@@ -91,5 +98,32 @@ describe("buildMasonLinks", () => {
   it("returns nothing for a game with no Mason at all", () => {
     const links = buildMasonLinks({ a: "SEER", b: "VILLAGER" });
     expect(links).toEqual({});
+  });
+});
+
+describe("buildBeholderTargets", () => {
+  it("points a single Beholder at the game's one Seer", () => {
+    const targets = buildBeholderTargets({ a: "BEHOLDER", b: "SEER", c: "VILLAGER" });
+    expect(targets).toEqual({ a: "b" });
+  });
+
+  it("points every Beholder at the same Seer when more than one is dealt", () => {
+    const targets = buildBeholderTargets({
+      a: "BEHOLDER",
+      b: "BEHOLDER",
+      c: "SEER",
+      d: "VILLAGER",
+    });
+    expect(targets).toEqual({ a: "c", b: "c" });
+  });
+
+  it("returns nothing for a game with no Beholder at all", () => {
+    const targets = buildBeholderTargets({ a: "SEER", b: "VILLAGER" });
+    expect(targets).toEqual({});
+  });
+
+  it("returns nothing if there's a Beholder but somehow no Seer (defensive, shouldn't happen)", () => {
+    const targets = buildBeholderTargets({ a: "BEHOLDER", b: "VILLAGER" });
+    expect(targets).toEqual({});
   });
 });

@@ -14,6 +14,7 @@ export type RoleKey =
   | "PRINCE"
   | "PACIFIST"
   | "VILLAGE_IDIOT"
+  | "BEHOLDER"
   | "WOLF_MAN"
   | "WOLF_CUB"
   | "TANNER"
@@ -40,6 +41,7 @@ export const FACTION_BY_ROLE: Record<RoleKey, Faction> = {
   PRINCE: "VILLAGE",
   PACIFIST: "VILLAGE",
   VILLAGE_IDIOT: "VILLAGE",
+  BEHOLDER: "VILLAGE",
   WOLF_MAN: "WOLF",
   WOLF_CUB: "WOLF",
   TANNER: "TANNER",
@@ -68,6 +70,7 @@ export const ALL_ROLE_KEYS: RoleKey[] = [
   "PRINCE",
   "PACIFIST",
   "VILLAGE_IDIOT",
+  "BEHOLDER",
   "VILLAGER",
   "TANNER",
 ];
@@ -245,6 +248,11 @@ export interface PrivatePlayerState {
    * when this uid is the only Mason in the game (nobody else to know about),
    * never present for a non-Mason. */
   masonUids?: string[];
+  /** Story 4a.2 (Beholder/"Kẻ Quan Sát"): the uid of this game's one Seer,
+   * written once at role-dealing time — passive knowledge, no phase
+   * involved, same pattern as masonUids above. Only ever present for a uid
+   * dealt the BEHOLDER role; never present otherwise. */
+  beholderSeerUid?: string;
 }
 
 export interface NightActions {

@@ -1055,6 +1055,53 @@ describe("Epic 2 Story 2.1: Sorcerer's SEER check is written to their own privat
   });
 });
 
+describe("Story 4a.2 (Beholder): passive knowledge of the game's one Seer", () => {
+  it("writes beholderSeerUid onto the Beholder's private state, readable only there", async () => {
+    // BEHOLDER isn't part of the old auto-fill formula seedRoom()'s fixture
+    // leans on, so this deck is seeded directly rather than through
+    // seedRoom/oldBuildRoleList.
+    const startUids = ["wolfA", "seer3", "beholder1", "villagerX", "villagerY"];
+    const roleCounts = toRoleCounts(["WEREWOLF", "SEER", "BEHOLDER", "VILLAGER", "VILLAGER"]);
+    const members: Room["members"] = {};
+    for (const uid of startUids) {
+      members[uid] = { name: uid, photoURL: null, joinedAt: 1, ready: true, online: true };
+    }
+    await fakeDb.ref("rooms/BEHOLD1").set({
+      createdAt: 1,
+      status: "LOBBY",
+      settings: { roleCounts, remoteMode: false },
+      members,
+    } satisfies Room);
+
+    const { gameId } = await callStart("BEHOLD1");
+    if (!gameId) throw new Error("start route did not return a gameId");
+
+    const priv = await getPrivate(gameId);
+    const [beholderUid, beholderPriv] =
+      Object.entries(priv).find(([, p]) => p.role === "BEHOLDER") ?? [];
+    const seerUid = Object.entries(priv).find(([, p]) => p.role === "SEER")?.[0];
+    if (!beholderUid || !beholderPriv || !seerUid) throw new Error("Beholder or Seer not dealt");
+
+    expect(beholderPriv.beholderSeerUid).toBe(seerUid);
+
+    for (const [uid, p] of Object.entries(priv)) {
+      if (uid !== beholderUid) expect(p.beholderSeerUid).toBeUndefined();
+    }
+  });
+
+  it("does not write beholderSeerUid to anyone when no Beholder is in the deck", async () => {
+    const uids = ["p1", "p2", "p3", "p4", "p5", "p6", "p7"];
+    await seedRoom("NOBEHOLD", uids, NO_OPTIONAL_ROLES);
+    const { gameId } = await callStart("NOBEHOLD");
+    if (!gameId) throw new Error("start route did not return a gameId");
+
+    const priv = await getPrivate(gameId);
+    for (const p of Object.values(priv)) {
+      expect(p.beholderSeerUid).toBeUndefined();
+    }
+  });
+});
+
 describe("Epic 3 Story 3.1: Wolf Man acts with the pack and survives a Cursed pack rebuild", () => {
   const gameId = "GAME-WOLFMAN";
   const roomCode = "WOLFMAN1";

@@ -23,6 +23,7 @@ import { ActionPanel } from "./ActionPanel";
 import { RoleCard } from "./RoleCard";
 import { PackInfo } from "./PackInfo";
 import { MasonInfo } from "./MasonInfo";
+import { BeholderInfo } from "./BeholderInfo";
 import { MutedBanner } from "./MutedBanner";
 import { DeathAnnouncement } from "./DeathAnnouncement";
 import { SeerHints } from "./SeerHints";
@@ -183,6 +184,7 @@ function GameScreenInner({
           <RoleCard privateState={privateState} />
           <PackInfo privateState={privateState} players={game.players} />
           <MasonInfo privateState={privateState} players={game.players} />
+          <BeholderInfo privateState={privateState} players={game.players} />
           <SeerHints privateState={privateState} players={game.players} />
           <SorcererHints privateState={privateState} players={game.players} />
 

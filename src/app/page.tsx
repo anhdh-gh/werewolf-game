@@ -39,6 +39,7 @@ const DEFAULT_DECK: Record<RoleKey, number> = {
   PRINCE: 0,
   PACIFIST: 0,
   VILLAGE_IDIOT: 0,
+  BEHOLDER: 0,
   VILLAGER: 1,
   TANNER: 0,
 };
