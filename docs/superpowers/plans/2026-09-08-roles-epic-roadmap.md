@@ -36,7 +36,7 @@ rõ ràng chứ không giấu.
 | **Epic 2b** | Vai có khái niệm rõ nhưng paraphrase để lại mơ hồ thời điểm/trạng thái xuyên đêm hoặc điều kiện thắng chính xác — cùng loại vấn đề đã chặn Epic 1b (Doppelgänger, Hoodlum) | 2 | Chưa viết story — cần rulebook gốc | chưa có |
 | **Epic 3** | Vai Sói thật tham gia cắn cùng bầy WOLVES, cơ chế đủ rõ để viết story ngay (Wolf Man → "Lang Nhân") | 1 | **`done`** — CI xanh (run 34221621075, commit 62e1052, `typecheck`/`test`/`build` đều `success`, sau khi iteration 14 sửa 1 bug đếm quân trong test fixture của run trước đó bị fail), rules RTDB live đã deploy và byte-compare khớp repo (2026-09-08) | `2026-09-08-roles-epic-3.md` |
 | **Epic 3b** | Vai Sói có khái niệm rõ nhưng paraphrase mơ hồ thời điểm xuyên đêm hoặc điều kiện thắng chính xác — cùng loại vấn đề đã chặn Epic 1b/2b (Dire Wolf, Lone Wolf) | 2 | Chưa viết story — cần rulebook gốc | chưa có |
-| **Epic 3c** | Vai cần khả năng engine mới ("cắn 2 mạng/đêm", chưa có trong pipeline WOLVES/WITCH/resolveNight hiện tại) — Wolf Cub | 1 | Chặn lại — cần một pass thiết kế engine riêng trước khi viết story | chưa có |
+| **Epic 3c** | Vai cần khả năng engine mới ("cắn 2 mạng/đêm", chưa có trong pipeline WOLVES/WITCH/resolveNight hiện tại) — Wolf Cub | 1 | **`story ready`** (2026-09-08, iteration 16) — pass thiết kế engine xong (tổng quát hoá `resolveNight`/`tallyMajorityVote` sang top-N nạn nhân, cờ `wolfCubBonusNightPending` xuyên đêm), chờ owner duyệt 3 quyết định thiết kế trong doc trước khi code | `2026-09-08-roles-epic-3c.md` |
 | **Epic 4** | Vai cần rulebook gốc để phân biệt khỏi vai đã có, **không suy đoán** (Priest vs Bảo Vệ, Huntress vs Thợ Săn, Revealer vs Tiên Tri, Village Idiot, Drunk, Troublemaker, Insomniac, Apprentice Seer, Aura Seer, Paranormal Investigator, Beholder) | ~11 | **Chặn lại** — cần nghiên cứu thêm (không phải "thêm web search thông thường" nữa, xem catalog §6 mục 4) | chưa có |
 | **Epic 5 (kiến trúc)** | Phe thứ 3 mới hoàn toàn — Vampire, Cult Leader (cần thiết kế điều kiện thắng + UI phe mới dùng chung trước khi có vai nào trong nhóm này implement được) | 2 | Chặn lại — cần một `bmad-architecture` pass riêng trước khi có story | chưa có |
 | **Epic 6** | Tier 2 — Night Terrors, Urban Legends, Classic Movie Monsters (tên xác nhận, **lời văn năng lực chưa có nguồn chính hãng**) | ~14 | Chặn lại — cần nghiên cứu lại lời văn trước khi viết story (catalog §5, §6 mục 4) | chưa có |
@@ -115,7 +115,7 @@ liệt kê vai đã có epic xác định (không lặp lại toàn bộ ~141 va
 | Doppelgänger, Hoodlum | 2b | `blocked` — cần rulebook gốc (mơ hồ thời điểm/điều kiện thắng xuyên đêm) |
 | Wolf Man ("Lang Nhân") | 3 | `done` — CI xanh (run 34221621075, commit 62e1052, `typecheck`/`test`/`build` đều `success`; commit gốc d82648a từng fail 1 test do lỗi đếm quân trong fixture, sửa ở iteration 14). Rules RTDB live đã deploy (`firebase deploy --only database --project werewolf-game-2026`, 2026-09-08) và byte-compare khớp 100% với `database.rules.json` trong repo (2 rule WOLVES/wolves-chat mở rộng `WOLF_MAN` xác nhận có mặt sau deploy) |
 | Dire Wolf, Lone Wolf | 3b | `blocked` — cần rulebook gốc (mơ hồ thời điểm bạn đồng hành / điều kiện thắng chính xác) |
-| Wolf Cub | 3c | `blocked` — cần thiết kế engine "cắn 2 mạng/đêm" (không phải thiếu nguồn) |
+| Wolf Cub | 3c | `story ready` (2026-09-08, iteration 16) — thiết kế engine xong ở `2026-09-08-roles-epic-3c.md`, chờ owner duyệt 3 quyết định thiết kế (điều kiện kích hoạt, cờ public, tái dùng UI vote đơn thay vì chọn 2 mục tiêu) trước khi code |
 | Priest, Huntress, Revealer, Village Idiot, Drunk, Troublemaker, Insomniac, Apprentice Seer, Aura Seer, Paranormal Investigator, Beholder | 4 | `blocked` — cần rulebook gốc |
 | Vampire, Cult Leader | 5 | `blocked` — cần kiến trúc phe thứ 3 |
 | Thing, The Count, Beholder*, Insomniac*, Bogeyman, vai thứ 6 chưa rõ (Night Terrors); Bloody Mary, Chupacabra, Wolf Man*, Leprechaun, Sasquatch, Nostradamus (Urban Legends); The Blob, The Mummy, Dracula, The Zombie, Frankenstein's Monster (Classic Movie Monsters) | 6 | `blocked` — cần lời văn năng lực |
@@ -188,3 +188,17 @@ không tìm ra rulebook gốc — tất cả cần owner theo dõi, không chỉ
    điểm/trạng thái/điều kiện thắng — hoặc thiếu khả năng engine — trước khi coi cả epic là
    "story ready".
 7. Cập nhật bảng theo dõi tiến độ ở trên mỗi khi một vai đổi trạng thái.
+8. **Xong (iteration 16, 2026-09-08)**: pass thiết kế engine cho Epic 3c (Wolf Cub, "cắn 2
+   mạng/đêm") — `2026-09-08-roles-epic-3c.md`. Tổng quát hoá `resolveNight`/`tallyMajorityVote`
+   sang top-N nạn nhân/đêm (n=1 mặc định, n=2 khi có cờ đêm thưởng), thêm state xuyên đêm
+   `games/{gameId}/wolfCubBonusNightPending` set/đọc/xoá ở tầng route (planAdvance vẫn pure).
+   Xác nhận `resolveDeathExtras.ts` đã generic sẵn theo mảng, không cần đổi. 3 quyết định thiết
+   kế chưa có trong lời văn nguồn được ghi rõ trong doc (điều kiện kích hoạt = chết bất kỳ cách
+   nào; cờ đêm thưởng public nhưng không lộ vai; đêm thưởng lấy top-2 của cùng 1 lượt phiếu thay
+   vì cho mỗi sói chọn 2 mục tiêu) — theo đúng tiền lệ deviation của Prince (Epic 1, story 1.2):
+   ghi rõ để owner review qua git history, không chặn việc implement chờ trả lời trực tiếp (run
+   này không tương tác được với owner giữa chừng). Epic 3c chuyển từ `blocked` sang
+   `story ready`. Việc tiếp theo: implement theo danh sách file ở mục 5 của
+   `2026-09-08-roles-epic-3c.md` — chưa làm ở iteration 16 để giữ mỗi iteration là 1 đơn vị công
+   việc nhỏ, độc lập review được (design pass riêng, implementation riêng), đúng tinh thần Epic 1
+   viết story 1 iteration rồi implement iteration sau.
