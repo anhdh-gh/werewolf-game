@@ -18,11 +18,14 @@
 // Nothing here touches the network: preflight.mjs only runs its checks when
 // invoked as a script, so importing it is inert.
 
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   REQUIRED_ENV,
+  SMOKE_ROUTES,
+  classifyRouteProbe,
+  parseProductionOrigin,
   diffRuleSections,
   normalizeRules,
   parseDatabaseRegionRedirect,
@@ -431,6 +434,77 @@ describe("supporting parsers", () => {
   it("reads only names out of a dotenv file, never values", () => {
     const contents = 'A=1\nexport B="two"\n# C=3\n\nD=\n';
     expect(parseEnvFileNames(contents)).toEqual(["A", "B", "D"]);
+  });
+});
+
+// The route probes are the only checks in preflight.mjs that ask deployed code
+// to run rather than reading configuration, and they exist because the other
+// nine reported PASS for two hours while every route on wolf.anhdh.net
+// returned a bare 500 (see SMOKE_ROUTES' own comment). Two things have to hold
+// for them to be worth anything: they must point at routes that still exist,
+// and a 5xx must actually fail the run.
+describe("deployed route probes", () => {
+  const origin = "https://example.test";
+
+  it("reads the production origin out of the app's own metadataBase", () => {
+    const layout = readFileSync(path.join(REPO_ROOT, "src/app/layout.tsx"), "utf8");
+    const parsed = parseProductionOrigin(layout);
+    expect(parsed).toMatch(/^https:\/\/[^/]+$/);
+    expect(layout).toContain(parsed as string);
+  });
+
+  it("returns null rather than a wrong URL when metadataBase is gone", () => {
+    expect(parseProductionOrigin("export const metadata = { title: 'x' };")).toBeNull();
+  });
+
+  it("probes a route file that actually exists, for every entry", () => {
+    for (const probe of SMOKE_ROUTES) {
+      expect(existsSync(path.join(REPO_ROOT, probe.route))).toBe(true);
+    }
+  });
+
+  it("covers every API route in the app", () => {
+    const routeFiles = walk(path.join(REPO_ROOT, "src/app/api"))
+      .filter((file) => path.basename(file) === "route.ts")
+      .map((file) => path.relative(REPO_ROOT, file));
+    expect(new Set(SMOKE_ROUTES.map((probe) => probe.route))).toEqual(new Set(routeFiles));
+  });
+
+  it("passes when a route answers with its own guard", () => {
+    const probe = SMOKE_ROUTES[0];
+    const check = classifyRouteProbe(probe, { status: probe.expect, body: "{}" }, origin);
+    expect(check.status).toBe("ok");
+  });
+
+  it("FAILS on the 500 this check was built for — an empty-bodied module-load crash", () => {
+    const probe = SMOKE_ROUTES[0];
+    const check = classifyRouteProbe(
+      probe,
+      { status: 500, body: "", vercelError: "FUNCTION_INVOCATION_FAILED" },
+      origin,
+    );
+    expect(check.status).toBe("fail");
+    expect(summarize([check]).exitCode).toBe(1);
+    // The owner needs the one command that shows the real stack; a bare 500
+    // with no body says nothing on its own.
+    expect(check.detail).toContain("vercel logs");
+    expect(check.detail).toContain("FUNCTION_INVOCATION_FAILED");
+  });
+
+  it("SKIPs, not FAILs, when something in front of the app answers instead", () => {
+    // Vercel Deployment Protection answers 401 for the whole site. The probe
+    // never reached the route, so it proves nothing either way — calling that
+    // a broken route would train the owner to ignore this check.
+    const probe = SMOKE_ROUTES[0];
+    const check = classifyRouteProbe(probe, { status: 401, body: "Authentication Required" }, origin);
+    expect(check.status).toBe("skip");
+    expect(summarize([check]).exitCode).toBe(0);
+  });
+
+  it("SKIPs when the request never completed", () => {
+    const probe = SMOKE_ROUTES[0];
+    const check = classifyRouteProbe(probe, { status: 0, body: "", error: "ETIMEDOUT" }, origin);
+    expect(check.status).toBe("skip");
   });
 });
 

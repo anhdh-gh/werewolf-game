@@ -16,11 +16,22 @@
  * "the code for it exists".
  *
  * STRICTLY READ-ONLY. It runs `vercel ls`, `vercel env ls`, `firebase
- * database:instances:list`, `firebase database:get /.settings/rules`, and
- * unauthenticated HTTPS GETs. It never deploys, never writes to the database,
- * never creates an auth user, and never prints an environment variable's
- * value — only whether the name is set. (`vercel env ls` shows values
- * encrypted anyway; this script parses the name column and drops the rest.)
+ * database:instances:list`, `firebase database:get /.settings/rules`,
+ * unauthenticated HTTPS GETs, and one POST per deployed API route. Those
+ * POSTs are non-mutating by construction, not by convention: each names a
+ * game/room id that cannot exist (or omits the auth header), so the handler
+ * returns at its first guard, before any write — see SMOKE_ROUTES, which
+ * records the guard each one lands on. It never deploys, never writes to the
+ * database, never creates an auth user, and never prints an environment
+ * variable's value — only whether the name is set. (`vercel env ls` shows
+ * values encrypted anyway; this script parses the name column and drops the
+ * rest.)
+ *
+ * Every check except the route probes reads CONFIGURATION — what is set, what
+ * is Ready, which ruleset is live. That is not the same as the app working:
+ * this script reported 9 PASS for two hours while every deployed route
+ * returned a bare 500. The route probes are the answer to that, and are the
+ * only checks here that ask deployed code to actually run.
  *
  * Exit code: 0 when no check FAILed (SKIPs alone do not fail the run — a skip
  * means "could not determine from here", and reporting that as a failure would
@@ -36,6 +47,7 @@ import { REPO_ROOT, loadNarrationCatalog } from "./narration-catalog.mjs";
 const RULES_FILE = path.join(REPO_ROOT, "database.rules.json");
 const FIREBASERC_FILE = path.join(REPO_ROOT, ".firebaserc");
 const ENV_LOCAL_FILE = path.join(REPO_ROOT, ".env.local");
+const LAYOUT_FILE = path.join(REPO_ROOT, "src/app/layout.tsx");
 
 /**
  * Every environment variable the running app reads, with the feature that
@@ -322,6 +334,131 @@ export function parseDatabaseRegionRedirect(body) {
   }
 }
 
+// The three check verdicts. Pure data, and used by the pure classifiers below
+// as well as by every network check, so they live above the divider.
+const OK = "ok";
+const FAIL = "fail";
+const SKIP = "skip";
+
+/** The production origin the app is actually served from. Read out of
+ * src/app/layout.tsx rather than hardcoded here for the same reason the env
+ * table names a `readBy` file: a preflight that probes a URL the app no
+ * longer uses reports PASS about nothing. `metadataBase` is the single place
+ * in the running app that states its own public origin. */
+export function parseProductionOrigin(layoutSource) {
+  const match = /metadataBase:\s*new URL\(\s*["'`]([^"'`]+)["'`]/.exec(layoutSource);
+  return match ? match[1].replace(/\/$/, "") : null;
+}
+
+/**
+ * One probe per deployed API route, chosen so that the request cannot change
+ * anything: each targets a resource that does not exist (or omits the auth
+ * header), so the handler returns at its first guard — before any db.update(),
+ * push() or token mint. `expect` is the status that guard produces.
+ *
+ * WHY THIS EXISTS: on 2026-09-08 every one of these routes returned a bare 500
+ * on wolf.anhdh.net for over two hours (jwks-rsa require()ing an ESM-only
+ * jose — see docs/superpowers/plans/2026-09-07-resilience.md's postmortem)
+ * while CI was green and this very script reported 9 PASS. Every other check
+ * here reads configuration: which variables are set, which deployment is
+ * Ready, which ruleset is live. None of them asked a deployed route to
+ * actually run, which is why a route that could not even load its own modules
+ * was invisible. These do.
+ *
+ * A 404/401 from these is the SUCCESS case: reaching a handler's guard proves
+ * the route module loaded, and for the two Admin-SDK routes it further proves
+ * the Admin SDK initialized from FIREBASE_SERVICE_ACCOUNT_KEY and completed a
+ * live RTDB read, since both guards sit behind a `.get()`.
+ */
+export const SMOKE_ROUTES = [
+  {
+    id: "route-advance",
+    method: "POST",
+    path: "/api/games/__preflight_no_such_game__/advance",
+    route: "src/app/api/games/[gameId]/advance/route.ts",
+    expect: 404,
+    proves:
+      "Admin SDK loaded, credentials accepted, and a live RTDB read completed " +
+      "(the 404 comes from games/{id} not existing).",
+  },
+  {
+    id: "route-start",
+    method: "POST",
+    path: "/api/rooms/__PREFLIGHT_NO_SUCH_ROOM__/start",
+    route: "src/app/api/rooms/[code]/start/route.ts",
+    expect: 404,
+    proves: "Same, for the deal-roles route (the 404 comes from rooms/{code} not existing).",
+  },
+  {
+    id: "route-livekit",
+    method: "POST",
+    path: "/api/livekit/token",
+    route: "src/app/api/livekit/token/route.ts",
+    expect: 401,
+    // Deliberately sends no Authorization header: that guard returns before
+    // adminAuth() is ever called, so this probe cannot mint a token or touch
+    // LiveKit. It still proves the module graph loaded, which is the whole
+    // point — the 500 this check exists for happened at module load.
+    proves: "The route's module graph loaded (the 401 is its missing-token guard).",
+  },
+];
+
+/** Turns one probe response into a check. Pure so the test can pin the policy
+ * without a network round trip.
+ *
+ * The distinction that matters: a 5xx means the deployed function is broken
+ * and that is a FAIL, full stop. An unexpected non-5xx (typically a 401 from
+ * Vercel Deployment Protection sitting in front of the whole site) means the
+ * probe never reached the app, which is "could not determine from here" — a
+ * SKIP, because reporting infrastructure we cannot see through as a broken
+ * route would train the owner to ignore this check. */
+export function classifyRouteProbe(probe, response, origin) {
+  const where = `${probe.method} ${origin}${probe.path}`;
+  if (response.status === probe.expect) {
+    return {
+      id: probe.id,
+      title: `Deployed route ${probe.path.replace(/__[A-Za-z_]+__/, ":id")}: responds (${response.status})`,
+      status: OK,
+      detail: `  ${probe.proves}`,
+    };
+  }
+  if (response.status === 0) {
+    return {
+      id: probe.id,
+      title: `Deployed route ${probe.path}: no response`,
+      status: SKIP,
+      detail: `  ${where}\n  ${response.error ?? "request failed"}`,
+    };
+  }
+  if (response.status >= 500) {
+    return {
+      id: probe.id,
+      title: `Deployed route ${probe.path}: HTTP ${response.status}`,
+      status: FAIL,
+      detail:
+        `  ${where}\n` +
+        `  Expected ${probe.expect} (its own guard); got a server error, so the handler\n` +
+        "  never ran. The suite cannot see this: it mocks the Admin SDK, so a module that\n" +
+        "  fails to load only in the deployed runtime is green everywhere but here.\n" +
+        (response.vercelError ? `  x-vercel-error: ${response.vercelError}\n` : "") +
+        (response.body.trim() ? `  Body: ${response.body.trim().slice(0, 300)}\n` : "  Body: empty\n") +
+        "  Read the real stack: vercel logs " +
+        origin,
+    };
+  }
+  return {
+    id: probe.id,
+    title: `Deployed route ${probe.path}: HTTP ${response.status}, expected ${probe.expect}`,
+    status: SKIP,
+    detail:
+      `  ${where}\n` +
+      "  Not a server error, but not this route's own guard either — most likely Vercel\n" +
+      "  Deployment Protection answering before the app does, in which case the probe\n" +
+      "  never reached the route and proves nothing either way.\n" +
+      (response.body.trim() ? `  Body: ${response.body.trim().slice(0, 300)}` : "  Body: empty"),
+  };
+}
+
 /** Exit code and headline counts. Kept pure so the test can pin the policy:
  * FAIL fails the run, SKIP never does. */
 export function summarize(checks) {
@@ -333,10 +470,6 @@ export function summarize(checks) {
 // ---------------------------------------------------------------------------
 // Everything below here touches the network / the CLIs.
 // ---------------------------------------------------------------------------
-
-const OK = "ok";
-const FAIL = "fail";
-const SKIP = "skip";
 
 function run(command, args, timeoutMs = 120_000) {
   const result = spawnSync(command, args, {
@@ -360,17 +493,28 @@ function run(command, args, timeoutMs = 120_000) {
   };
 }
 
-async function httpStatus(url, timeoutMs = 30_000) {
+async function httpRequest(url, { method = "GET", headers, body } = {}, timeoutMs = 30_000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(url, { signal: controller.signal });
-    return { status: response.status, body: await response.text() };
+    const response = await fetch(url, { method, headers, body, signal: controller.signal });
+    return {
+      status: response.status,
+      body: await response.text(),
+      // Vercel names the platform-level failure here when a function cannot
+      // even start (FUNCTION_INVOCATION_FAILED for the module-load crash this
+      // check exists for), which is the only clue a 500 with an empty body has.
+      vercelError: response.headers.get("x-vercel-error"),
+    };
   } catch (error) {
-    return { status: 0, body: "", error: String(error) };
+    return { status: 0, body: "", vercelError: null, error: String(error) };
   } finally {
     clearTimeout(timer);
   }
+}
+
+async function httpStatus(url, timeoutMs = 30_000) {
+  return httpRequest(url, {}, timeoutMs);
 }
 
 function projectId() {
@@ -579,6 +723,40 @@ function checkBuildEnvFreshness(state) {
       "  so that build inlined them. Any NEXT_PUBLIC_* changed from here on needs a\n" +
       "  redeploy before it reaches the browser.",
   };
+}
+
+/**
+ * Asks each deployed API route to actually run. See SMOKE_ROUTES for why this
+ * is the one check here that exercises behaviour rather than configuration,
+ * and for why every probe is non-mutating by construction.
+ */
+async function checkDeployedRoutes() {
+  const layout = readFileSync(LAYOUT_FILE, "utf8");
+  const origin = parseProductionOrigin(layout);
+  if (!origin) {
+    return [
+      {
+        id: "deployed-routes",
+        title: "Deployed API routes respond",
+        status: SKIP,
+        detail:
+          "  Could not read the production origin from src/app/layout.tsx (metadataBase),\n" +
+          "  so there is no URL to probe. Probe by hand against the production alias.",
+      },
+    ];
+  }
+
+  const probes = await Promise.all(
+    SMOKE_ROUTES.map(async (probe) => {
+      const response = await httpRequest(origin + probe.path, {
+        method: probe.method,
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      return classifyRouteProbe(probe, response, origin);
+    }),
+  );
+  return probes;
 }
 
 async function checkDatabase(project) {
@@ -802,6 +980,7 @@ async function main() {
     checks.push(checkVercelDeployment(state));
     // Must come after both of the above: it compares what they each read.
     checks.push(checkBuildEnvFreshness(state));
+    checks.push(...(await checkDeployedRoutes()));
     checks.push(...(await checkDatabase(projectId())));
   }
   process.exit(report(checks, asJson));

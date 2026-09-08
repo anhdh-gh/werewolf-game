@@ -23,6 +23,9 @@ firebase-debug.log
 .vercel
 next-env.d.ts
 coverage/
+# tsconfig.json sets incremental: true, so `npm run typecheck` drops this
+# build artifact in the repo root every time it runs.
+tsconfig.tsbuildinfo
 playwright-report/
 test-results/
 .vitest/

@@ -480,9 +480,39 @@ Two things to carry forward:
 - **The whole suite mocks the Admin SDK**, so no test ever loads `jwks-rsa`. There is no
   arrangement of unit tests that would have caught this. Only a real request against the
   deployed URL, or the module-format assertion above, can.
-- **Preflight checks configuration, not behaviour.** It verified every environment
+- **Preflight checked configuration, not behaviour.** It verified every environment
   variable, the deployment's Ready state, the database instance and the deployed
-  ruleset — and reported all-clear while every server route was dead. The obvious next
-  addition is a live smoke request against a deployed route that fails on a module-load
-  500; it needs a shape that stays read-only (a route that returns 4xx for an unknown id
-  is fine, a real state transition is not).
+  ruleset — and reported all-clear while every server route was dead.
+
+### Both are now closed on live (verified 2026-09-08)
+
+The fix is deployed and confirmed by real requests against wolf.anhdh.net, not by CI:
+
+| Request | Before | After |
+|---|---|---|
+| `POST /api/games/test-id/advance` | 500, empty body | `404 {"error":"Không tìm thấy ván đấu"}` |
+| `POST /api/rooms/ZZZZZZ/start` | 500, empty body | `404 {"error":"Phòng ZZZZZZ không tồn tại"}` |
+| `POST /api/livekit/token` (no auth) | 500, empty body | `401 {"error":"Thiếu token đăng nhập"}` |
+| `POST /api/livekit/token` (bad Bearer) | 500, empty body | `401 {"error":"Token đăng nhập không hợp lệ"}` |
+
+The two 404s are the strongest of these: each comes from a guard that sits *behind*
+`adminDb().ref(...).get()`, so reaching it proves the Admin SDK loaded, initialized from
+`FIREBASE_SERVICE_ACCOUNT_KEY`, and completed a live RTDB read.
+
+Preflight now makes exactly those four probes itself, as `SMOKE_ROUTES` in
+`scripts/preflight.mjs` (three checks, one per route). They are the only checks in that
+script that ask deployed code to run rather than reading configuration, and they stay
+read-only by construction rather than by convention: each names a game/room id that
+cannot exist, or omits the auth header, so the handler returns at its first guard before
+any write. A 5xx is a FAIL; an unexpected non-5xx (Vercel Deployment Protection
+answering in front of the app) is a SKIP, because a probe that never reached the route
+proves nothing either way. `src/test/preflight.test.ts` pins that policy, pins that the
+probe table covers every `src/app/api/**/route.ts` in the repo, and reads the origin to
+probe out of `layout.tsx`'s own `metadataBase` so it cannot drift from the app.
+
+Note the per-deployment URL (`werewolf-game-<hash>-*.vercel.app`) answers 401 from
+Deployment Protection, so live route probes must go through the production alias.
+
+Fresh preflight snapshot after this change: **12 PASS, 1 FAIL, 1 SKIP**. The single FAIL
+is narration audio (37 clips, needs a paid Vietnamese TTS voice — owner-side). The SKIP
+is the informational local-environment check. Nothing else is blocking a real game.
