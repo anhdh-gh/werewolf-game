@@ -32,20 +32,35 @@ rõ ràng chứ không giấu.
 |---|---|---|---|---|
 | **Epic 1** | Vai Làng thụ động, không cần phase đêm mới (Mason, Prince, Pacifist) | 3 | **`done`** — cả 3 story CI xanh, merged vào main, rules RTDB live đã deploy và byte-compare khớp repo (2026-09-08) | `2026-09-08-roles-epic-1.md` |
 | **Epic 1b** | Vai Làng thụ động nhưng cần thêm 1 vòng xác nhận cơ chế trước khi viết story an toàn (Tough Guy, Diseased, Old Hag — xem lý do treo ở cuối mục này) | 3 | Chưa viết story — cần làm rõ timing trước | chưa có |
-| **Epic 2** | Vai Làng cần phase đêm mới, cơ chế đã đủ rõ để viết story (Sorcerer/Sorceress, Doppelgänger, Cult Leader, Hoodlum) | 4 | Chưa viết story | chưa có |
+| **Epic 2** | Vai Sói đồng minh cần phase đêm mới, cơ chế đủ rõ để viết story ngay (Sorcerer/Sorceress) | 1 | **Story sẵn sàng implement** — xem lý do 3/4 vai gốc dự kiến bị tách ra ở mục dưới | `2026-09-08-roles-epic-2.md` |
+| **Epic 2b** | Vai có khái niệm rõ nhưng paraphrase để lại mơ hồ thời điểm/trạng thái xuyên đêm hoặc điều kiện thắng chính xác — cùng loại vấn đề đã chặn Epic 1b (Doppelgänger, Hoodlum) | 2 | Chưa viết story — cần rulebook gốc | chưa có |
 | **Epic 3** | Vai Sói mới ngoài Kẻ Phản Bội (Dire Wolf, Lone Wolf, Wolf Man, Wolf Cub) | 4 | Chưa viết story | chưa có |
 | **Epic 4** | Vai cần rulebook gốc để phân biệt khỏi vai đã có, **không suy đoán** (Priest vs Bảo Vệ, Huntress vs Thợ Săn, Revealer vs Tiên Tri, Village Idiot, Drunk, Troublemaker, Insomniac, Apprentice Seer, Aura Seer, Paranormal Investigator, Beholder) | ~11 | **Chặn lại** — cần nghiên cứu thêm (không phải "thêm web search thông thường" nữa, xem catalog §6 mục 4) | chưa có |
-| **Epic 5 (kiến trúc)** | Vampire — phe thứ 3 mới hoàn toàn, cần thiết kế điều kiện thắng + UI phe mới trước khi có vai nào implement được | 1 | Chặn lại — cần một `bmad-architecture` pass riêng trước khi có story | chưa có |
+| **Epic 5 (kiến trúc)** | Phe thứ 3 mới hoàn toàn — Vampire, Cult Leader (cần thiết kế điều kiện thắng + UI phe mới dùng chung trước khi có vai nào trong nhóm này implement được) | 2 | Chặn lại — cần một `bmad-architecture` pass riêng trước khi có story | chưa có |
 | **Epic 6** | Tier 2 — Night Terrors, Urban Legends, Classic Movie Monsters (tên xác nhận, **lời văn năng lực chưa có nguồn chính hãng**) | ~14 | Chặn lại — cần nghiên cứu lại lời văn trước khi viết story (catalog §5, §6 mục 4) | chưa có |
 | **Epic Z (cuối roadmap, không phải tier chờ implement)** | Bonus Roles (44) + Pro Roles (50+) | 94 | **Chặn vĩnh viễn cho tới khi có nguồn mới** — không lặp lại tìm kiếm web thông thường (catalog §1.1 kết luận) | chưa có |
 | *Loại khỏi phạm vi* | Legacy (kiến trúc campaign 16 phiên), Artifacts (cơ chế item-overlay, không phải vai), Daybreak (thuộc One Night, khác kiến trúc), "Village" (không xác nhận tồn tại) | — | Không lập epic — ghi rõ lý do ở catalog §2 | — |
 
-**Thứ tự triển khai đề xuất:** Epic 1 → Epic 1b → Epic 2 → Epic 3 → (Epic 4 sau khi có nghiên
-cứu rulebook mới) → (Epic 5 sau khi có kiến trúc phe thứ 3) → (Epic 6 sau khi có lời văn Tier
-2) → Epic Z chỉ khi owner tự cung cấp nguồn mới (ảnh chụp thẻ bài vật lý, liên hệ Bezier Games).
-Đây đúng là thứ tự "phổ biến nhất trước, hiếm nhất sau cùng" owner yêu cầu — vai càng rõ nguồn
-và càng đơn giản về kiến trúc thì càng lên trước, không phải theo thứ tự bảng chữ cái hay theo
-độ khó code.
+**Thứ tự triển khai đề xuất:** Epic 1 → Epic 2 → Epic 1b/2b (khi có nghiên cứu rulebook giải
+quyết được mơ hồ) → Epic 3 → (Epic 4 sau khi có nghiên cứu rulebook mới) → (Epic 5 sau khi có
+kiến trúc phe thứ 3) → (Epic 6 sau khi có lời văn Tier 2) → Epic Z chỉ khi owner tự cung cấp
+nguồn mới (ảnh chụp thẻ bài vật lý, liên hệ Bezier Games). Đây đúng là thứ tự "phổ biến nhất
+trước, hiếm nhất sau cùng" owner yêu cầu — vai càng rõ nguồn và càng đơn giản về kiến trúc thì
+càng lên trước, không phải theo thứ tự bảng chữ cái hay theo độ khó code. Epic 2 (Sorcerer/
+Sorceress) đứng trước Epic 1b vì đã có story sẵn sàng ngay, trong khi Epic 1b vẫn đang chờ một
+nguồn rulebook mới chưa tìm ra.
+
+### Vì sao Epic 2 chỉ còn 1/4 vai dự kiến ban đầu
+
+Khi viết story chi tiết cho Epic 2 (`2026-09-08-roles-epic-2.md`), soi kỹ từng vai theo đúng
+mức độ rà soát đã áp dụng cho Epic 1b phát hiện 3/4 vai gốc dự kiến ("cơ chế đã đủ rõ") thực ra
+không đủ rõ: **Doppelgänger** và **Hoodlum** có cùng loại mơ hồ thời điểm/điều kiện xuyên đêm đã
+chặn Tough Guy/Diseased/Old Hag lại (chuyển sang Epic 2b, cùng nhóm với Epic 1b về bản chất vấn
+đề); **Cult Leader** không phải vấn đề mơ hồ mà là cần **phe thứ 3 mới hoàn toàn** giống hệt
+Vampire — gộp vào Epic 5. Chỉ **Sorcerer/Sorceress** (paraphrase "soi ra ai là Tiên Tri" có đúng
+một cách hiện thực hợp lý, tái dùng khuôn Tiên Tri có sẵn) đủ điều kiện viết story ngay. Bài học
+lặp lại từ Epic 1b: một vai nghe "cơ chế rõ" ở mức liệt kê tên/khái niệm không có nghĩa là đủ rõ
+để viết story an toàn — luôn cần soi từng vai riêng lẻ trước khi gộp vào một epic "sẵn sàng".
 
 ### Vì sao Epic 1b bị tách khỏi Epic 1 thay vì gộp chung
 
@@ -77,10 +92,11 @@ liệt kê vai đã có epic xác định (không lặp lại toàn bộ ~141 va
 | Tough Guy | 1b | `blocked` — cần xác nhận timing |
 | Diseased | 1b | `blocked` — cần xác nhận timing |
 | Old Hag | 1b | `blocked` — cần xác nhận khái niệm "rời làng" |
-| Sorcerer/Sorceress, Doppelgänger, Cult Leader, Hoodlum | 2 | `not started` — chưa viết story |
+| Sorcerer/Sorceress ("Pháp Sư") | 2 | `planned` — story 2.1 viết xong trong `2026-09-08-roles-epic-2.md`, sẵn sàng implement |
+| Doppelgänger, Hoodlum | 2b | `blocked` — cần rulebook gốc (mơ hồ thời điểm/điều kiện thắng xuyên đêm) |
 | Dire Wolf, Lone Wolf, Wolf Man, Wolf Cub | 3 | `not started` |
 | Priest, Huntress, Revealer, Village Idiot, Drunk, Troublemaker, Insomniac, Apprentice Seer, Aura Seer, Paranormal Investigator, Beholder | 4 | `blocked` — cần rulebook gốc |
-| Vampire | 5 | `blocked` — cần kiến trúc phe thứ 3 |
+| Vampire, Cult Leader | 5 | `blocked` — cần kiến trúc phe thứ 3 |
 | Thing, The Count, Beholder*, Insomniac*, Bogeyman, vai thứ 6 chưa rõ (Night Terrors); Bloody Mary, Chupacabra, Wolf Man*, Leprechaun, Sasquatch, Nostradamus (Urban Legends); The Blob, The Mummy, Dracula, The Zombie, Frankenstein's Monster (Classic Movie Monsters) | 6 | `blocked` — cần lời văn năng lực |
 | Bonus Roles (44), Pro Roles (50+) | Z | `blocked` — cần nguồn mới ngoài web search |
 
@@ -100,16 +116,22 @@ liên hệ trực tiếp Bezier Games xin rulebook). Epic Z ghi nhận đúng th
 thầm bỏ qua — quyết định có coi 52/141 là đủ để "xong" epic mở rộng vai, hay tiếp tục đầu tư vào
 việc lấy nguồn cho 94 vai còn lại, **là của owner**, không tự ý chọn ở đây.
 
-Điều này KHÔNG có nghĩa là dừng toàn bộ epic mở rộng vai ngay bây giờ — Epic 1 (3 vai) đã có
-story sẵn sàng implement, và Epic 1b/2/3 có đường đi rõ ràng không cần nguồn mới. "Không bao giờ
-hoàn thành 100%" chỉ áp dụng cho phần đuôi (Epic Z), không áp dụng cho phần đầu roadmap.
+Điều này KHÔNG có nghĩa là dừng toàn bộ epic mở rộng vai ngay bây giờ — Epic 1 (3 vai, đã
+`done`) và Epic 2 (1 vai) đã có story sẵn sàng/đã implement, và Epic 3 có đường đi rõ ràng không
+cần nguồn mới. Epic 1b và Epic 2b (5 vai) hiện đang chờ một nguồn rulebook mới — không tự tin
+nói "không cần nguồn mới" cho hai epic này nữa như bản roadmap trước đã ghi nhầm. "Không bao giờ
+hoàn thành 100%" áp dụng chắc chắn cho Epic Z (94 vai), và có thể áp dụng cho Epic 1b/2b nếu
+không tìm ra rulebook gốc — cả hai cần owner theo dõi, không chỉ Epic Z.
 
 ## Việc tiếp theo sau tài liệu này
 
 1. Implement Epic 1 (3 story trong `2026-09-08-roles-epic-1.md`), mỗi story một commit riêng,
    build+test trước mỗi commit, verify CI xanh + (nếu có RTDB rules mới) verify rules deploy
    thật trên Firebase live, không chỉ emulator — đúng bài học đã ghi trong
-   `2026-09-07-resilience.md`.
-2. Sau khi Epic 1 xong, viết story cho Epic 1b (sau khi giải quyết được câu hỏi timing) hoặc
-   Epic 2 (không phụ thuộc nghiên cứu thêm) — ưu tiên epic nào không bị chặn trước.
-3. Cập nhật bảng theo dõi tiến độ ở trên mỗi khi một vai đổi trạng thái.
+   `2026-09-07-resilience.md`. **Xong (2026-09-08)**, xem `2026-09-08-roles-epic-1.md`.
+2. Implement Epic 2 (story 2.1, Sorcerer/Sorceress → "Pháp Sư", trong
+   `2026-09-08-roles-epic-2.md`) — vai đầu tiên cần một phase đêm mới và một node action RTDB
+   mới; deploy + verify rules live sau khi CI xanh, cùng bài học Pacifist.
+3. Sau khi Epic 2 xong: Epic 1b/2b (nếu tìm được rulebook giải quyết được mơ hồ) hoặc Epic 3
+   (không phụ thuộc nghiên cứu thêm) — ưu tiên epic nào không bị chặn trước.
+4. Cập nhật bảng theo dõi tiến độ ở trên mỗi khi một vai đổi trạng thái.
