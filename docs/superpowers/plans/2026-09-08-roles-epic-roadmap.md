@@ -71,8 +71,8 @@ liệt kê vai đã có epic xác định (không lặp lại toàn bộ ~141 va
 
 | Vai | Epic | Trạng thái |
 |---|---|---|
-| Mason | 1 | `in progress` — code viết xong (types/game.ts, types/room.ts, roles.ts::buildMasonLinks, start/route.ts, labels.ts, MasonInfo.tsx + unit test), **chưa CI xanh / chưa merge** — xem iteration log |
-| Prince | 1 | `planned` |
+| Mason | 1 | `done` — CI xanh (run 34215788171, commit 6c6e469), merged vào main |
+| Prince | 1 | `in progress` — code viết xong (types/game.ts, types/room.ts, resolveVote.ts + roleOf param, planAdvance.ts, labels.ts + unit tests), **chưa CI xanh / chưa merge** — xem iteration log |
 | Pacifist | 1 | `planned` |
 | Tough Guy | 1b | `blocked` — cần xác nhận timing |
 | Diseased | 1b | `blocked` — cần xác nhận timing |

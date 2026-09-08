@@ -30,6 +30,7 @@ export const ROLE_LABELS: Record<RoleKey, string> = {
   CURSED: "Bị Nguyền",
   LYCAN: "Sói Giả",
   MASON: "Hội Kín",
+  PRINCE: "Hoàng Tử",
   TANNER: "Chán Đời",
   VILLAGER: "Dân Làng",
 };

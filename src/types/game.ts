@@ -10,6 +10,7 @@ export type RoleKey =
   | "CURSED"
   | "LYCAN"
   | "MASON"
+  | "PRINCE"
   | "TANNER"
   | "VILLAGER";
 
@@ -30,6 +31,7 @@ export const FACTION_BY_ROLE: Record<RoleKey, Faction> = {
   CURSED: "VILLAGE",
   LYCAN: "VILLAGE",
   MASON: "VILLAGE",
+  PRINCE: "VILLAGE",
   TANNER: "TANNER",
   VILLAGER: "VILLAGE",
 };

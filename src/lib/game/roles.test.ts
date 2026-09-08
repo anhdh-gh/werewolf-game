@@ -11,6 +11,7 @@ const ALL_ENABLED: Record<OptionalRoleKey, boolean> = {
   CURSED: true,
   LYCAN: true,
   MASON: true,
+  PRINCE: true,
   TANNER: true,
 };
 
@@ -23,6 +24,7 @@ const ALL_DISABLED: Record<OptionalRoleKey, boolean> = {
   CURSED: false,
   LYCAN: false,
   MASON: false,
+  PRINCE: false,
   TANNER: false,
 };
 
@@ -70,7 +72,13 @@ describe("buildRoleList", () => {
     });
   });
 
-  it("at 16 players with everything enabled, every optional role appears exactly once", () => {
+  it("at 16 players with everything enabled, fills every optional role slot it has room for", () => {
+    // Story 1.2 (Prince) pushed the optional-role list to 10 entries while
+    // n=16 only ever had 9 optional slots to give out (16 - 6 mandatory - 1
+    // reserved villager) — capacity was exact before Prince, so the last
+    // entry in OPTIONAL_ROLE_KEYS now misses its slot. That's TANNER by
+    // design (spec §4.2: the sole Riêng role is always lowest fill
+    // priority), not an accident — see the dedicated capacity test below.
     const roles = buildRoleList(16, ALL_ENABLED);
     expect(roles).toHaveLength(16);
     expect(countRoles(roles)).toEqual({
@@ -85,9 +93,14 @@ describe("buildRoleList", () => {
       CURSED: 1,
       LYCAN: 1,
       MASON: 1,
-      TANNER: 1,
+      PRINCE: 1,
       VILLAGER: 1,
     });
+  });
+
+  it("drops Tanner first, not any Wolf/Village-faction role, when demand exceeds capacity", () => {
+    const counts = countRoles(buildRoleList(16, ALL_ENABLED));
+    expect(counts.TANNER).toBeUndefined();
   });
 
   it("skips disabled optional roles and backfills with villagers", () => {
@@ -126,6 +139,7 @@ describe("buildRoleList", () => {
     expect(counts.CURSED).toBeUndefined();
     expect(counts.LYCAN).toBeUndefined();
     expect(counts.MASON).toBeUndefined();
+    expect(counts.PRINCE).toBeUndefined();
     expect(counts).toEqual({
       WEREWOLF: 3,
       SEER: 1,

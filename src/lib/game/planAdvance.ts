@@ -64,7 +64,7 @@ export function planAdvance(input: PlanAdvanceInput): PlanAdvanceResult {
     deaths = applyDeathExtras(nightResult.deaths, input.lovers, input.actions.hunterShots);
     transformedToWolf = nightResult.transformed;
   } else if (next === "VOTE_RESULT") {
-    const hanged = resolveVote(input.actions.voteBallots);
+    const hanged = resolveVote(input.actions.voteBallots, input.aliveRolesByUid);
     deaths = applyDeathExtras(hanged ? [hanged] : [], input.lovers, input.actions.hunterShots);
   }
 

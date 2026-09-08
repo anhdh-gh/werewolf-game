@@ -74,6 +74,7 @@ const NO_OPTIONAL_ROLES = {
   CURSED: false,
   LYCAN: false,
   MASON: false,
+  PRINCE: false,
   TANNER: false,
 };
 

@@ -77,6 +77,17 @@ describe("planAdvance", () => {
     expect(result.winner).toBe("TANNER");
   });
 
+  it("spares a Prince who wins the vote — nobody dies and the round looks like a tie", () => {
+    const result = planAdvance({
+      ...baseInput,
+      currentPhase: "VOTE",
+      aliveRolesByUid: { ...baseInput.aliveRolesByUid, prince1: "PRINCE" },
+      actions: { ...NIGHT_ACTIONS_EMPTY, voteBallots: { seer1: "prince1", witch1: "prince1" } },
+    });
+    expect(result.nextPhase).toBe("VOTE_RESULT");
+    expect(result.deaths).toEqual([]);
+  });
+
   it("chains a Hunter's revenge shot and lover heartbreak through the night resolution", () => {
     const result = planAdvance({
       ...baseInput,
