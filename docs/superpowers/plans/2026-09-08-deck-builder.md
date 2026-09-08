@@ -236,3 +236,20 @@ verify CI xanh + deploy `database.rules.json` lên RTDB live + byte-compare (đ�
 lại xuyên mọi epic trước) trước khi coi deck-builder là `done`. Sau khi `done`, roadmap vai
 (`2026-09-08-roles-epic-roadmap.md`) tiếp tục đúng checkpoint hiện tại của nó (Story 4a.2
 Beholder, `story ready`, chưa implement).
+
+## 8. Đã xong (iteration 3, 2026-09-08)
+
+CI cho commit implement (`d85f167`) xanh (`vitest`/`rules.test.ts` chạy trên emulator, bao
+gồm toàn bộ test case `.validate` mới ở §4). §2.3 xác nhận: `firebase database:get /rooms
+--shallow --project werewolf-game-2026` TRƯỚC khi deploy tìm thấy đúng 2 room format cũ
+(`EUXNJX`, `PYTLSM` — cả 2 đơn-thành-viên, chủ sở hữu chính tài khoản đang thao tác, offline,
+`status: LOBBY`, `settings.{maxPlayers, rolesEnabled}` cũ) — xác nhận giả định "không còn room
+cũ" ở §2.3 SAI, không phải đúng như dự đoán. Đã xoá cả 2 (`firebase database:remove ... --force`)
+trước khi deploy rules mới, vì client mới sẽ crash khi đọc `settings.roleCounts` undefined trên
+2 room đó (`deckSize(undefined)` ném lỗi) — quyết định có chủ đích, không phải side-effect âm
+thầm, theo đúng yêu cầu ghi rõ quyết định ở learnings iteration 2. Sau đó `firebase deploy
+--only database --project werewolf-game-2026` thành công, và `firebase database:get
+/.settings/rules` byte-so khớp CHÍNH XÁC với `database.rules.json` local (so bằng
+`JSON.stringify` deep-equal, không phải diff văn bản thô vì JSON một dòng luôn "khác" theo
+diff dòng). Deck-builder chính thức `done` — roadmap vai (`2026-09-08-roles-epic-roadmap.md`)
+tiếp tục từ Story 4a.2 (Beholder, `story ready`) ở iteration kế tiếp.
