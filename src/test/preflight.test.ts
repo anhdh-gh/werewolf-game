@@ -506,6 +506,35 @@ describe("deployed route probes", () => {
     const check = classifyRouteProbe(probe, { status: 0, body: "", error: "ETIMEDOUT" }, origin);
     expect(check.status).toBe("skip");
   });
+
+  it("gives every probe a distinct id and a distinct report line", () => {
+    // The livekit route is probed twice (with and without a bearer token), so
+    // path alone no longer identifies a probe. Two checks sharing a title
+    // would make the report unreadable in exactly the case that matters.
+    const ids = SMOKE_ROUTES.map((probe) => probe.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    const titles = SMOKE_ROUTES.map(
+      (probe) => classifyRouteProbe(probe, { status: probe.expect, body: "{}" }, origin).title,
+    );
+    expect(new Set(titles).size).toBe(titles.length);
+  });
+
+  // A malformed bearer token is the only probe that makes the deployed Admin
+  // SDK do real work: reaching its 401 means verifyIdToken loaded the service
+  // account and ran the jwks-rsa -> jose chain that took production down. It
+  // is only meaningful because the route answers 500 rather than 401 when that
+  // chain cannot run — see isTokenRejection in the route itself.
+  it("exercises verifyIdToken with a token that cannot possibly be valid", () => {
+    const probe = SMOKE_ROUTES.find((entry) => entry.id === "route-livekit-verify");
+    expect(probe).toBeDefined();
+    expect(probe!.headers?.authorization).toMatch(/^Bearer \S+$/);
+    // Three dots would be a JWT shape; this is not even that, and carries no
+    // signature — it cannot authenticate anyone if the verifier does work.
+    expect(probe!.headers!.authorization).not.toMatch(/^Bearer [\w-]+\.[\w-]+\.[\w-]+$/);
+    expect(probe!.expect).toBe(401);
+    const broken = classifyRouteProbe(probe!, { status: 500, body: "" }, origin);
+    expect(broken.status).toBe("fail");
+  });
 });
 
 describe("exit policy", () => {

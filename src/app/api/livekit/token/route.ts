@@ -44,7 +44,13 @@ export async function POST(req: Request): Promise<NextResponse> {
   try {
     const decoded = await adminAuth().verifyIdToken(idToken);
     uid = decoded.uid;
-  } catch {
+  } catch (error) {
+    if (!isTokenRejection(error)) {
+      // The verification machinery itself broke — see isTokenRejection's
+      // comment for why this must not be answered as a 401.
+      console.error("[livekit/token] ID token verification failed to run", error);
+      return NextResponse.json({ error: "Lỗi xác thực phía máy chủ" }, { status: 500 });
+    }
     return NextResponse.json({ error: "Token đăng nhập không hợp lệ" }, { status: 401 });
   }
 
@@ -95,6 +101,37 @@ export async function POST(req: Request): Promise<NextResponse> {
 
   const token = await at.toJwt();
   return NextResponse.json({ token, url, room: grant.roomName, canPublish: grant.canPublish });
+}
+
+/** Firebase `auth/*` codes that are NOT the caller's token being rejected —
+ * they mean the Admin SDK could not complete the check at all. Everything else
+ * under the `auth/` prefix is a verdict about the token itself. */
+const AUTH_INFRASTRUCTURE_CODES = new Set(["auth/internal-error", "auth/network-error"]);
+
+/**
+ * True when `verifyIdToken` reached a verdict and the verdict was "no": an
+ * expired, revoked, malformed or foreign-project token. False when it never
+ * got that far — a missing/invalid service account (`app/invalid-credential`,
+ * thrown by adminAuth() itself), a network failure reaching Google's certs, or
+ * a module that will not load in the deployed runtime.
+ *
+ * WHY THIS SPLIT EXISTS: this route's `catch` used to answer 401 for both.
+ * That is the exact shape of the outage this project already had — `jwks-rsa`
+ * `require()`ing an ESM-only `jose`, which is the very dependency chain
+ * verifyIdToken runs through — except one layer deeper, where it would not
+ * even show up as a 500. Every player would be told "Token đăng nhập không
+ * hợp lệ" and be unable to join any voice room, while CI stayed green (the
+ * suite mocks the Admin SDK) and the preflight stayed green (its livekit
+ * probe sends no header at all, returning before this line). Reporting a
+ * broken verifier as a client error is how a live-only defect stays invisible;
+ * a 500 here is what makes preflight's bogus-token probe able to see it.
+ *
+ * Note this deliberately does NOT change what a genuinely bad token gets: a
+ * real user whose token expired still sees 401, not a server error.
+ */
+export function isTokenRejection(error: unknown): boolean {
+  const code = (error as { code?: unknown } | null)?.code;
+  return typeof code === "string" && code.startsWith("auth/") && !AUTH_INFRASTRUCTURE_CODES.has(code);
 }
 
 export interface CallRoomGrant {

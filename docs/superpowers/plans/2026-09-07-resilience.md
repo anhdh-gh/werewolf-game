@@ -500,7 +500,8 @@ The two 404s are the strongest of these: each comes from a guard that sits *behi
 `FIREBASE_SERVICE_ACCOUNT_KEY`, and completed a live RTDB read.
 
 Preflight now makes exactly those four probes itself, as `SMOKE_ROUTES` in
-`scripts/preflight.mjs` (three checks, one per route). They are the only checks in that
+`scripts/preflight.mjs` (four checks; the livekit route is probed twice, see the next
+section). They are the only checks in that
 script that ask deployed code to run rather than reading configuration, and they stay
 read-only by construction rather than by convention: each names a game/room id that
 cannot exist, or omits the auth header, so the handler returns at its first guard before
@@ -516,3 +517,45 @@ Deployment Protection, so live route probes must go through the production alias
 Fresh preflight snapshot after this change: **12 PASS, 1 FAIL, 1 SKIP**. The single FAIL
 is narration audio (37 clips, needs a paid Vietnamese TTS voice — owner-side). The SKIP
 is the informational local-environment check. Nothing else is blocking a real game.
+
+### The same failure, one layer deeper: a broken verifier that answers 401 (2026-09-08)
+
+The bad-Bearer row in the table above was, when it was recorded, worth nothing as
+evidence. `POST /api/livekit/token` is the only route that calls
+`adminAuth().verifyIdToken()` — i.e. the only one that runs the `jwks-rsa` → `jose`
+chain that caused the outage — and its `catch` answered `401 "Token đăng nhập không hợp
+lệ"` for *every* throw. A rejected token and a verifier that could not run at all were
+indistinguishable from outside.
+
+That is the outage's exact shape, one layer deeper and strictly worse:
+
+- **Invisible to CI** — the suite mocks `@/lib/firebase/admin` entirely, so the real
+  verification path never executes there. That is what let the first outage stay green
+  for two hours.
+- **Invisible to preflight** — its livekit probe deliberately sends no `Authorization`
+  header, so it returns at the missing-token guard, before `adminAuth()` is reached.
+- **Invisible in production** — no 500, so no `FUNCTION_INVOCATION_FAILED`, nothing in
+  `vercel logs`. Every player would simply be told their login token was invalid and be
+  unable to join any voice room, forever, with nothing anywhere saying why.
+
+`isTokenRejection()` in `src/app/api/livekit/token/route.ts` now splits the two. A
+Firebase `auth/*` code means `verifyIdToken` reached a verdict and the verdict was "no"
+(expired, revoked, malformed, foreign project) → still `401`, unchanged, so a real user
+with a stale token sees the same thing as before. Anything else — `app/invalid-credential`
+from `adminAuth()` itself, `auth/internal-error`, `auth/network-error`, or a module that
+refuses to load in the deployed runtime — means it never got that far → `500` plus a
+`console.error`, which is what puts a stack in `vercel logs`.
+
+With that split in place the bad-Bearer probe finally means something, so preflight now
+sends it as a fourth check (`route-livekit-verify`). Reaching its 401 proves the deployed
+Admin SDK loaded the service account and ran the whole verification chain against a real
+token; a 500 there is a FAIL. It stays read-only for the same structural reason as the
+others: a token that malformed cannot authenticate anyone, so the handler returns before
+any LiveKit token is minted or any room is touched.
+
+Covered by `src/test/livekitToken.test.ts` (a rejected token still 401s; an
+`ERR_REQUIRE_ESM` throw and an `adminAuth()` credential failure both 500 and log; plus
+`isTokenRejection` unit cases in both directions) and `src/test/preflight.test.ts` (the
+probe presents a token that cannot possibly validate, expects 401, and FAILs on 500 —
+and every probe now has a distinct id and report line, since path alone no longer
+identifies one).

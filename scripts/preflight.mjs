@@ -17,11 +17,12 @@
  *
  * STRICTLY READ-ONLY. It runs `vercel ls`, `vercel env ls`, `firebase
  * database:instances:list`, `firebase database:get /.settings/rules`,
- * unauthenticated HTTPS GETs, and one POST per deployed API route. Those
- * POSTs are non-mutating by construction, not by convention: each names a
- * game/room id that cannot exist (or omits the auth header), so the handler
- * returns at its first guard, before any write — see SMOKE_ROUTES, which
- * records the guard each one lands on. It never deploys, never writes to the
+ * unauthenticated HTTPS GETs, and at least one POST per deployed API route.
+ * Those POSTs are non-mutating by construction, not by convention: each names
+ * a game/room id that cannot exist, omits the auth header, or presents a
+ * deliberately malformed bearer token, so the handler returns at its first
+ * guard, before any write — see SMOKE_ROUTES, which records the guard each one
+ * lands on. It never deploys, never writes to the
  * database, never creates an auth user, and never prints an environment
  * variable's value — only whether the name is set. (`vercel env ls` shows
  * values encrypted anyway; this script parses the name column and drops the
@@ -401,6 +402,27 @@ export const SMOKE_ROUTES = [
     // point — the 500 this check exists for happened at module load.
     proves: "The route's module graph loaded (the 401 is its missing-token guard).",
   },
+  {
+    id: "route-livekit-verify",
+    method: "POST",
+    path: "/api/livekit/token",
+    label: "/api/livekit/token (bogus bearer token)",
+    route: "src/app/api/livekit/token/route.ts",
+    headers: { authorization: "Bearer preflight.not.a.real.token" },
+    expect: 401,
+    // The one probe that makes the Admin SDK do real cryptographic work. A
+    // token this malformed is rejected outright, so nothing is minted and no
+    // LiveKit room is touched — but reaching the rejection means
+    // adminAuth().verifyIdToken() loaded the service account and ran the whole
+    // jwks-rsa -> jose chain, which is exactly the dependency chain that took
+    // production down at module load. The route answers 500 (not 401) when
+    // that chain fails to run at all, so this probe can tell the two apart;
+    // before that split, a broken verifier and a bad token looked identical
+    // from outside and every player would silently lose voice rooms.
+    proves:
+      "adminAuth().verifyIdToken() actually ran and rejected the token (a verifier that " +
+      "could not run at all answers 500 here, not 401).",
+  },
 ];
 
 /** Turns one probe response into a check. Pure so the test can pin the policy
@@ -414,10 +436,14 @@ export const SMOKE_ROUTES = [
  * route would train the owner to ignore this check. */
 export function classifyRouteProbe(probe, response, origin) {
   const where = `${probe.method} ${origin}${probe.path}`;
+  // Two probes can share a path (the livekit route is hit twice, with and
+  // without a bearer token), so the label — not the path — is what keeps their
+  // report lines telling apart.
+  const label = probe.label ?? probe.path.replace(/__[A-Za-z_]+__/, ":id");
   if (response.status === probe.expect) {
     return {
       id: probe.id,
-      title: `Deployed route ${probe.path.replace(/__[A-Za-z_]+__/, ":id")}: responds (${response.status})`,
+      title: `Deployed route ${label}: responds (${response.status})`,
       status: OK,
       detail: `  ${probe.proves}`,
     };
@@ -425,7 +451,7 @@ export function classifyRouteProbe(probe, response, origin) {
   if (response.status === 0) {
     return {
       id: probe.id,
-      title: `Deployed route ${probe.path}: no response`,
+      title: `Deployed route ${label}: no response`,
       status: SKIP,
       detail: `  ${where}\n  ${response.error ?? "request failed"}`,
     };
@@ -433,7 +459,7 @@ export function classifyRouteProbe(probe, response, origin) {
   if (response.status >= 500) {
     return {
       id: probe.id,
-      title: `Deployed route ${probe.path}: HTTP ${response.status}`,
+      title: `Deployed route ${label}: HTTP ${response.status}`,
       status: FAIL,
       detail:
         `  ${where}\n` +
@@ -448,7 +474,7 @@ export function classifyRouteProbe(probe, response, origin) {
   }
   return {
     id: probe.id,
-    title: `Deployed route ${probe.path}: HTTP ${response.status}, expected ${probe.expect}`,
+    title: `Deployed route ${label}: HTTP ${response.status}, expected ${probe.expect}`,
     status: SKIP,
     detail:
       `  ${where}\n` +
@@ -750,7 +776,7 @@ async function checkDeployedRoutes() {
     SMOKE_ROUTES.map(async (probe) => {
       const response = await httpRequest(origin + probe.path, {
         method: probe.method,
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...probe.headers },
         body: "{}",
       });
       return classifyRouteProbe(probe, response, origin);

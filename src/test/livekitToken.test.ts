@@ -26,21 +26,33 @@ import type { Game, PrivatePlayerState } from "@/types/game";
 
 const fakeDb = new FakeAdminDatabase();
 
+/** A Firebase `auth/*` rejection looks like this: a real Error carrying a
+ * prefixed `code`. The default mock trusts whatever bearer string arrives (so
+ * each test picks its own "authenticated" uid) and rejects only an empty one. */
+function mockAuthRejection(code: string): Error {
+  return Object.assign(new Error(`mock ${code}`), { code });
+}
+
+/** Swapped per-test to model the two ways verifyIdToken can fail: a verdict of
+ * "no" versus never reaching a verdict at all. Reset in beforeEach. */
+let mockVerifyIdToken: (token: string) => Promise<{ uid: string }>;
+/** Set to make adminAuth() itself throw, the way a missing/invalid
+ * FIREBASE_SERVICE_ACCOUNT_KEY does before verifyIdToken is ever reached. */
+let mockAdminAuthError: unknown = null;
+
 vi.mock("@/lib/firebase/admin", () => ({
   adminDb: () => fakeDb,
-  adminAuth: () => ({
-    verifyIdToken: async (token: string) => {
-      if (!token) throw new Error("empty token");
-      return { uid: token };
-    },
-  }),
+  adminAuth: () => {
+    if (mockAdminAuthError) throw mockAdminAuthError;
+    return { verifyIdToken: (token: string) => mockVerifyIdToken(token) };
+  },
 }));
 
 process.env.LIVEKIT_API_KEY = "test-key";
 process.env.LIVEKIT_API_SECRET = "test-secret-at-least-32-chars-long";
 process.env.NEXT_PUBLIC_LIVEKIT_URL = "wss://example.livekit.cloud";
 
-const { POST: getToken } = await import("@/app/api/livekit/token/route");
+const { POST: getToken, isTokenRejection } = await import("@/app/api/livekit/token/route");
 
 async function callToken(uid: string | null, gameId: string) {
   const headers = new Headers();
@@ -66,6 +78,11 @@ const verifier = new TokenVerifier(
 beforeEach(() => {
   fakeDb.root = {};
   fakeDb.counter = 0;
+  mockAdminAuthError = null;
+  mockVerifyIdToken = async (token: string) => {
+    if (!token) throw mockAuthRejection("auth/argument-error");
+    return { uid: token };
+  };
 });
 
 const wolfA = "wolfA";
@@ -120,6 +137,48 @@ describe("POST /api/livekit/token", () => {
     const { status, body } = await callToken(null, gameId);
     expect(status).toBe(401);
     expect(body.error).toBeTruthy();
+  });
+
+  // The route's catch used to answer 401 for BOTH a rejected token and a
+  // verifier that could not run. The second case is the shape of this
+  // project's real outage (jwks-rsa require()ing an ESM-only jose) one layer
+  // deeper, where a 401 would hide it completely: every player locked out of
+  // voice rooms, CI green because the Admin SDK is mocked, preflight green
+  // because its livekit probe sends no header and returns before this line.
+  it("still answers 401 when the token itself is rejected", async () => {
+    await seedGame("WOLVES", true);
+    mockVerifyIdToken = async () => {
+      throw mockAuthRejection("auth/id-token-expired");
+    };
+    const { status, body } = await callToken(wolfA, gameId);
+    expect(status).toBe(401);
+    expect(body.error).toBe("Token đăng nhập không hợp lệ");
+  });
+
+  it("answers 500, not 401, when the verifier could not run at all", async () => {
+    await seedGame("WOLVES", true);
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    // Exactly what the production outage threw, one layer deeper.
+    mockVerifyIdToken = async () => {
+      throw Object.assign(new Error("require() of ES Module ... not supported"), {
+        code: "ERR_REQUIRE_ESM",
+      });
+    };
+    const { status, body } = await callToken(wolfA, gameId);
+    expect(status).toBe(500);
+    expect(body.error).not.toBe("Token đăng nhập không hợp lệ");
+    // Without this the only trace of the failure is a status code.
+    expect(spy).toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it("answers 500 when the service account is missing, before any token is read", async () => {
+    await seedGame("WOLVES", true);
+    const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+    mockAdminAuthError = mockAuthRejection("app/invalid-credential");
+    const { status } = await callToken(wolfA, gameId);
+    expect(status).toBe(500);
+    spy.mockRestore();
   });
 
   it("denies a room that hasn't turned on Chơi xa", async () => {
@@ -206,5 +265,40 @@ describe("POST /api/livekit/token", () => {
     const { body } = await callToken(wolfA, gameId);
     const grants = await verifier.verify(body.token!);
     expect(grants.sub).toBe(wolfA);
+  });
+});
+
+// The classification the two 500 cases above hinge on. Getting it wrong in
+// either direction is a real cost: too strict and an expired token becomes a
+// server error for an innocent player; too loose and a broken verifier is
+// reported as the caller's fault, which is the bug this exists to prevent.
+describe("isTokenRejection", () => {
+  it("treats a verdict about the token as a rejection", () => {
+    for (const code of [
+      "auth/id-token-expired",
+      "auth/id-token-revoked",
+      "auth/argument-error",
+      "auth/user-disabled",
+    ]) {
+      expect(isTokenRejection(mockAuthRejection(code))).toBe(true);
+    }
+  });
+
+  it("does not treat the SDK failing to reach a verdict as a rejection", () => {
+    for (const code of [
+      "auth/internal-error",
+      "auth/network-error",
+      "app/invalid-credential",
+      "ERR_REQUIRE_ESM",
+    ]) {
+      expect(isTokenRejection(mockAuthRejection(code))).toBe(false);
+    }
+  });
+
+  it("does not treat a code-less throw as a rejection", () => {
+    expect(isTokenRejection(new Error("boom"))).toBe(false);
+    expect(isTokenRejection(null)).toBe(false);
+    expect(isTokenRejection(undefined)).toBe(false);
+    expect(isTokenRejection("auth/id-token-expired")).toBe(false);
   });
 });
