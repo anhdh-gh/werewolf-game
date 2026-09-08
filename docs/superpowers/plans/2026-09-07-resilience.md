@@ -307,12 +307,31 @@ was deleted before this commit.
 ## What's left before any of this runs live
 
 Same shape as Game Engine's own checklist — everything below needs the user's own
-access, not more code:
+access, not more code.
+
+**`npm run preflight` now reports this list as a check run** (`scripts/preflight.mjs`,
+runbook in `docs/live-preflight.md`): read-only against Vercel and Firebase, exit 1
+while anything is still missing, and it names the exact console page or CLI command
+for each gap. `src/test/preflight.test.ts` greps `src/` for every `process.env.*` and
+fails if the preflight's list and the code disagree, so a variable cannot be added to
+the app without being preflighted.
+
+Verified read-only on 2026-09-08 with it: the seven `NEXT_PUBLIC_FIREBASE_*` values
+and `FIREBASE_SERVICE_ACCOUNT_KEY` **are** now set in Vercel production; the newest
+production deployment is Ready; the RTDB instance exists at
+`werewolf-game-2026-default-rtdb.asia-southeast1.firebasedatabase.app` (note the
+region — not the `*.firebaseio.com` host) and an unauthenticated read of `/games` is
+denied, so the database is not in test mode. Still missing: the VAPID key, all three
+LiveKit values, and the narration audio.
 
 - Deploy `database.rules.json` (now also covers `fcmTokens/`, `chat/`) to the real
-  Firebase project.
-- Set `FIREBASE_SERVICE_ACCOUNT_KEY` in Vercel (already needed by Game Engine;
-  Resilience's new routes — `/api/livekit/token` — depend on the same one).
+  Firebase project. Preflight can confirm this one exactly, but only after
+  `firebase experiments:enable rtdbrules` (a local CLI setting) — without it, the
+  released ruleset cannot be read back and the check reports SKIP rather than
+  guessing.
+- ~~Set `FIREBASE_SERVICE_ACCOUNT_KEY` in Vercel~~ — done; preflight sees it as a
+  Secret on Production. (Already needed by Game Engine; Resilience's new routes —
+  `/api/livekit/token` — depend on the same one.)
 - Set `NEXT_PUBLIC_FIREBASE_VAPID_KEY` (Firebase Console → Project Settings → Cloud
   Messaging → Web Push certificates) for Task 6's push notifications to mint tokens
   at all.
