@@ -37,14 +37,16 @@ rõ ràng chứ không giấu.
 | **Epic 3** | Vai Sói thật tham gia cắn cùng bầy WOLVES, cơ chế đủ rõ để viết story ngay (Wolf Man → "Lang Nhân") | 1 | **`done`** — CI xanh (run 34221621075, commit 62e1052, `typecheck`/`test`/`build` đều `success`, sau khi iteration 14 sửa 1 bug đếm quân trong test fixture của run trước đó bị fail), rules RTDB live đã deploy và byte-compare khớp repo (2026-09-08) | `2026-09-08-roles-epic-3.md` |
 | **Epic 3b** | Vai Sói có khái niệm rõ nhưng paraphrase mơ hồ thời điểm xuyên đêm hoặc điều kiện thắng chính xác — cùng loại vấn đề đã chặn Epic 1b/2b (Dire Wolf, Lone Wolf) | 2 | Chưa viết story — cần rulebook gốc | chưa có |
 | **Epic 3c** | Vai cần khả năng engine mới ("cắn 2 mạng/đêm", chưa có trong pipeline WOLVES/WITCH/resolveNight hiện tại) — Wolf Cub | 1 | **`done`** — CI xanh (run 34224670711, commit e1deedd, `typecheck`/`test`/`build` đều `success`), rules RTDB live đã deploy và byte-compare khớp repo (2026-09-08, iteration 18) | `2026-09-08-roles-epic-3c.md` |
-| **Epic 4** | Vai cần rulebook gốc để phân biệt khỏi vai đã có, **không suy đoán** (Priest vs Bảo Vệ, Huntress vs Thợ Săn, Revealer vs Tiên Tri, Village Idiot, Drunk, Troublemaker, Insomniac, Apprentice Seer, Aura Seer, Paranormal Investigator, Beholder) | ~11 | **Chặn lại** — cần nghiên cứu thêm (không phải "thêm web search thông thường" nữa, xem catalog §6 mục 4) | chưa có |
+| **Epic 4a** | Vai Làng thụ động/sửa VOTE, soi riêng từ Epic 4 và đủ rõ để viết story ngay (Village Idiot, Beholder) — cùng khuôn kiến trúc Epic 1 (Prince/Pacifist/Mason) | 2 | **`story ready`** (2026-09-08, iteration 20) — chưa implement | `2026-09-08-roles-epic-4.md` |
+| **Epic 4b** | Phần còn lại của Epic 4 sau khi soi riêng: Priest, Huntress, Revealer, Aura Seer (trùng/xung đột vai đã có, không có lời văn phân biệt); Drunk, Apprentice Seer (mơ hồ thời điểm, cùng lớp 1b/2b/3b); Troublemaker (thiếu khả năng engine + thiếu lời văn, cùng lớp 3c); Insomniac (khái niệm "hàng xóm" không tồn tại trong kiến trúc hiện tại) | 9 | **Chặn lại** — cần nghiên cứu thêm, 4 loại lý do khác nhau (xem `2026-09-08-roles-epic-4.md` bảng soi từng vai) | `2026-09-08-roles-epic-4.md` |
 | **Epic 5** | Phe thứ 3 mới — Vampire, Cult Leader. **Kiến trúc đã xong (2026-09-08, iteration 19)**: pass thiết kế xác nhận template "1 phase đêm cho 1 vai đơn lẻ" đã tồn tại sẵn (Sorcerer đã chứng minh), `checkWinner` chỉ cần thêm 1 branch mới (không refactor), "đổi phe hiệu lực" đã có tiền lệ ngầm từ Cursed. Không có gì bị chặn ở tầng kỹ thuật nữa. | 2 | Chặn lại — **đổi lý do sang "cần nguồn"**: Vampire thiếu hoàn toàn lời văn điều kiện thắng; Cult Leader thiếu chi tiết cơ chế xuyên đêm (cùng lớp mơ hồ Epic 1b/2b/3b) | `2026-09-08-roles-epic-5.md` |
 | **Epic 6** | Tier 2 — Night Terrors, Urban Legends, Classic Movie Monsters (tên xác nhận, **lời văn năng lực chưa có nguồn chính hãng**) | ~14 | Chặn lại — cần nghiên cứu lại lời văn trước khi viết story (catalog §5, §6 mục 4) | chưa có |
 | **Epic Z (cuối roadmap, không phải tier chờ implement)** | Bonus Roles (44) + Pro Roles (50+) | 94 | **Chặn vĩnh viễn cho tới khi có nguồn mới** — không lặp lại tìm kiếm web thông thường (catalog §1.1 kết luận) | chưa có |
 | *Loại khỏi phạm vi* | Legacy (kiến trúc campaign 16 phiên), Artifacts (cơ chế item-overlay, không phải vai), Daybreak (thuộc One Night, khác kiến trúc), "Village" (không xác nhận tồn tại) | — | Không lập epic — ghi rõ lý do ở catalog §2 | — |
 
 **Thứ tự triển khai đề xuất:** Epic 1 → Epic 2 → Epic 3 → Epic 3c (đã `done`, 2026-09-08) →
-Epic 1b/2b/3b/4/5 (khi có nghiên cứu rulebook giải quyết được mơ hồ) →
+Epic 4a (`story ready`, 2026-09-08, iteration 20 — chưa implement) →
+Epic 1b/2b/3b/4b/5 (khi có nghiên cứu rulebook giải quyết được mơ hồ) →
 (Epic 6 sau khi có lời văn Tier 2) → Epic Z chỉ khi
 owner tự cung cấp nguồn mới (ảnh chụp thẻ bài vật lý, liên hệ Bezier Games). Đây đúng là thứ tự
 "phổ biến nhất trước, hiếm nhất sau cùng" owner yêu cầu — vai càng rõ nguồn và càng đơn giản về
@@ -118,7 +120,13 @@ liệt kê vai đã có epic xác định (không lặp lại toàn bộ ~141 va
 | Wolf Man ("Lang Nhân") | 3 | `done` — CI xanh (run 34221621075, commit 62e1052, `typecheck`/`test`/`build` đều `success`; commit gốc d82648a từng fail 1 test do lỗi đếm quân trong fixture, sửa ở iteration 14). Rules RTDB live đã deploy (`firebase deploy --only database --project werewolf-game-2026`, 2026-09-08) và byte-compare khớp 100% với `database.rules.json` trong repo (2 rule WOLVES/wolves-chat mở rộng `WOLF_MAN` xác nhận có mặt sau deploy) |
 | Dire Wolf, Lone Wolf | 3b | `blocked` — cần rulebook gốc (mơ hồ thời điểm bạn đồng hành / điều kiện thắng chính xác) |
 | Wolf Cub | 3c | `done` — CI xanh (run 34224670711, commit e1deedd, `typecheck`/`test`/`build` đều `success`), merged vào main. Rules RTDB live đã deploy (`firebase deploy --only database --project werewolf-game-2026`, 2026-09-08) và byte-compare khớp 100% với `database.rules.json` trong repo (rule WOLVES/wolves-chat mở rộng `WOLF_CUB` và field `wolfCubBonusNightPending` xác nhận có mặt sau deploy, diff rỗng) — `resolveNight`/`tallyMajorityVote` tổng quát hoá sang `tallyTopNVotes`/`wolfTargets: string[]`, `planAdvance` nhận `wolfCubBonusNightPending` + trả `deathsThisRoundRoles`, route đọc/set cờ đúng 2 điểm DAWN/VOTE_RESULT (KHÔNG ở "Leaving WOLVES" như thiết kế gốc), full test coverage (unit + route-level e2e + emulator rules) |
-| Priest, Huntress, Revealer, Village Idiot, Drunk, Troublemaker, Insomniac, Apprentice Seer, Aura Seer, Paranormal Investigator, Beholder | 4 | `blocked` — cần rulebook gốc |
+| Village Idiot ("Gã Khờ") | 4a | `story ready` (2026-09-08, iteration 20) — chưa implement |
+| Beholder ("Kẻ Quan Sát") | 4a | `story ready` (2026-09-08, iteration 20) — chưa implement |
+| Priest, Huntress, Revealer, Aura Seer | 4b | `blocked` — trùng/xung đột vai đã có (Bodyguard/Hunter/Seer), không có lời văn phân biệt |
+| Drunk, Apprentice Seer | 4b | `blocked` — mơ hồ thời điểm, cùng lớp Epic 1b/2b/3b |
+| Troublemaker | 4b | `blocked` — thiếu khả năng engine (chèn thêm 1 chu kỳ VOTE phụ) + thiếu lời văn cơ chế kích hoạt |
+| Insomniac | 4b | `blocked` — khái niệm "hàng xóm" (seating order) không tồn tại trong kiến trúc hiện tại |
+| Paranormal Investigator | 4b | `blocked` — paraphrase quá chung chung, không đủ để suy ra cơ chế |
 | Vampire | 5 | `blocked` — cần nguồn: điều kiện thắng hoàn toàn chưa xác định (khác các vai Tier 1 khác, không có nổi 1 câu paraphrase về thắng/thua) |
 | Cult Leader | 5 | `blocked` — cần rulebook gốc (điều kiện thắng đã rõ, nhưng cơ chế "kéo người vào giáo phái" mỗi đêm mơ hồ thời điểm/kháng cự — cùng lớp vấn đề Epic 1b/2b/3b) |
 | Thing, The Count, Beholder*, Insomniac*, Bogeyman, vai thứ 6 chưa rõ (Night Terrors); Bloody Mary, Chupacabra, Wolf Man*, Leprechaun, Sasquatch, Nostradamus (Urban Legends); The Blob, The Mummy, Dracula, The Zombie, Frankenstein's Monster (Classic Movie Monsters) | 6 | `blocked` — cần lời văn năng lực |
@@ -270,3 +278,27 @@ gốc mới — tất cả cần owner theo dõi, không chỉ Epic Z.
     written chưa verify") — mọi epic còn lại (1b, 2b, 3b, 4, 5, 6, Z) chờ đúng một thứ duy nhất:
     owner cung cấp nguồn rulebook gốc mới. Nếu run này tiếp tục mà không có nguồn mới từ owner,
     các iteration sau nên nêu rõ điều đó thay vì cố tìm việc tự chế ra để làm.
+
+12. **Xong (iteration 20, 2026-09-08)**: trước khi kết luận hẳn "không còn việc tự-giải-quyết-được",
+    thử lại 2 việc: (a) 3 đầu mối web nghiên cứu owner nêu tên trong prompt gốc (BGG filepage
+    99038, fandom wiki, beziergames.com per-expansion) — tất cả xác nhận vẫn chết y hệt kết luận
+    iteration 1 (fandom wiki vẫn HTTP 402; công cụ WebFetch của phiên này tự chặn hẳn domain
+    `archive.org` nên không dùng được Wayback Machine dù tìm thấy snapshot hợp lệ qua API; phát
+    hiện thêm 1 nguồn mới — `gridbeast.gg` có cấu trúc 1 trang/vai — nhưng trang Wolf Cub thực tế
+    ghi "Content coming soon", không có lời văn); (b) áp dụng đúng kỷ luật "soi từng vai riêng lẻ"
+    (đã dùng 3 lần cho Epic 1b/2b/3b) cho 11 vai của **Epic 4** — việc này roadmap gốc chưa từng
+    làm, chỉ gộp chung "Chặn lại" ở mức tên epic. Kết quả: soi trực tiếp trên code (`resolveVote.ts`,
+    `roles.ts`'s `buildMasonLinks`, `types/game.ts`'s "Tiên Tri luôn có mặt") tìm ra **2 vai
+    story-ready mà không cần nguồn mới nào** — Village Idiot (đối lập gương của Pacifist, chặn
+    ballot `null` thay vì chặn ghi hoàn toàn) và Beholder (thông tin thụ động đúng khuôn Mason,
+    biết uid của Tiên Tri — vai luôn có mặt nên không có case rỗng) — tách thành **Epic 4a**
+    (`2026-09-08-roles-epic-4.md`, story ready, chưa implement). 9 vai còn lại tách thành Epic 4b,
+    phân loại lại theo 4 lý do chặn khác nhau (trùng vai đã có / mơ hồ thời điểm / thiếu khả năng
+    engine / khái niệm kiến trúc không tồn tại) thay vì 1 dòng chung chung. Việc tiếp theo cho epic
+    mở rộng vai: implement Story 4a.1 + 4a.2 (mỗi story 1 commit, build+test trước mỗi commit,
+    verify CI xanh + rules RTDB live cho Story 4a.1 sau khi deploy — Story 4a.1 chạm
+    `database.rules.json`). Đồng thời: kết luận "mọi epic còn lại chỉ chờ nguồn owner" ở mục 11
+    (iteration 19) **chưa hoàn toàn đúng** — vẫn còn việc tự-giải-quyết-được dạng "soi từng vai"
+    cho các epic multi-role chưa được soi kỹ (chính Epic 4 là ví dụ), nên các iteration sau, trước
+    khi coi một epic là "blocked, chờ owner", nên tự hỏi đã soi từng vai riêng lẻ trong đó chưa,
+    không chỉ tin theo phân loại epic ban đầu.
