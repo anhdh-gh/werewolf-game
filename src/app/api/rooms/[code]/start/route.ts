@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebase/admin";
-import { assignRoles, buildMasonLinks } from "@/lib/game/roles";
+import { assignRoles, assertValidDeck, buildMasonLinks } from "@/lib/game/roles";
 import { PHASE_DURATIONS_MS } from "@/lib/game/phases";
-import type { Room } from "@/types/room";
+import { deckSize, type Room } from "@/types/room";
 import { isPackVisible, type PrivatePlayerState } from "@/types/game";
 
 /**
@@ -31,12 +31,23 @@ export async function POST(
     return NextResponse.json({ error: "Phòng đã bắt đầu chơi hoặc đã kết thúc" }, { status: 409 });
   }
 
-  const uids = Object.keys(room.members ?? {});
-  if (uids.length < 4) {
-    return NextResponse.json({ error: "Cần ít nhất 4 người chơi" }, { status: 400 });
+  try {
+    assertValidDeck(room.settings.roleCounts);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Deck không hợp lệ";
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 
-  const assignment = assignRoles(uids, room.settings.rolesEnabled);
+  const uids = Object.keys(room.members ?? {});
+  const targetSize = deckSize(room.settings.roleCounts);
+  if (uids.length !== targetSize) {
+    return NextResponse.json(
+      { error: `Cần đúng ${targetSize} người chơi, hiện có ${uids.length}` },
+      { status: 400 },
+    );
+  }
+
+  const assignment = assignRoles(uids, room.settings.roleCounts);
 
   const gameId = db.ref("games").push().key;
   if (!gameId) throw new Error("Không tạo được mã ván đấu");

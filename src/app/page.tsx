@@ -2,17 +2,46 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, Loader2, LogOut, Minus, Plus } from "lucide-react";
+import { AlertCircle, Loader2, LogOut } from "lucide-react";
 import { useAuth } from "@/lib/auth/useAuth";
 import { db } from "@/lib/firebase/client";
 import { createRoom } from "@/lib/rooms/createRoom";
 import { joinRoom, JoinRoomError } from "@/lib/rooms/joinRoom";
+import { deckIssue } from "@/lib/game/roles";
 import { Logo } from "@/components/Logo";
+import { DeckBuilder } from "@/components/DeckBuilder";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import type { RoleKey } from "@/types/game";
+
+/** UX convenience only, not enforced logic (the old auto-fill formula is
+ * gone from roles.ts entirely) — seeds the deck-builder with a sensible
+ * 8-player deck so a new room starts from something playable instead of
+ * empty. Same composition floor((n-1)/4)+1 wolves + Seer/Witch/Bodyguard/
+ * Traitor/Hunter/1 Villager would have produced for n=8. */
+const DEFAULT_DECK: Record<RoleKey, number> = {
+  WEREWOLF: 2,
+  TRAITOR: 1,
+  SORCERER: 0,
+  WOLF_MAN: 0,
+  WOLF_CUB: 0,
+  SEER: 1,
+  WITCH: 1,
+  BODYGUARD: 1,
+  HUNTER: 1,
+  CUPID: 0,
+  MUTER: 0,
+  CURSED: 0,
+  LYCAN: 0,
+  MASON: 0,
+  PRINCE: 0,
+  PACIFIST: 0,
+  VILLAGE_IDIOT: 0,
+  VILLAGER: 1,
+  TANNER: 0,
+};
 
 function GoogleIcon() {
   return (
@@ -49,7 +78,7 @@ export default function HomePage() {
   const { user, loading, signInWithGoogle, signOut } = useAuth();
   const router = useRouter();
   const [mode, setMode] = useState<"create" | "join">("create");
-  const [maxPlayers, setMaxPlayers] = useState(8);
+  const [roleCounts, setRoleCounts] = useState<Record<RoleKey, number>>(DEFAULT_DECK);
   const [joinCode, setJoinCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [signingIn, setSigningIn] = useState(false);
@@ -128,7 +157,7 @@ export default function HomePage() {
         uid: user.uid,
         name: user.displayName ?? "Ẩn danh",
         photoURL: user.photoURL,
-        maxPlayers,
+        roleCounts,
       });
       router.push(`/room/${code}`);
     } catch (err) {
@@ -235,43 +264,20 @@ export default function HomePage() {
                 key="create"
                 className="flex flex-col gap-4 animate-in fade-in-0 duration-200"
               >
-                <div className="flex flex-col items-center gap-2">
-                  <Label htmlFor="maxPlayers" className="text-muted-foreground">
-                    Số người chơi
-                  </Label>
-                  <div className="flex items-center gap-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="size-11"
-                      onClick={() => setMaxPlayers((n) => Math.max(4, n - 1))}
-                      disabled={maxPlayers <= 4}
-                      aria-label="Giảm"
-                    >
-                      <Minus className="size-4" />
-                    </Button>
-                    <span
-                      id="maxPlayers"
-                      className="font-heading w-12 text-center text-3xl tabular-nums"
-                    >
-                      {maxPlayers}
-                    </span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="size-11"
-                      onClick={() => setMaxPlayers((n) => Math.min(16, n + 1))}
-                      disabled={maxPlayers >= 16}
-                      aria-label="Tăng"
-                    >
-                      <Plus className="size-4" />
-                    </Button>
+                <div className="flex flex-col gap-2">
+                  <p className="text-center text-xs text-muted-foreground">
+                    Chọn đúng số lượng từng vai — tổng số lá chính là số người chơi cần có
+                  </p>
+                  <div className="max-h-80 overflow-y-auto rounded-lg border border-border/50 p-1">
+                    <DeckBuilder roleCounts={roleCounts} onChange={(role, count) => setRoleCounts((prev) => ({ ...prev, [role]: count }))} />
                   </div>
-                  <span className="text-xs text-muted-foreground">4 đến 16 người</span>
                 </div>
-                <Button onClick={handleCreate} disabled={submitting} size="lg" className="h-12 text-base">
+                <Button
+                  onClick={handleCreate}
+                  disabled={submitting || deckIssue(roleCounts) !== null}
+                  size="lg"
+                  className="h-12 text-base"
+                >
                   {submitting && <Loader2 className="size-4 animate-spin" />}
                   Tạo phòng
                 </Button>

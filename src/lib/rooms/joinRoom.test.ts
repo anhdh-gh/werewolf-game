@@ -5,8 +5,19 @@ import { initializeApp, deleteApp, type FirebaseApp } from "firebase/app";
 import { createRoom } from "./createRoom";
 import { joinRoom, JoinRoomError } from "./joinRoom";
 import { roomPath } from "./paths";
+import { ALL_ROLE_KEYS, type RoleKey } from "@/types/game";
 
 let app: FirebaseApp;
+
+function zeroDeck(): Record<RoleKey, number> {
+  return Object.fromEntries(ALL_ROLE_KEYS.map((key) => [key, 0])) as Record<RoleKey, number>;
+}
+
+function deck(overrides: Partial<Record<RoleKey, number>>): Record<RoleKey, number> {
+  return { ...zeroDeck(), ...overrides };
+}
+
+const DECK_OF_4 = deck({ WEREWOLF: 1, SEER: 1, WITCH: 1, VILLAGER: 1 });
 
 beforeAll(() => {
   app = initializeApp(
@@ -45,7 +56,7 @@ describe("joinRoom", () => {
       uid: ownerUid,
       name: "Owner",
       photoURL: null,
-      maxPlayers: 4,
+      roleCounts: DECK_OF_4,
     });
 
     const joinerUid = await signInAs();
@@ -63,18 +74,18 @@ describe("joinRoom", () => {
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 
-  it("throws FULL when the room is at maxPlayers", async () => {
-    // maxPlayers has a floor of 4 (createRoom validates it, and the deployed
-    // rules' settings.validate enforces the same bound), so this fills a
-    // 4-player room via three real joinRoom calls rather than creating a
-    // room already at capacity.
+  it("throws FULL when the room is at deckSize", async () => {
+    // A deck's minimum valid total is 4 (createRoom validates it, and the
+    // deployed rules' settings.validate enforces the same bound), so this
+    // fills a 4-player deck via three real joinRoom calls rather than
+    // creating a room already at capacity.
     const db = getDatabase(app);
     const ownerUid = await signInAs();
     const code = await createRoom(db, {
       uid: ownerUid,
       name: "Owner",
       photoURL: null,
-      maxPlayers: 4,
+      roleCounts: DECK_OF_4,
     });
 
     const aUid = await signInAs();
@@ -102,7 +113,7 @@ describe("joinRoom", () => {
       uid: ownerUid,
       name: "Owner",
       photoURL: null,
-      maxPlayers: 4,
+      roleCounts: DECK_OF_4,
     });
 
     await expect(

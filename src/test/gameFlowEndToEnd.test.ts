@@ -16,8 +16,62 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { FakeAdminDatabase } from "./helpers/fakeAdminDb";
-import type { Game, PrivatePlayerState } from "@/types/game";
+import { ALL_ROLE_KEYS, type Game, type PrivatePlayerState, type RoleKey } from "@/types/game";
 import type { Room } from "@/types/room";
+
+/** Deck-builder change (2026-09-08) replaced roles.ts's auto-fill formula
+ * with an explicit deck the room creator sets. This file's fixtures used to
+ * lean on that formula purely as a convenient way to seed a realistic,
+ * varied deck from a small "which optional roles are on" config — that
+ * convenience is still useful for a test fixture even though production
+ * code no longer has it, so a local copy lives here rather than forcing
+ * every call site below to spell out exact per-role numbers by hand. */
+const OLD_OPTIONAL_ROLE_KEYS: RoleKey[] = [
+  "BODYGUARD",
+  "TRAITOR",
+  "HUNTER",
+  "CUPID",
+  "MUTER",
+  "CURSED",
+  "LYCAN",
+  "MASON",
+  "PRINCE",
+  "PACIFIST",
+  "VILLAGE_IDIOT",
+  "SORCERER",
+  "WOLF_MAN",
+  "WOLF_CUB",
+  "TANNER",
+];
+
+function oldWolfCount(n: number): number {
+  return Math.floor((n - 1) / 4) + 1;
+}
+
+function oldBuildRoleList(n: number, rolesEnabled: Record<string, boolean>): RoleKey[] {
+  const roles: RoleKey[] = Array(oldWolfCount(n)).fill("WEREWOLF");
+  roles.push("SEER", "WITCH");
+  let optionalSlots = n - roles.length - 1;
+  for (const key of OLD_OPTIONAL_ROLE_KEYS) {
+    if (optionalSlots <= 0) break;
+    if (rolesEnabled[key]) {
+      roles.push(key);
+      optionalSlots--;
+    }
+  }
+  const villagers = n - roles.length;
+  for (let i = 0; i < villagers; i++) roles.push("VILLAGER");
+  return roles;
+}
+
+function toRoleCounts(roles: RoleKey[]): Record<RoleKey, number> {
+  const counts = Object.fromEntries(ALL_ROLE_KEYS.map((key) => [key, 0])) as Record<
+    RoleKey,
+    number
+  >;
+  for (const role of roles) counts[role]++;
+  return counts;
+}
 
 const fakeDb = new FakeAdminDatabase();
 const sendEachForMulticast = vi.fn().mockResolvedValue({});
@@ -139,7 +193,7 @@ async function seedRoom(code: string, uids: string[], rolesEnabled: typeof NO_OP
   const room: Room = {
     createdAt: 1,
     status: "LOBBY",
-    settings: { maxPlayers: uids.length, rolesEnabled, remoteMode: false },
+    settings: { roleCounts: toRoleCounts(oldBuildRoleList(uids.length, rolesEnabled)), remoteMode: false },
     members,
   };
   await fakeDb.ref(`rooms/${code}`).set(room);

@@ -10,12 +10,36 @@ import { ref, set, get, update } from "firebase/database";
 
 let testEnv: RulesTestEnvironment;
 
+/** Deck-builder change (2026-09-08): settings.roleCounts needs a value for
+ * every one of the 19 RoleKeys. 8 total, ≥1 Wolf-faction role, matching the
+ * deck the room-creation UI seeds by default (src/app/page.tsx). */
+const VALID_ROLE_COUNTS = {
+  WEREWOLF: 2,
+  TRAITOR: 1,
+  SORCERER: 0,
+  WOLF_MAN: 0,
+  WOLF_CUB: 0,
+  SEER: 1,
+  WITCH: 1,
+  BODYGUARD: 1,
+  HUNTER: 1,
+  CUPID: 0,
+  MUTER: 0,
+  CURSED: 0,
+  LYCAN: 0,
+  MASON: 0,
+  PRINCE: 0,
+  PACIFIST: 0,
+  VILLAGE_IDIOT: 0,
+  VILLAGER: 1,
+  TANNER: 0,
+};
+
 const EXISTING_ROOM = {
   createdAt: 1000,
   status: "LOBBY",
   settings: {
-    maxPlayers: 8,
-    rolesEnabled: { BODYGUARD: true, TRAITOR: true, HUNTER: true, CUPID: true, MUTER: true, CURSED: true, LYCAN: true, MASON: true, PRINCE: true, PACIFIST: true, SORCERER: true, WOLF_MAN: true, WOLF_CUB: true, TANNER: true },
+    roleCounts: VALID_ROLE_COUNTS,
     remoteMode: false,
   },
   members: {
@@ -100,12 +124,12 @@ describe("rooms/$code", () => {
 
   it("allows an existing member to update settings while in LOBBY", async () => {
     const db = testEnv.authenticatedContext("uid-owner").database();
-    await assertSucceeds(set(ref(db, "rooms/EXIST1/settings/maxPlayers"), 10));
+    await assertSucceeds(set(ref(db, "rooms/EXIST1/settings/roleCounts/VILLAGER"), 2));
   });
 
   it("denies a non-member from updating settings", async () => {
     const db = testEnv.authenticatedContext("uid-outsider").database();
-    await assertFails(set(ref(db, "rooms/EXIST1/settings/maxPlayers"), 10));
+    await assertFails(set(ref(db, "rooms/EXIST1/settings/roleCounts/VILLAGER"), 2));
   });
 
   it("denies any client from writing currentGameId", async () => {
@@ -126,8 +150,7 @@ describe("rooms/$code", () => {
         createdAt: 5000,
         status: "LOBBY",
         settings: {
-          maxPlayers: 8,
-          rolesEnabled: { BODYGUARD: true, TRAITOR: true, HUNTER: true, CUPID: true, MUTER: true, CURSED: true, LYCAN: true, MASON: true, PRINCE: true, PACIFIST: true, SORCERER: true, WOLF_MAN: true, WOLF_CUB: true, TANNER: true },
+          roleCounts: VALID_ROLE_COUNTS,
           remoteMode: false,
         },
         members: {
@@ -159,8 +182,7 @@ describe("rooms/$code", () => {
       update(ref(db), {
         "rooms/SOLO01/createdAt": 5000,
         "rooms/SOLO01/settings": {
-          maxPlayers: 8,
-          rolesEnabled: { BODYGUARD: true, TRAITOR: true, HUNTER: true, CUPID: true, MUTER: true, CURSED: true, LYCAN: true, MASON: true, PRINCE: true, PACIFIST: true, SORCERER: true, WOLF_MAN: true, WOLF_CUB: true, TANNER: true },
+          roleCounts: VALID_ROLE_COUNTS,
           remoteMode: false,
         },
         "rooms/SOLO01/members/uid-solo": {
@@ -177,7 +199,7 @@ describe("rooms/$code", () => {
   it("denies writing settings into a room the writer is not a member of", async () => {
     const db = testEnv.authenticatedContext("uid-ghost").database();
     await assertFails(
-      set(ref(db, "rooms/GHOST1/settings"), { maxPlayers: 8, rolesEnabled: {} }),
+      set(ref(db, "rooms/GHOST1/settings"), { roleCounts: VALID_ROLE_COUNTS, remoteMode: false }),
     );
   });
 
@@ -193,22 +215,34 @@ describe("rooms/$code", () => {
 
   // This one exercises .validate directly: a non-deleting payload (has
   // children) that is still the wrong shape.
-  it("denies a settings write missing rolesEnabled", async () => {
+  it("denies a settings write missing roleCounts", async () => {
     const db = testEnv.authenticatedContext("uid-owner").database();
-    await assertFails(set(ref(db, "rooms/EXIST1/settings"), { maxPlayers: 8 }));
+    await assertFails(set(ref(db, "rooms/EXIST1/settings"), { remoteMode: false }));
   });
 
-  it("denies a settings write with maxPlayers out of range", async () => {
+  it("denies a settings write missing one of roleCounts' 19 role keys", async () => {
     const db = testEnv.authenticatedContext("uid-owner").database();
-    await assertFails(set(ref(db, "rooms/EXIST1/settings/maxPlayers"), 99));
+    const { VILLAGER: _omitted, ...incomplete } = VALID_ROLE_COUNTS;
+    await assertFails(
+      set(ref(db, "rooms/EXIST1/settings"), { roleCounts: incomplete, remoteMode: false }),
+    );
+  });
+
+  it("denies a settings write with roleCounts totaling above 16", async () => {
+    const db = testEnv.authenticatedContext("uid-owner").database();
+    await assertFails(set(ref(db, "rooms/EXIST1/settings/roleCounts/VILLAGER"), 99));
+  });
+
+  it("denies a settings write with a negative role count", async () => {
+    const db = testEnv.authenticatedContext("uid-owner").database();
+    await assertFails(set(ref(db, "rooms/EXIST1/settings/roleCounts/VILLAGER"), -1));
   });
 
   it("denies a settings write missing remoteMode", async () => {
     const db = testEnv.authenticatedContext("uid-owner").database();
     await assertFails(
       set(ref(db, "rooms/EXIST1/settings"), {
-        maxPlayers: 8,
-        rolesEnabled: { BODYGUARD: true, TRAITOR: true, HUNTER: true, CUPID: true, MUTER: true, CURSED: true, LYCAN: true, MASON: true, PRINCE: true, PACIFIST: true, SORCERER: true, WOLF_MAN: true, WOLF_CUB: true, TANNER: true },
+        roleCounts: VALID_ROLE_COUNTS,
       }),
     );
   });

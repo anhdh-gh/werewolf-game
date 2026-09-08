@@ -23,9 +23,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Logo } from "@/components/Logo";
+import { DeckBuilder } from "@/components/DeckBuilder";
 import { cn } from "@/lib/utils";
-import { OPTIONAL_ROLE_KEYS, type OptionalRoleKey } from "@/types/room";
-import { ROLE_LABELS } from "@/lib/game/labels";
+import { deckSize } from "@/types/room";
+import { deckIssue } from "@/lib/game/roles";
+import type { RoleKey } from "@/types/game";
 
 const AVATAR_TINTS = [
   "bg-red-500/20 text-red-300",
@@ -138,13 +140,13 @@ export function RoomLobby({ code }: { code: string }) {
     update(ref(db, roomMemberPath(code, user.uid)), { ready: !currentlyReady });
   };
 
-  // Spec §4.2: "phòng có mấy công tắc bật/tắt từng vai phụ" — no room owner
-  // (spec §0/§3), so any member can flip these while the room is still in
-  // LOBBY, same as toggleReady above. Security Rules gate this the same way
-  // (settings.write checks status === 'LOBBY', not who's asking).
-  const toggleRole = (key: OptionalRoleKey) => {
-    const current = room.settings.rolesEnabled[key];
-    update(ref(db, `${roomSettingsPath(code)}/rolesEnabled`), { [key]: !current });
+  // Deck-builder change (2026-09-08): no room owner (spec §0/§3), so any
+  // member can adjust the deck while the room is still in LOBBY, same as
+  // toggleReady above. Security Rules gate this the same way (settings.write
+  // checks status === 'LOBBY', not who's asking). Only who-gets-which-role
+  // stays random and hidden — this only edits how many of each role exist.
+  const setRoleCount = (role: RoleKey, count: number) => {
+    update(ref(db, `${roomSettingsPath(code)}/roleCounts`), { [role]: count });
   };
 
   // Spec §0: "Chat sói và chat làng tắt mặc định, chỉ bật khi phòng bật
@@ -187,8 +189,22 @@ export function RoomLobby({ code }: { code: string }) {
 
   const members = Object.entries(room.members).sort(([, a], [, b]) => a.joinedAt - b.joinedAt);
   const isReady = room.members[user.uid]?.ready ?? false;
-  const fillRatio = Math.min(1, members.length / room.settings.maxPlayers);
-  const canStart = members.length >= 4;
+  const targetSize = deckSize(room.settings.roleCounts);
+  const fillRatio = targetSize > 0 ? Math.min(1, members.length / targetSize) : 0;
+  const currentDeckIssue = deckIssue(room.settings.roleCounts);
+  // §2.1/§5 of the design doc: the deck is fixed up front, so Start requires
+  // exactly the deck's player count (not merely "at least 4") AND a deck
+  // that's actually valid (e.g. ≥1 Wolf-faction role) — the server re-checks
+  // both via assertValidDeck, this just avoids a guaranteed-to-fail round
+  // trip when the deck itself isn't playable yet.
+  const canStart = members.length === targetSize && currentDeckIssue === null;
+  const startLabel = currentDeckIssue
+    ? currentDeckIssue
+    : members.length < targetSize
+      ? `Cần thêm ${targetSize - members.length} người`
+      : members.length > targetSize
+        ? `Thừa ${members.length - targetSize} người`
+        : "Bắt đầu";
 
   return (
     <main className="flex min-h-dvh flex-col items-center gap-6 p-6">
@@ -216,7 +232,7 @@ export function RoomLobby({ code }: { code: string }) {
                 />
               </div>
               <p className="text-center text-xs text-muted-foreground">
-                {members.length} / {room.settings.maxPlayers} người chơi
+                {members.length} / {targetSize} người chơi
               </p>
             </div>
           </CardHeader>
@@ -261,7 +277,7 @@ export function RoomLobby({ code }: { code: string }) {
               size="lg"
             >
               {starting ? <Loader2 className="size-4 animate-spin" /> : <Swords className="size-4" />}
-              {canStart ? "Bắt đầu" : `Cần thêm ${4 - members.length} người`}
+              {startLabel}
             </Button>
 
             {startError && (
@@ -325,20 +341,9 @@ export function RoomLobby({ code }: { code: string }) {
           {settingsOpen && (
             <CardContent className="animate-in fade-in-0 slide-in-from-top-1 flex flex-col gap-1 pt-0 duration-200">
               <p className="pb-2 text-xs text-muted-foreground">
-                Không cần chỉnh gì cũng chơi được — mặc định bật hết. Sói và Dân luôn có mặt.
+                Chỉnh số lượng từng vai — tổng số lá chính là số người chơi cần có để bắt đầu.
               </p>
-              {OPTIONAL_ROLE_KEYS.map((key) => (
-                <label
-                  key={key}
-                  className="flex touch-manipulation items-center justify-between gap-3 rounded-lg px-2.5 py-2.5 text-sm hover:bg-muted"
-                >
-                  <span>{ROLE_LABELS[key]}</span>
-                  <Switch
-                    checked={room.settings.rolesEnabled[key]}
-                    onCheckedChange={() => toggleRole(key)}
-                  />
-                </label>
-              ))}
+              <DeckBuilder roleCounts={room.settings.roleCounts} onChange={setRoleCount} />
             </CardContent>
           )}
         </Card>

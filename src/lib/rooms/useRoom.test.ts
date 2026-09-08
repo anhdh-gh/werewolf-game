@@ -5,8 +5,15 @@ import { connectAuthEmulator, getAuth, signInAnonymously } from "firebase/auth";
 import { initializeApp, deleteApp, type FirebaseApp } from "firebase/app";
 import { createRoom } from "./createRoom";
 import { useRoom } from "./useRoom";
+import { ALL_ROLE_KEYS, type RoleKey } from "@/types/game";
 
 let app: FirebaseApp;
+
+function zeroDeck(): Record<RoleKey, number> {
+  return Object.fromEntries(ALL_ROLE_KEYS.map((key) => [key, 0])) as Record<RoleKey, number>;
+}
+
+const DECK_OF_8 = { ...zeroDeck(), WEREWOLF: 2, SEER: 1, WITCH: 1, VILLAGER: 4 };
 
 beforeAll(() => {
   app = initializeApp(
@@ -33,7 +40,7 @@ describe("useRoom", () => {
       uid: user.uid,
       name: "Anh",
       photoURL: null,
-      maxPlayers: 8,
+      roleCounts: DECK_OF_8,
     });
 
     const { result } = renderHook(() => useRoom(db, code));

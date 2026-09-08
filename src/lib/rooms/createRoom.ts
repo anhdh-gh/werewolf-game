@@ -1,25 +1,23 @@
 import { type Database, ref, runTransaction, update } from "firebase/database";
 import { generateRoomCode } from "./roomCode";
 import { roomPath, roomStatusPath, roomMemberPath } from "./paths";
-import { OPTIONAL_ROLE_KEYS, type RoomSettings } from "@/types/room";
+import { assertValidDeck } from "@/lib/game/roles";
+import type { RoleKey } from "@/types/game";
 
 const MAX_ATTEMPTS = 5;
-
-const DEFAULT_ROLES_ENABLED: RoomSettings["rolesEnabled"] = Object.fromEntries(
-  OPTIONAL_ROLE_KEYS.map((key) => [key, true]),
-) as RoomSettings["rolesEnabled"];
 
 export interface CreateRoomInput {
   uid: string;
   name: string;
   photoURL: string | null;
-  maxPlayers: number;
+  /** Deck-builder change (2026-09-08): the caller (room-creation UI) builds
+   * the exact deck up front — createRoom no longer computes one from a
+   * player-count formula. */
+  roleCounts: Record<RoleKey, number>;
 }
 
 export async function createRoom(db: Database, input: CreateRoomInput): Promise<string> {
-  if (input.maxPlayers < 4 || input.maxPlayers > 16) {
-    throw new Error("Số người chơi phải từ 4 đến 16");
-  }
+  assertValidDeck(input.roleCounts);
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     const code = generateRoomCode();
@@ -54,8 +52,7 @@ async function tryCreateAt(
   await update(ref(db), {
     [`${roomPath(code)}/createdAt`]: now,
     [`${roomPath(code)}/settings`]: {
-      maxPlayers: input.maxPlayers,
-      rolesEnabled: DEFAULT_ROLES_ENABLED,
+      roleCounts: input.roleCounts,
       remoteMode: false,
     },
     [roomMemberPath(code, input.uid)]: {

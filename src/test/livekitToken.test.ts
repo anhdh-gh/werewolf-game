@@ -125,8 +125,7 @@ async function seedGame(phaseName: Game["phase"]["name"], remoteMode: boolean) {
     },
   } satisfies Record<string, PrivatePlayerState>);
   await fakeDb.ref(`rooms/${roomCode}/settings`).set({
-    maxPlayers: 8,
-    rolesEnabled: {},
+    roleCounts: { WEREWOLF: 2, SEER: 1, WITCH: 1, VILLAGER: 4 },
     remoteMode,
   });
 }

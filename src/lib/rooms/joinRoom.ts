@@ -1,5 +1,5 @@
 import { type Database, ref, get, set } from "firebase/database";
-import type { Room } from "@/types/room";
+import { deckSize, type Room } from "@/types/room";
 import { roomPath, roomMemberPath } from "./paths";
 
 export class JoinRoomError extends Error {
@@ -36,7 +36,7 @@ export async function joinRoom(
   if (alreadyMember) return;
 
   const memberCount = Object.keys(room.members ?? {}).length;
-  if (memberCount >= room.settings.maxPlayers) {
+  if (memberCount >= deckSize(room.settings.roleCounts)) {
     throw new JoinRoomError("FULL", "Phòng đã đầy");
   }
 
@@ -46,7 +46,7 @@ export async function joinRoom(
   // This leaves a small race window: two people joining the last open
   // slot at the same instant could both pass the FULL check above before
   // either write lands, so the room could briefly hold one more member
-  // than maxPlayers. Accepted for v1 — this is a friend-group party game
+  // than the deck's size. Accepted for v1 — this is a friend-group party game
   // with no adversarial concurrency, not a security boundary, and the
   // room self-corrects on the next read.
   await set(ref(db, roomMemberPath(roomCode, input.uid)), {

@@ -46,6 +46,32 @@ export const FACTION_BY_ROLE: Record<RoleKey, Faction> = {
   VILLAGER: "VILLAGE",
 };
 
+/** Every RoleKey, grouped and ordered by faction (Sói → Làng → Riêng) — the
+ * display order the deck-builder UI groups roles by (spec §4.1's faction
+ * table), and the single source other code iterates over instead of
+ * re-deriving "every role that exists" a second time. */
+export const ALL_ROLE_KEYS: RoleKey[] = [
+  "WEREWOLF",
+  "TRAITOR",
+  "SORCERER",
+  "WOLF_MAN",
+  "WOLF_CUB",
+  "SEER",
+  "WITCH",
+  "BODYGUARD",
+  "HUNTER",
+  "CUPID",
+  "MUTER",
+  "CURSED",
+  "LYCAN",
+  "MASON",
+  "PRINCE",
+  "PACIFIST",
+  "VILLAGE_IDIOT",
+  "VILLAGER",
+  "TANNER",
+];
+
 /** Spec §4.1: what the Seer's check reports for a role. Only WEREWOLF,
  * WOLF_CUB, and LYCAN read as wolf — TRAITOR and WOLF_MAN are wolf-faction
  * but read as villager, LYCAN is village-faction but reads as wolf. Wolf Cub

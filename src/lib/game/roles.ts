@@ -1,45 +1,38 @@
-import { OPTIONAL_ROLE_KEYS, type OptionalRoleKey } from "@/types/room";
-import type { RoleKey } from "@/types/game";
+import { deckSize } from "@/types/room";
+import { FACTION_BY_ROLE, type RoleKey } from "@/types/game";
 
-export function wolfCount(n: number): number {
-  return Math.floor((n - 1) / 4) + 1;
-}
-
-function assertValidSize(n: number): void {
-  if (n < 4 || n > 16) {
-    throw new Error("Số người chơi phải từ 4 đến 16");
+/** Deck-builder change (2026-09-08): the room creator decides exactly how
+ * many of each role to deal — no more auto-computed formula. Order doesn't
+ * matter here; assignRoles shuffles the result before dealing it out. */
+export function buildRoleList(roleCounts: Record<RoleKey, number>): RoleKey[] {
+  const roles: RoleKey[] = [];
+  for (const [role, count] of Object.entries(roleCounts) as [RoleKey, number][]) {
+    for (let i = 0; i < count; i++) roles.push(role);
   }
-}
-
-/** Spec §4.2: wolves, then Seer + Witch + ≥1 Villager are mandatory, then the
- * remaining slots are filled in OPTIONAL_ROLE_KEYS order — Wolf- and
- * Village-faction roles first, the sole Riêng (solo) role TANNER always
- * last — skipping any optional role the room disabled. A disabled role's
- * slot rolls over to the next one in line rather than going straight to
- * Villager. */
-export function buildRoleList(
-  n: number,
-  rolesEnabled: Record<OptionalRoleKey, boolean>,
-): RoleKey[] {
-  assertValidSize(n);
-
-  const wolves = wolfCount(n);
-  const roles: RoleKey[] = Array(wolves).fill("WEREWOLF");
-  roles.push("SEER", "WITCH");
-
-  let optionalSlots = n - roles.length - 1; // reserve 1 guaranteed villager
-  for (const key of OPTIONAL_ROLE_KEYS) {
-    if (optionalSlots <= 0) break;
-    if (rolesEnabled[key]) {
-      roles.push(key);
-      optionalSlots--;
-    }
-  }
-
-  const villagers = n - roles.length;
-  for (let i = 0; i < villagers; i++) roles.push("VILLAGER");
-
   return roles;
+}
+
+/** The one hard guardrail the owner kept when everything else about the old
+ * auto-fill formula (always Seer/Witch/≥1 Villager) was dropped: a deck with
+ * zero Wolf-faction roles can never be started. Non-throwing so the UI can
+ * show the same message as a live warning; assertValidDeck below is the
+ * throwing wrapper the server route uses. */
+export function deckIssue(roleCounts: Record<RoleKey, number>): string | null {
+  const size = deckSize(roleCounts);
+  if (size < 4) return "Cần ít nhất 4 người chơi";
+  if (size > 16) return "Tối đa 16 người chơi";
+
+  const wolfCount = (Object.entries(roleCounts) as [RoleKey, number][])
+    .filter(([role]) => FACTION_BY_ROLE[role] === "WOLF")
+    .reduce((sum, [, n]) => sum + n, 0);
+  if (wolfCount < 1) return "Deck phải có ít nhất một vai phe Sói";
+
+  return null;
+}
+
+export function assertValidDeck(roleCounts: Record<RoleKey, number>): void {
+  const issue = deckIssue(roleCounts);
+  if (issue) throw new Error(issue);
 }
 
 function shuffle<T>(items: T[]): T[] {
@@ -67,11 +60,16 @@ export function buildMasonLinks(assignment: Record<string, RoleKey>): Record<str
   return links;
 }
 
+/** Who gets which role among uids stays random and hidden, exactly as
+ * before — only the input (an explicit deck instead of a formula-computed
+ * one) changed. Caller is responsible for making sure uids.length matches
+ * deckSize(roleCounts) (see the start route's own check) — this function
+ * doesn't re-validate that. */
 export function assignRoles(
   uids: string[],
-  rolesEnabled: Record<OptionalRoleKey, boolean>,
+  roleCounts: Record<RoleKey, number>,
 ): Record<string, RoleKey> {
-  const roles = shuffle(buildRoleList(uids.length, rolesEnabled));
+  const roles = shuffle(buildRoleList(roleCounts));
   const assignment: Record<string, RoleKey> = {};
   uids.forEach((uid, i) => {
     assignment[uid] = roles[i];

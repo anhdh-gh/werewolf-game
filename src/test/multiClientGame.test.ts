@@ -50,37 +50,49 @@ import type { ChatMessage, Game, PrivatePlayerState, RoleKey } from "@/types/gam
 
 const PROJECT_ID = "werewolf-multiclient-test";
 
-/** Spec §4.2 with every optional role off and 7 players deals exactly
- * 2 WEREWOLF + SEER + WITCH + 3 VILLAGER (`wolfCount` is
- * `floor((n - 1) / 4) + 1`), so the only phases in play are
- * NIGHT_FALLS / SEER / WOLVES / WITCH_SAVE / WITCH_KILL / DAWN /
- * DISCUSSION / VOTE / VOTE_RESULT. Which uid gets which role is still
- * random (assignRoles shuffles) — this file reads the deal back out of
- * /private rather than forcing it, so it exercises the real dealer.
+/** Deck-builder change (2026-09-08): the room creator now sets an explicit
+ * per-role count instead of an auto-computed formula. This deck (2 WEREWOLF +
+ * SEER + WITCH + 3 VILLAGER, everything else off) is the same composition
+ * the old formula produced for 7 players, kept explicit here since
+ * production code no longer computes it — so the only phases in play are
+ * NIGHT_FALLS / SEER / WOLVES / WITCH_SAVE / WITCH_KILL / DAWN / DISCUSSION /
+ * VOTE / VOTE_RESULT. Which uid gets which role is still random (assignRoles
+ * shuffles) — this file reads the deal back out of /private rather than
+ * forcing it, so it exercises the real dealer.
  *
- * SEVEN and not fewer, because §4.6's headcount decides how long a game
- * can last: a 5-player deal is also 2 wolves, so the very first night kill
+ * SEVEN and not fewer, because §4.6's headcount decides how long a game can
+ * last: a 5-player deal is also 2 wolves, so the very first night kill
  * leaves 2 wolves against 2 villagers and the wolves win at DAWN before
  * DISCUSSION/VOTE ever happen. Seven gives 5 non-wolves, which is exactly
  * enough for the night-kill / day-hang / night-kill arc below to reach a
  * wolf win on night two — the shortest game that still exercises a full
  * day phase. */
-const NO_OPTIONAL_ROLES = {
-  BODYGUARD: false,
-  TRAITOR: false,
-  HUNTER: false,
-  CUPID: false,
-  MUTER: false,
-  CURSED: false,
-  LYCAN: false,
-  MASON: false,
-  PRINCE: false,
-  PACIFIST: false,
-  VILLAGE_IDIOT: false,
-  SORCERER: false,
-  WOLF_MAN: false,
-  WOLF_CUB: false,
-  TANNER: false,
+const DECK_7_NO_OPTIONAL_ROLES: Record<RoleKey, number> = {
+  WEREWOLF: 2,
+  TRAITOR: 0,
+  SORCERER: 0,
+  WOLF_MAN: 0,
+  WOLF_CUB: 0,
+  SEER: 1,
+  WITCH: 1,
+  BODYGUARD: 0,
+  HUNTER: 0,
+  CUPID: 0,
+  MUTER: 0,
+  CURSED: 0,
+  LYCAN: 0,
+  MASON: 0,
+  PRINCE: 0,
+  PACIFIST: 0,
+  VILLAGE_IDIOT: 0,
+  VILLAGER: 3,
+  TANNER: 0,
+};
+
+const DECK_16_NO_OPTIONAL_ROLES: Record<RoleKey, number> = {
+  ...DECK_7_NO_OPTIONAL_ROLES,
+  WEREWOLF: 4,
+  VILLAGER: 10,
 };
 
 /** Set only for the duration of one route call, so two route calls can be
@@ -357,7 +369,7 @@ describe("seven clients, one server, one game", () => {
       uid: clients[0].uid,
       name: clients[0].name,
       photoURL: null,
-      maxPlayers: 7,
+      roleCounts: DECK_7_NO_OPTIONAL_ROLES,
     });
 
     for (const client of clients.slice(1)) {
@@ -372,8 +384,7 @@ describe("seven clients, one server, one game", () => {
     // while the room is still in the lobby, and only then.
     await assertSucceeds(
       set(ref(clients[1].db, roomSettingsPath(roomCode)), {
-        maxPlayers: 7,
-        rolesEnabled: NO_OPTIONAL_ROLES,
+        roleCounts: DECK_7_NO_OPTIONAL_ROLES,
         remoteMode: true,
       }),
     );
@@ -382,8 +393,7 @@ describe("seven clients, one server, one game", () => {
     await assertSucceeds(get(ref(outsiderDb, roomStatusPath(roomCode))));
     await assertFails(
       set(ref(outsiderDb, roomSettingsPath(roomCode)), {
-        maxPlayers: 16,
-        rolesEnabled: NO_OPTIONAL_ROLES,
+        roleCounts: DECK_16_NO_OPTIONAL_ROLES,
         remoteMode: false,
       }),
     );
@@ -429,8 +439,7 @@ describe("seven clients, one server, one game", () => {
     // The room is PLAYING now, so its settings are frozen even for members.
     await assertFails(
       set(ref(clients[1].db, roomSettingsPath(roomCode)), {
-        maxPlayers: 7,
-        rolesEnabled: NO_OPTIONAL_ROLES,
+        roleCounts: DECK_7_NO_OPTIONAL_ROLES,
         remoteMode: false,
       }),
     );

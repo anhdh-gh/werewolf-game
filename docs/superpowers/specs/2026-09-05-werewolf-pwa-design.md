@@ -99,6 +99,14 @@ thứ 3 luôn là phần thêm sau cùng, không phải trọng tâm.
 
 ### 4.2 Chia vai
 
+> **Superseded 2026-09-08** (xem `docs/superpowers/plans/2026-09-08-deck-builder.md`): công
+> thức auto-compute + công tắc bật/tắt bên dưới không còn đúng với code nữa. Người tạo phòng
+> giờ chọn tường minh số lượng từng vai (kể cả Sói/Tiên Tri/Phù Thuỷ/Dân Làng, không còn vai
+> nào "bắt buộc theo công thức") qua `DeckBuilder`, ràng buộc duy nhất còn lại là deck phải có
+> ≥1 vai phe Sói và tổng trong khoảng 4–16. Ai trong số người đã join nhận vai nào **vẫn** ngẫu
+> nhiên và giấu kín y hệt — chỉ đổi cách deck được soạn, không đổi cách chia. Đoạn dưới đây giữ
+> lại làm lịch sử/tham khảo thứ tự ưu tiên cũ, không còn là hành vi thật của `buildRoleList`.
+
 **Thứ tự ưu tiên khi mở rộng bộ vai: Sói và Làng lấp đầy trước, phe Riêng luôn lấp sau
 cùng.** Lý do: Sói và Làng là hai phe phải đối đầu nhau mỗi ván, thêm vai ở đây làm phong phú
 thế trận chính. Phe Riêng chỉ thắng một mình, thêm vai ở đó không làm ván đấu chính (Sói và
@@ -294,7 +302,8 @@ mà để xoá hẳn lớp lỗi lộ vai của bản cũ. Không có dữ liệ
 ```
 /rooms/{code}
   createdAt, status            LOBBY | PLAYING
-  settings/                    maxPlayers, rolesEnabled{}, remoteMode  ← "Chơi xa"
+  settings/                    roleCounts{}, remoteMode  ← "Chơi xa" (deck-builder, 2026-09-08:
+                               không còn maxPlayers riêng — deckSize(roleCounts) thay thế)
                                 (Resilience Task 1); mặc định false, gạt luôn chat và
                                 thoại LiveKit ở trạng thái tắt cho tới khi bật
   members/{uid}                name, photoURL, joinedAt
