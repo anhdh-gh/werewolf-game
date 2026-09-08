@@ -321,6 +321,10 @@ access, not more code:
 - Render `NARRATION_SENTENCES`/`NARRATION_COUNT_WORDS` (Task 5, `narration.ts`) to
   real Vietnamese mp3s at the exact paths its own path helpers expect — the one
   piece of this whole plan blocked on a missing tool rather than missing
-  credentials.
+  credentials. The tooling for it now exists: `scripts/render-narration.mjs`
+  renders all 37 clips from one provider credential (`docs/narration-audio.md` is
+  the runbook), `npm run narration:check` reports what is missing or stale, and
+  `src/test/narrationCatalog.test.ts` fails on any partial render. What is still
+  missing is only the credential and a chosen voice.
 - Run a real multi-device game with "Chơi xa" on to confirm chat, push, and the
   LiveKit call rooms actually work together the way the phase-gating logic assumes.
