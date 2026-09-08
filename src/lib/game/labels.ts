@@ -31,6 +31,7 @@ export const ROLE_LABELS: Record<RoleKey, string> = {
   LYCAN: "Sói Giả",
   MASON: "Hội Kín",
   PRINCE: "Hoàng Tử",
+  PACIFIST: "Người Hoà Bình",
   TANNER: "Chán Đời",
   VILLAGER: "Dân Làng",
 };

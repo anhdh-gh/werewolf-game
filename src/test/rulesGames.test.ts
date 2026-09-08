@@ -26,6 +26,7 @@ const EXISTING_GAME = {
     "uid-wolf": { name: "Wolf", alive: true, muted: false },
     "uid-seer": { name: "Seer", alive: true, muted: false },
     "uid-witch": { name: "Witch", alive: true, muted: false },
+    "uid-pacifist": { name: "Pacifist", alive: true, muted: false },
     "uid-dead-hunter": { name: "Hunter", alive: false, muted: false },
     "uid-dead-villager": { name: "Villager", alive: false, muted: false },
   },
@@ -48,6 +49,7 @@ const EXISTING_PRIVATE: Record<string, Record<string, unknown>> = {
     initialRole: "WITCH",
     potions: { heal: true, poison: true },
   },
+  "uid-pacifist": { role: "PACIFIST", initialRole: "PACIFIST" },
   "uid-dead-hunter": { role: "HUNTER", initialRole: "HUNTER" },
   "uid-dead-villager": { role: "VILLAGER", initialRole: "VILLAGER" },
 };
@@ -243,6 +245,31 @@ describe("actions/$gameId — only the phase's own role may act", () => {
 
     // ...while a live player in the same phase still votes normally, so the
     // rule above is denying the death and not the phase.
+    const alive = testEnv.authenticatedContext("uid-seer").database();
+    await assertSucceeds(
+      set(ref(alive, "actions/GAME1/VOTE/uid-seer"), {
+        target: "uid-wolf",
+        done: true,
+        at: 1,
+      }),
+    );
+  });
+
+  it("denies an alive Pacifist from casting a ballot, while another alive player votes normally", async () => {
+    // Story 1.3: VOTE was the one action-phase rule with no role condition
+    // at all — Pacifist is the first role that needs one. Both sides must
+    // hold: the rule actually blocks the Pacifist (not just the UI), and it
+    // must not accidentally block everyone else in the same phase.
+    await setPhase("VOTE");
+    const pacifist = testEnv.authenticatedContext("uid-pacifist").database();
+    await assertFails(
+      set(ref(pacifist, "actions/GAME1/VOTE/uid-pacifist"), {
+        target: "uid-seer",
+        done: true,
+        at: 1,
+      }),
+    );
+
     const alive = testEnv.authenticatedContext("uid-seer").database();
     await assertSucceeds(
       set(ref(alive, "actions/GAME1/VOTE/uid-seer"), {

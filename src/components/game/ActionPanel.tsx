@@ -204,6 +204,13 @@ export function ActionPanel({
   }
 
   if (phase === "VOTE") {
+    if (privateState?.role === "PACIFIST") {
+      return (
+        <p className="rounded-md bg-muted px-3 py-4 text-center text-sm text-muted-foreground">
+          Bạn là Người Hoà Bình — không được bỏ phiếu treo cổ ván này.
+        </p>
+      );
+    }
     return (
       <TargetPicker
         targets={alivePlayersExcept(game, [uid])}

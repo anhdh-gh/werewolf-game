@@ -67,6 +67,7 @@ const NO_OPTIONAL_ROLES = {
   LYCAN: false,
   MASON: false,
   PRINCE: false,
+  PACIFIST: false,
   TANNER: false,
 };
 
